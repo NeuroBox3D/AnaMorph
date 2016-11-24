@@ -1,0 +1,23 @@
+(most important) MorphView controls:
+
+w/s/a/d/lshift/space/mouse: movement / camera control. first-person shooter like controls =>
+                            no camera roll. see below for changing camera roll. 
+ESC:                        quit
++/-:                        scale camera movement velocity by a factor of 2.0 / 0.5.
+1/Ctrl-1:                   increase camera roll by 0.1 / 0.5.
+2/Ctrl-2:                   decrease camera roll by 0.1 / 0.5.
+p:                          reset camera pitch.
+y:                          reset camera yaw.
+r:                          reset camera roll.
+z:                          reset camera position/pitch/yaw/roll to origin / default values.
+i:                          print camera position.
+
+t:                          grab/release mouse pointer
+c:                          enable/disable point-locked camera mode
+b:                          toggle bounding boxes
+g:                          toggle wire grid
+Alt-Return:                 toggle full-screen (currently fixed resolution 1920x1080).
+PRINT:                      render BMP screenshot.
+
+window can be resized to fit any dimensions after releasing mouse pointer with 't'. currently fixed full screen
+resolution: 1920x1080. lighting / anti-aliasing / multi-sampling are enabled.

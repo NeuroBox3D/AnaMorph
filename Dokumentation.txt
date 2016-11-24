@@ -1,0 +1,3 @@
+Settings for DAN-04-R.CNG.swc
+
+./am_cellgen.dynamic -i ../DAN-04-R.CNG.swc -cellnet-pc 9.0 2.5 10.0 -ana-nthreads 8

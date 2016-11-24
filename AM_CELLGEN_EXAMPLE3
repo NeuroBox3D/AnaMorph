@@ -1,0 +1,9 @@
+# see ./bin/am_cellgen -h for details on the command line switches.
+#
+# the generated amv file can be viewed with am_morphview.
+#
+# this example performes 4.0 / 2.0 / 10.0 preconditioning on the smith cell network, resulting in a clean preconditioned
+# network. the non-default simple-neurite-path partitioning strategy is used along with custom mesh post-processing
+# parameters.
+
+./bin/am_cellgen -i clean_smith_30-5-1-HCB.CNG.swc -cellnet-pc 4.0 2.0 10.0 -cellnet-partition-strategy simple-neurite-paths 90 inf -mesh-pp-gec 1.5 0.25 0.5 7 -mesh-pp-hc 0.4 0.7 150

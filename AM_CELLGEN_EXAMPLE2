@@ -1,0 +1,11 @@
+# see ./bin/am_cellgen -h for details on the command line switches.
+#
+# the generated amv file can be viewed with am_morphview.
+#
+# preconditioning the smith network with 2.5 / 1.25 / 10.0 yields an UNCLEAN network, that is nevertheless convertible
+# to a consistent mesh (visually obvious by viewing the network amv file in am_morphview). the -force-meshing switch is
+# used to overwrite the restriction of meshing only cell networks that are confirmed as clean by geometric analysis.
+# this example uses the max-chordal-depth partitioning strategy and non-default number 16 of angular segments for canal
+# surface meshing.
+
+./bin/am_cellgen -i clean_smith_30-5-1-HCB.CNG.swc -cellnet-pc 2.5 1.25 10.0 -cellnet-partition-strategy max-chordal-depth 90 10.0 -meshing-cansurf-angularsegments 16 -force-meshing

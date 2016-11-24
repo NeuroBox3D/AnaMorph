@@ -1,0 +1,325 @@
+------------------------------------------------------------------------------
+Error handling (not necessary in this version): 
+
+[Change ‚STDLIB=libstdc++‘‚ in Makefile.dynamic to ‚STDLIB=libc++‘
+
+in file include/common.hh author forgot to include <numeric> which is sometimes included implicitly: 
+#include <numeric>]
+------------------------------------------------------------------------------
+Build AnaMorph (Description also in BUILD file): 
+
+1. Dynamically linked executables, arch depending on host
+
+make clean -f Makefile.dynamic
+make -j4 -f Makefile.dynamic
+
+------------------------------------------------------------------------------
+Options for conversion of swc files in terminal (if compiled dynamically):  
+
+Usage: am_cellgen.dynamic -i <NETWORKNAME> [OPTIONS]
+
+Command line switches:
+ -i <NETWORKNAME>               MANDATORY: specify input cell network name. 
+                                the network name is the name of the SWC
+                                morphology file without suffix (that is,
+                                without ".swc").
+                                for convenience, the extensions ".swc", ".obj"
+                                and ".amv" are stripped from the input
+                                string if present.
+                                EXAMPLE: the network name for "ri05.CNG.swc"
+                                if "ri05.CNG". using "ri05.CNG.obj" would yield
+                                the same network name.
+
+ -analysis                  
+ -no-analysis                   enable / disable geometric analysis. once a
+                                single full geometric analysis run completes,
+                                a result visualization file suitable for the
+                                AnaMorph morphology viewer (which allows the
+                                user to view the morphology and potential
+                                geometric errors three-dimensionally), is
+                                written to the file
+
+                                "<CELLNETWORK>.amv"
+
+                                NOTE: if cell network preconditioning is enabled
+                                (-cellnet-pc), the preconditioned cell network
+                                is analysed, not the originally encoded one.
+                                DEFAULT: enabled.
+
+ -ana-nthreads <n>              number of worker threads used during geometric
+                                analysis. work is distributed approximately
+                                evenly among all threads. if the host CPU
+                                supports hyper-threading, a good choice is 2*n,
+                                otherwise n, where n is the number of physical
+                                cores of the CPU. n must be > 0.
+                                DEFAULT: 4. 
+
+ -ana-univar-eps <eps>          floating point tolerance value used for the
+                                numerical solver (Bezier Clipping) for
+                                univariate polynomial root finding problems. 
+                                <eps> must be in [1E-11, 1E-3].
+                                DEFAULT: 1E-6.
+
+ -ana-bivar-eps <eps>           floating point tolerance value used for the
+                                numerical solver (Bivariate Linear Clipping) for
+                                bivariate polynomial root finding problems. 
+                                <eps> must be in [1E-11, 1E-3].
+                                DEFAULT: 1E-4.
+
+ -cellnet-pc <alpha> <beta> <gamma>
+ -no-cellnet-pc
+                                enable / disable cell network preconditioning.
+                                requires "-analysis" to be effective.
+                                if enabled: <alpha>, <beta> and <gamma> are the
+                                parameters for the (preliminary) preconditioning
+                                algorithm for cell networks, all of which must
+                                be > 0.0. the preconditioned cell network is 
+                                subjected to geometric analysis.
+                                DEFAULT: enabled, <alpha> = 3.0, <beta> = 1.5
+                                <gamma> = 10.0.
+
+ -cellnet-partition-strategy <strategy> <filter_angle> <filter_radius_ratio>
+                                specify cell network partitioning strategy.
+                                possible values for <strategy> (without quotes):
+
+                                    1. "max-chordal-depth": continue neurite
+                                    path with the neurite segment (u, v) whose
+                                    end neurite vertex v roots the sub-tree
+                                    of maximum chordal depth among all possible
+                                    choices. the chordal depth of a neurite sub-
+                                    tree with root v is the maximum chord length
+                                    of all paths from v to a neurite terminal
+                                    vertex (i.e. leaf).
+
+                                    2. "min-angle": continue neurite path with
+                                    the neurite segment of minimum angle.
+
+                                    3. "simple-neurite-paths": neurite path
+                                    always ends at the next neurite branching
+                                    vertex.
+
+                                the parameters <filter_angle>, given in degrees
+                                from [0, 180], and <filter_radius_ratio>, from 
+                                [1.0, oo(, are used to narrow the set of
+                                possible neurite segments to choose from:
+                                among all possible neurite segments, only those
+                                having both an angle less than or equal to
+                                <filter_angle> and a radius radio of less than
+                                or equal to <filter_radius_ratio> are
+                                taken into consideration. if this set is empty,
+                                the neurite path ends at the terminal vertex.
+
+                                DEFAULT: <strategy> = "max-chordal-depth",
+                                         <filter_angle> = "90.0",
+                                         <filter_radius_ratio> = "10.0".
+
+ -cellnet-parametrization-strategy <strategy>
+                                specify neurite path parametrization strategy.
+                                possible values for <strategy> (without quotes):
+
+                                    1. "chord-length": use chord-length
+                                    parametrization and matching scaling
+                                    factors.
+
+                                    2. "uniform": use uniform parametrization
+                                    and matching scaling factors.
+
+                                DEFAULT: <strategy> = "chord-length".
+
+ -meshing                        
+ -no-meshing                    enable / disable inductive cell meshing, which
+                                generates a consistent triangular output mesh
+                                representing the plasma membrane of the input
+                                cell network (the cell network union mesh).
+                                can be enabled only if geometric analysis is
+                                enabled as well (-analysis). inductive cell
+                                meshing is performed only if geometric analysis
+                                has confirmed the input cell network as clean.
+                                in order to attempt meshing of unclean networks,
+                                use -force-meshing. the mesh output file name is
+
+                                "<CELLNETWORK>.obj"
+                                
+                                DEFAULT: enabled.
+
+ -force-meshing                 force inductive cell meshing, even for unclean
+                                networks. can be used only if geometric
+                                analysis is enabled as well (-analysis). 
+                                DEFAULT: don't force meshing.
+
+ -meshing-individual-surfaces   render all modelling surfaces individually
+                                into a generally inconsistent mesh.
+                                no merging is performed: every modelling
+                                surface produces a connected component of the
+                                resulting mesh. can be enabled only if geometric
+                                analysis is enabled as well (-analysis).
+                                the mesh output file name is
+
+                               "<CELLNETWORK>_individual_modelling_surfaces.obj"
+
+                                DEFAULT: no individual surface meshing.
+
+ -meshing-flush <flush_face_limit>                    
+ -no-meshing-flush                        
+                                enable / disable mesh flushing.
+                                requires -meshing and -analysis.
+                                during inductive cell network meshing, large
+                                parts of the partially completed cell network
+                                mesh are no longer needed and can already be
+                                flushed to disk to save significant amounts of
+                                RAM and computation time. the flushing process
+                                incrementally completes the mesh obj file
+                                ("<CELLNETWORK>.obj"). if enabled, the integral
+                                parameter <flush_face_limit>, which must be in
+                                [1024,oo[, defines the face count limit that
+                                triggers another partial flushing to disk. that
+                                is, if the partially completed mesh reaches
+                                the face count <flush_face_limit>, all 
+                                definitely no longer needed mesh components are
+                                identified and written to disk.
+                                if disabled, the entire mesh is kept in RAM.
+                                NOTE: for large cell networks, this may result
+                                in intolerably high memory consumption, which
+                                can cause the system to kill the application
+                                or even freeze (occurred on win32) if the
+                                amount of available RAM is exceeded.
+                                DEFAULT: enabled, <flush_face_limit> = 100000.
+
+ -meshing-cansurf-angularsegments <nseg>      
+                                defines angular discretization precision used
+                                during neurite path / neurite canal segment 
+                                meshing. during canal surface meshing, circles
+                                are approximated by ring polygons with <nseg>
+                                corners on the circle, where all <nseg> sides
+                                are chosen equilaterally. <nseg> must be
+                                in [12, 360].
+                                NOTE: vertex / face count of canal surfaces are
+                                O(<nseg>^2): choosing high values for <nseg>
+                                will produce meshes of correspondingly high
+                                vertex / face count.
+                                DEFAULT: <nseg> = 12.
+
+ -meshing-outerloop-maxiter <n> defines the maximum number of iterations
+                                performed in the outer meshing loop before
+                                the start radius factor for the currently 
+                                processed neurite path mesh is decreased
+                                by the decrement defined by 
+                                -meshing-merging-radiusfactor-decrement.
+                                <n> must be positive.
+                                DEFAULT: <n> = 16.
+                                 
+ -meshing-innerloop-maxiter <n> defines the maximum number of iterations
+                                performed in the inner meshing loop before
+                                breaking the latter and re-randomizing in
+                                a fresh iteration of the outer meshing loop.
+                                <n> must be positive.
+                                DEFAULT: <n> = 8.
+                                
+ -meshing-merging-initial-radiusfactor <f>
+                                defines the initial radius factor used during
+                                merging of neurite path meshes. the factor <f>
+                                is used to scale down the radius of the 
+                                neurite start vertex of the currently processed
+                                neurite path for meshing only. this is necessary
+                                to ensure various invariants for the internally
+                                used Red-Blue meshing algorithm.
+                                <f> must be in [0.9, 1.0].
+                                DEFAULT: <f> = 0.975.
+                                 
+ -meshing-merging-radiusfactor-decrement <d>
+                                defines the decrement applied to the radius
+                                factor if 
+                                    i) one of certain geometric invariants
+                                    used by the Red-Blue-Algorithm is violated,
+                                    which indicates that the radius factor must
+                                    be further reduced. 
+
+                                    ii) the number of outer meshing loop
+                                    iterations for the currently processed
+                                    neurite path is a multiple of the value
+                                    set with -meshing-outerloop-maxiter.
+
+                                if f denotes the current factor, then the new
+                                factor f' = f - <d>. <d> must be a floating
+                                point value in ]0.0, 0.1] (max. 10% reduction in
+                                one step).
+                                DEFAULT: <d> = 0.01.
+
+ -meshing-complexedge-max-growthfactor <c>
+                                defines the maximum growth factor for complexly
+                                intersecting mesh edges during merging.
+                                complexly intersecting edges must be split to
+                                ensure geometric and topological invariants used
+                                by the Red-Blue meshing algorithm.
+                                in certain situations, splitting complex edges
+                                creates even more complex edges, a process that
+                                can lead to exponential amplification, resulting
+                                in extreme edge counts and numerical problems.
+                                the maximum growth factor <c> is used to avoid
+                                such cases and trigger another iteration of the
+                                outer meshing loop. if m denotes the initial
+                                count of complexly intersecting edges of the
+                                original red / blue mesh pair (R, B),
+                                then _every new_ splitting step is allowed to
+                                produce at most <c>*m new complexly intersecting
+                                edges in the process of splitting and thus removing
+                                all old complexly intersecting edges.
+                                splitting continues until either the maximum
+                                number of inner meshing iterations is reached,
+                                another (possibly more severe) exception is
+                                thrown, the limit <c>*m is exceeded or until
+                                there are no more complexly intersecting edges
+                                left in both red and blue mesh.
+                                oftentimes, the splitting process dies out after
+                                a few iterations. in relatively rare cases
+                                however, it is necessary to stop a runaway
+                                process. <c> must be > 0.0, but a value close to
+                                1 is advisable in light of the above explanation.
+                                DEFAULT: <c> = 2.0.
+                                
+ -no-mesh-pp                    disable cell network union mesh post-processing
+                                entirely. equivalent to
+                                -no-mesh-pp-gec -no-mesh-pp-hc
+
+ -mesh-pp-gec <alpha> <lambda> <mu>
+ -no-mesh-pp-gec                enable / disable stage 1 of the post-processing
+                                chain for the cell network union mesh: improved
+                                greedy edge collapsing.
+                                <alpha>, <lambda> and <mu> are the parameters
+                                passed to the improved greedy edge collapse 
+                                algorithm. <alpha> is a triangle aspect ratio
+                                and must hence be >= 1.0. <lambda> and <mu>
+                                are area scaling factors and must be > 0.0.
+
+                                DEFAULT: enabled, <alpha> = 1.5,
+                                <lambda> = 0.125, <mu> = 0.5.
+
+                                NOTE: if either -mesh-pp-gec (stage 1) or 
+                                -mesh-pp-hc (stage2) is enabled, post-processing
+                                is performed as configured, where stage 1 always
+                                precedes stage 2. the mesh obtained after post-
+                                processing is written to the file
+
+                                "<CELLNETWORK>_post_processed.obj".
+
+ -mesh-pp-hc <alpha> <beta> <maxiter>
+ -no-mesh-pp-hc                 enable / disable stage 2 of the post-processing
+                                chain for the cell network union mesh:
+                                HC Laplacian smoothing.
+                                the algorithm is performed for <maxiter>
+                                (which must be > 0) iterations. <alpha> and
+                                <beta> are the key parameters for HC Laplacian
+                                smoothing, where <beta> must be greater than
+                                <alpha> to ensure a converging "diffusion",
+                                i.e. smoothing, process. 
+                                DEFAULT: enabled, 
+
+                                NOTE: if either -mesh-pp-gec (stage 1) or 
+                                -mesh-pp-hc (stage2) is enabled, post-processing
+                                is performed as configured, where stage 1 always
+                                precedes stage 2. the mesh obtained after post-
+                                processing is written to the file
+
+                                "<CELLNETWORK>_post_processed.obj".
+
+ -h                             display this help message.

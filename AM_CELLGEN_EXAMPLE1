@@ -1,0 +1,10 @@
+# see ./bin/am_cellgen -h for details on the command line switches.
+#
+# the generated amv file can be viewed with am_morphview.
+#
+# minimal example on a moderately large jacobs cell network with only preconditioning set to non-default settings 4.0
+# 2.0 10.0 (a little "more generous" preconditioning than by default).  meshing and post-processing are performed as set
+# by default.
+#
+
+./bin/am_cellgen -i clean_jacobs_largeradius_156-2-3a.CNG.swc -cellnet-pc 4.0 2.0 10.0
