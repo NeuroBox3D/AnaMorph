@@ -609,7 +609,8 @@ namespace NLM {
                 typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
             >                                                  &end_circle_its,
         typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          &closing_vertex_it,
-        R const                                                &radius_reduction_factor) const
+        R const                                                &radius_reduction_factor,
+		bool                                                    preserve_crease_edges) const
     {
         debugl(0, "NeuritePath::generateInitialSegmentMesh().\n");
         debugTabInc();
@@ -652,7 +653,8 @@ namespace NLM {
                 /* retrieve end circle parity and iterators as well as closing vertex iterator */
                 &end_circle_offset,
                 &end_circle_its,
-                &closing_vertex_it);
+                &closing_vertex_it,
+				preserve_crease_edges);
 
             debugl(1, "mesh generated.\n");
         }
@@ -684,7 +686,8 @@ namespace NLM {
                     /* retrieve end circle parity and iterators as well as closing vertex iterator */
                     &end_circle_offset,
                     &end_circle_its,
-                    &closing_vertex_it);
+                    &closing_vertex_it,
+					preserve_crease_edges);
 
                 /* erase the closing vertex to reopen the mesh */
                 M.vertices.erase(closing_vertex_it);
@@ -708,7 +711,8 @@ namespace NLM {
                     &end_circle_offset,
                     &end_circle_its,
                     /* save iterator to closing vertex */
-                    &closing_vertex_it);
+                    &closing_vertex_it,
+					preserve_crease_edges);
             }
             else {
                 throw("NeuritePath::generateMesh(): (this) is a neurite root path whose first vertex not incident to "\
@@ -747,7 +751,8 @@ namespace NLM {
         std::vector<
                 typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
             >                                                  *end_circle_its,
-        typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it) const
+        typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it,
+		bool                                                    preserve_crease_edges) const
     {
         debugl(0, "NeuritePath::appendTailMesh().\n");
         debugTabInc();
@@ -796,7 +801,8 @@ namespace NLM {
                 &segment_i_start_circle_offset,
                 &segment_i_start_circle_its,
                 /* same scheme to update iterator to closing vertex */
-                &segment_i_start_circle_closing_vertex_it);
+                &segment_i_start_circle_closing_vertex_it,
+				preserve_crease_edges);
 
             debugl(1, "done with mesh for neurite canal segment %d\n", i);
         }
@@ -869,6 +875,8 @@ NLM_CellNetwork<R>::NLM_CellNetwork(std::string network_name)
     this->meshing_outer_loop_maxiter                = 16;
     this->meshing_inner_loop_maxiter                = 8;
 
+    this->meshing_preserve_crease_edges             = false;
+
     this->meshing_radius_factor_initial_value       = 0.975;
     this->meshing_radius_factor_decrement           = 0.01;
     this->meshing_complex_edge_max_growth_factor    = 2.0;
@@ -902,6 +910,8 @@ NLM_CellNetwork<R>::getSettings() const
     s.meshing_outer_loop_maxiter                = this->meshing_outer_loop_maxiter;
     s.meshing_inner_loop_maxiter                = this->meshing_inner_loop_maxiter;
 
+    s.meshing_preserve_crease_edges             = this->meshing_preserve_crease_edges;
+
     s.meshing_radius_factor_initial_value       = this->meshing_radius_factor_initial_value;
     s.meshing_radius_factor_decrement           = this->meshing_radius_factor_decrement;
     s.meshing_complex_edge_max_growth_factor    = this->meshing_complex_edge_max_growth_factor;
@@ -928,6 +938,8 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
     this->meshing_outer_loop_maxiter                = s.meshing_outer_loop_maxiter;
     this->meshing_inner_loop_maxiter                = s.meshing_inner_loop_maxiter;
 
+    this->meshing_preserve_crease_edges             = s.meshing_preserve_crease_edges;
+
     this->meshing_radius_factor_initial_value       = s.meshing_radius_factor_initial_value;
     this->meshing_radius_factor_decrement           = s.meshing_radius_factor_decrement;
     this->meshing_complex_edge_max_growth_factor    = s.meshing_complex_edge_max_growth_factor;
@@ -941,6 +953,7 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
         "\t meshing_canal_segment_n_phi_segments:   %5d\n"\
         "\t meshing_outer_loop_maxiter:             %5d\n"\
         "\t meshing_inner_loop_maxiter:             %5d\n"\
+		"\t meshing_preserve_crease_edges:          %s\n"\
         "\t meshing_radius_factor_initial_value:    %5.4f\n"\
         "\t meshing_radius_factor_decrement:        %5.4f\n"\
         "\t meshing_complex_edge_max_growth_factor: %5.4f\n\n",
@@ -952,6 +965,7 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
         this->meshing_canal_segment_n_phi_segments,
         this->meshing_outer_loop_maxiter,
         this->meshing_inner_loop_maxiter,
+		this->meshing_preserve_crease_edges ? "true" : "false",
         this->meshing_radius_factor_initial_value,
         this->meshing_radius_factor_decrement,
         this->meshing_complex_edge_max_growth_factor);
@@ -3367,7 +3381,8 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 end_circle_its,
                 closing_vertex_it,
                 /* radius factor, which is being ignored for neurite root paths. */
-                radius_factor);
+                radius_factor,
+				this->meshing_preserve_crease_edges);
 
             /* triangulate M_P for RedBlueAlgorithm */
             M_P.triangulateQuads();
@@ -3615,7 +3630,8 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 /* store return iterators for subsequent generation of terminal half-sphere */
                &end_circle_offset,
                &end_circle_its,
-               &closing_vertex_it);
+               &closing_vertex_it,
+			    this->meshing_preserve_crease_edges);
 
             debugl(1, "tail path mesh appended. appending terminal half-sphere.\n");
 

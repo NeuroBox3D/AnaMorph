@@ -364,7 +364,8 @@ class CanalSurface {
                                             std::vector<
                                                     typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
                                                 >                                                  *end_circle_its          = NULL,
-                                            typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it       = NULL) const;
+                                            typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it       = NULL,
+                                            bool                                                    preserve_crease_edges   = false) const ;
 };
 
 #if 0
@@ -531,6 +532,6 @@ template <typename R> uint32_t                                  BLRCanalSurface<
 template <typename R> Tensor<2, BiBernsteinPolynomial<R, R>>    BLRCanalSurface<R>::F({ 1, 1 });
 template <typename R> Tensor<3, BiBernsteinPolynomial<R, R>>    BLRCanalSurface<R>::G({ 1, 1, 1 });
 
-#include "CanalSurface.tcc"
+#include "../tsrc/CanalSurface.impl.hh"
 
 #endif 

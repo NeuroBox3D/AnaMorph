@@ -124,6 +124,8 @@ class NLM_CellNetwork
         uint32_t        meshing_outer_loop_maxiter;
         uint32_t        meshing_inner_loop_maxiter;
 
+        bool            meshing_preserve_crease_edges;
+
         R               meshing_radius_factor_initial_value;
         R               meshing_radius_factor_decrement;
         R               meshing_complex_edge_max_growth_factor;
@@ -231,6 +233,8 @@ class NLM_CellNetwork
             uint32_t        meshing_canal_segment_n_phi_segments;
             uint32_t        meshing_outer_loop_maxiter;
             uint32_t        meshing_inner_loop_maxiter;
+
+            bool            meshing_preserve_crease_edges;
 
             R               meshing_radius_factor_initial_value;
             R               meshing_radius_factor_decrement;
@@ -1066,6 +1070,6 @@ class NLM_CellNetwork
         void                                        writeMorphViewFile(std::string filename) const;
 };
 
-#include "NLM_CellNetwork.tcc"
+#include "../tsrc/NLM_CellNetwork.impl.hh"
 
 #endif

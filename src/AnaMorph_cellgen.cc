@@ -76,6 +76,7 @@ const std::list<
         { "meshing-cansurf-angularsegments",        1 },
         { "meshing-outerloop-maxiter",              1 },
         { "meshing-innerloop-maxiter",              1 },
+        { "preserve-crease-edges",                  0 },
         { "meshing-flush",                          1 },
         { "no-meshing-flush",                       0 },
         { "meshing-merging-initial-radiusfactor",   1 },
@@ -497,6 +498,8 @@ AnaMorph_cellgen::AnaMorph_cellgen(
     this->meshing_outer_loop_maxiter                = 16;
     this->meshing_inner_loop_maxiter                = 8;
 
+    this->meshing_preserve_crease_edges             = false;
+
     this->meshing_radius_factor_initial_value       = 0.975;
     this->meshing_radius_factor_decrement           = 0.01;
     this->meshing_complex_edge_max_growth_factor    = 2.0;
@@ -777,7 +780,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             }
 
             /* check value */
-            if (this->meshing_canal_segment_n_phi_segments < 12 || this->meshing_canal_segment_n_phi_segments > 360) {
+            if (this->meshing_canal_segment_n_phi_segments < 3 || this->meshing_canal_segment_n_phi_segments > 36) {
                 printf("ERROR: angular canal surface discretization parameter specified in switch \"meshing-cansurf-angularsegments\" must be in [12,360].\n");
                 return false;
             }
@@ -819,6 +822,9 @@ AnaMorph_cellgen::processCommandLineArguments()
                 printf("ERROR: iteration parameter to switch \"meshing-innerloop-maxiter\" must be > 0.\n");
                 return false;
             }
+        }
+        else if (s == "preserve-crease-edges") {
+            this->meshing_preserve_crease_edges = true;
         }
         else if (s == "meshing-flush") {
             try {
@@ -983,6 +989,8 @@ AnaMorph_cellgen::run()
             C_settings.meshing_canal_segment_n_phi_segments     = this->meshing_canal_segment_n_phi_segments;
             C_settings.meshing_outer_loop_maxiter               = this->meshing_outer_loop_maxiter;
             C_settings.meshing_inner_loop_maxiter               = this->meshing_inner_loop_maxiter;
+
+            C_settings.meshing_preserve_crease_edges            = this->meshing_preserve_crease_edges;
 
             C_settings.meshing_radius_factor_initial_value      = this->meshing_radius_factor_initial_value;
             C_settings.meshing_radius_factor_decrement          = this->meshing_radius_factor_decrement;

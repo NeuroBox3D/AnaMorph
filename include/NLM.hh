@@ -145,7 +145,7 @@ namespace NLM {
 
             template <typename Tm, typename Tv, typename Tf>
             Mesh<Tm, Tv, Tf, R>
-            generateMesh(uint32_t tessellation_depth = 4) const
+            generateMesh(uint32_t tessellation_depth = 2) const
             {
                 Mesh<Tm, Tv, Tf, R> M_S;
                 MeshAlg::generateIcoSphere(_centre, _radius, tessellation_depth, M_S);
@@ -242,7 +242,8 @@ namespace NLM {
                                                                 typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
                                                             >                                                  &end_circle_its,
                                                         typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          &closing_vertex_it,
-                                                        R const                                                &radius_reduction_factor) const;
+                                                        R const                                                &radius_reduction_factor,
+														bool                                                    preserve_crease_edges = false) const;
 
 
             template<typename Tm, typename Tv, typename Tf>
@@ -261,7 +262,8 @@ namespace NLM {
                                                         std::vector<
                                                                 typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
                                                             >                                                  *end_circle_its      = NULL,
-                                                        typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it   = NULL) const;
+                                                        typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it   = NULL,
+														bool                                                    preserve_crease_edges = false) const;
                                                         
 
     };

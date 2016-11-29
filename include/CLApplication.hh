@@ -83,6 +83,8 @@ class CLApplication {
                             std::list<std::pair<std::string, std::string>> const   &cl_mutex_switch_list,
                             std::string const                                      &usage_text = "");
 
+        virtual			~CLApplication() {};
+
         /* processing command line arguments and calling main loop is specific to application => pure virtual */
         virtual bool    processCommandLineArguments() = 0; 
         virtual bool    run() = 0;

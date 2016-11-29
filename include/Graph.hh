@@ -1042,6 +1042,6 @@ class Graph {
 };
 
 /* include header for template implementation */
-#include "Graph.tcc"
+#include "../tsrc/Graph.impl.hh"
 
 #endif

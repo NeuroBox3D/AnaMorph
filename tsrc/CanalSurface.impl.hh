@@ -262,7 +262,8 @@ CanalSurface<C2F, RadF, R>::generateMesh(
     std::vector<
             typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
         >                                                  *end_circle_its,
-    typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it) const
+    typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it,
+	bool                                                    preserve_crease_edges) const
 {
     debugl(0, "CanalSurface::generateMesh().\n");
     debugTabInc();
@@ -298,7 +299,10 @@ CanalSurface<C2F, RadF, R>::generateMesh(
         /* compute and push next t-value */
         r       = this->radiusEval(t);
         l       = r*sqrt(2.0*(1.0 - cos(dphi))); 
-        h       = sqrt(3.0)*l / 2.0;
+        if (!preserve_crease_edges)
+        	h   = sqrt(3.0)*l / 2.0;
+        else
+        	h   = l;
 
         /* delta_t depends on the arc length: we want to advance a step of h in arc length, which
          * approximately amounts to an advance of h / l in t (for close to constant parametric
@@ -400,21 +404,24 @@ CanalSurface<C2F, RadF, R>::generateMesh(
     for (i = 1; i < ntsegments; i++) {
         /* if start is offset, then even values for i are not offset, odd values are offset.
          * otherwise, vice versa */
-        if (start_circle_offset) {
-            if (i % 2 == 0) {
-                phi_offset = phi_0 + dphi / 2.0;
-            }
-            else {
-                phi_offset = phi_0;
-            }
-        }
-        else {
-            if (i % 2 == 0) {
-                phi_offset = phi_0;
-            }
-            else {
-                phi_offset = phi_0 + dphi / 2.0;
-            }
+        if (!preserve_crease_edges)
+        {
+			if (start_circle_offset) {
+				if (i % 2 == 0) {
+					phi_offset = phi_0 + dphi / 2.0;
+				}
+				else {
+					phi_offset = phi_0;
+				}
+			}
+			else {
+				if (i % 2 == 0) {
+					phi_offset = phi_0;
+				}
+				else {
+					phi_offset = phi_0 + dphi / 2.0;
+				}
+			}
         }
 
         //t = (R)i / (R)ntsegments;
@@ -460,23 +467,26 @@ CanalSurface<C2F, RadF, R>::generateMesh(
     typename Mesh<Tm, Tv, Tf, R>::vertex_iterator   end_closing_vertex_it;
     
     /* last circle has index ntsegments, since we got (ntsegments + 1) circles */
-    if (start_circle_offset) {
-        if (ntsegments % 2 == 0) {
-            phi_offset = phi_0 + dphi / 2.0;
-        }
-        else {
-            phi_offset = phi_0;
-        }
+    if (!preserve_crease_edges)
+    {
+    	if (start_circle_offset) {
+			if (ntsegments % 2 == 0) {
+				phi_offset = phi_0 + dphi / 2.0;
+			}
+			else {
+				phi_offset = phi_0;
+			}
+		}
+		else {
+			if (ntsegments % 2 == 0) {
+				phi_offset = phi_0;
+			}
+			else {
+				phi_offset = phi_0 + dphi / 2.0;
+			}
+		}
     }
-    else {
-        if (ntsegments % 2 == 0) {
-            phi_offset = phi_0;
-        }
-        else {
-            phi_offset = phi_0 + dphi / 2.0;
-        }
-    }
-    
+
     px.print_debugl(0);
     py.print_debugl(0);
     pz.print_debugl(0);

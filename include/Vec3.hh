@@ -112,6 +112,6 @@ class Vec3 : public Vector<R> {
         void                                print_debugl(uint32_t level) const;
 };
 
-#include "Vec3.tcc"
+#include "../tsrc/Vec3.impl.hh"
 
 #endif

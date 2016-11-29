@@ -256,7 +256,7 @@ namespace PolyAlg {
             std::vector<ComplexInterval<R>>    &roots);
     */
 
-    #include "PolyAlgorithms.tcc"
+    #include "../tsrc/PolyAlgorithms.impl.hh"
 }
 
 #endif

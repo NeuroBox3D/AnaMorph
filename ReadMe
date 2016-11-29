@@ -214,6 +214,13 @@ Command line switches:
                                 a fresh iteration of the outer meshing loop.
                                 <n> must be positive.
                                 DEFAULT: <n> = 8.
+
+ -preserve-crease-edges         If this option is passed then the triangles along
+                                the dendritic and axonal elements will be arranged
+                                in such a way that there is no torsion in the neurites.
+                                This prevents concavities along the neurites, but also
+                                means the triangles in the neurites will no longer
+                                be perfectly equilateral.
                                 
  -meshing-merging-initial-radiusfactor <f>
                                 defines the initial radius factor used during

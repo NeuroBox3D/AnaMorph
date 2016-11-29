@@ -240,6 +240,6 @@ class BezierCurve : public SpaceCurveReal< BernsteinPolynomial<R, R>, R >
                                     BernsteinPolynomial<R, R>  &p) const;
 };
 
-#include "ParametricCurve.tcc"
+#include "../tsrc/ParametricCurve.impl.hh"
 
 #endif

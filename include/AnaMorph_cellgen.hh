@@ -95,6 +95,8 @@ class AnaMorph_cellgen : private CLApplication {
         uint32_t            meshing_outer_loop_maxiter;
         uint32_t            meshing_inner_loop_maxiter;
 
+        bool                meshing_preserve_crease_edges;
+
         double              meshing_radius_factor_initial_value;
         double              meshing_radius_factor_decrement;
         double              meshing_complex_edge_max_growth_factor;
@@ -122,6 +124,7 @@ class AnaMorph_cellgen : private CLApplication {
 
     public:
                             AnaMorph_cellgen(int argc, char *argv[]);
+        virtual				~AnaMorph_cellgen() {};
         virtual bool        processCommandLineArguments() final;
         virtual bool        run() final;
 };

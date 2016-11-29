@@ -180,6 +180,6 @@ class BiBernsteinPolynomial : public BivariatePolynomial<F, R> {
         void                                convertFromPowerBasis(Matrix<F> const &coeff_pow);
 };
 
-#include "BivariatePolynomial.tcc"
+#include "../tsrc/BivariatePolynomial.impl.hh"
 
 #endif

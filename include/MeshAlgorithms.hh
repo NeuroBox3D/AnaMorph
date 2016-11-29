@@ -399,6 +399,6 @@ namespace MeshAlg {
         std::list<typename Mesh<Tm, Tv, Tf, R>::Face *>            &face_list);
 }
 
-#include "MeshAlgorithms.tcc"
+#include "../tsrc/MeshAlgorithms.impl.hh"
 
 #endif 

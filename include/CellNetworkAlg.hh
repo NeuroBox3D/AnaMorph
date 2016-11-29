@@ -58,7 +58,7 @@ namespace CellNetworkAlg {
         R const                                                                    &beta,
         R const                                                                    &gamma);
 
-#include "CellNetworkAlg.tcc"
+#include "../tsrc/CellNetworkAlg.impl.hh"
 
 }
 

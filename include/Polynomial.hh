@@ -360,6 +360,6 @@ class LegendrePolynomial {
 };
 #endif
 
-#include "Polynomial.tcc"
+#include "../tsrc/Polynomial.impl.hh"
 
 #endif
