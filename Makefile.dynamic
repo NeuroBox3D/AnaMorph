@@ -41,10 +41,11 @@ all: clean am_cellgen
 	$(CCLINE) -c $< -o $@
 
 am_cellgen: $(OBJECTS_AMCELLGEN) $(OBJECTS_AMMESHSTAT)
-	#$(CXXLINE) -v -o bin/am_cellgen.dynamic -Wl,-s $(OBJECTS_AMCELLGEN) -pthread
-	#$(CXXLINE) -v -o bin/am_meshstat.dynamic -Wl,-s $(OBJECTS_AMMESHSTAT) -pthread
-	$(CXXLINE) -v -o bin/am_cellgen.dynamic $(OBJECTS_AMCELLGEN)
-	$(CXXLINE) -v -o bin/am_meshstat.dynamic $(OBJECTS_AMMESHSTAT)
+	$(CXXLINE) -v -o bin/am_cellgen.dynamic -Wl,-s $(OBJECTS_AMCELLGEN) -pthread
+	$(CXXLINE) -v -o bin/am_meshstat.dynamic -Wl,-s $(OBJECTS_AMMESHSTAT) -pthread
+	## The following lines may need to replace the previous two on some compile systems.
+	#$(CXXLINE) -v -o bin/am_cellgen.dynamic $(OBJECTS_AMCELLGEN)
+	#$(CXXLINE) -v -o bin/am_meshstat.dynamic $(OBJECTS_AMMESHSTAT)
 
 clean:
 	rm -f src/*.o bin/am_cellgen.dynamic bin/am_meshstat.dynamic
