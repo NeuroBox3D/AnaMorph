@@ -96,6 +96,7 @@ class AnaMorph_cellgen : private CLApplication {
         uint32_t            meshing_inner_loop_maxiter;
 
         bool                meshing_preserve_crease_edges;
+        double 				meshing_cansurf_triangle_height_factor;
 
         double              meshing_radius_factor_initial_value;
         double              meshing_radius_factor_decrement;

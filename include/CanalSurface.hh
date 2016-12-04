@@ -365,7 +365,8 @@ class CanalSurface {
                                                     typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
                                                 >                                                  *end_circle_its          = NULL,
                                             typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it       = NULL,
-                                            bool                                                    preserve_crease_edges   = false) const ;
+                                            bool                                                    preserve_crease_edges   = false,
+											R														triangle_height_factor	= 1.0) const ;
 };
 
 #if 0

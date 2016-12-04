@@ -125,6 +125,7 @@ class NLM_CellNetwork
         uint32_t        meshing_inner_loop_maxiter;
 
         bool            meshing_preserve_crease_edges;
+        R				meshing_cansurf_triangle_height_factor;
 
         R               meshing_radius_factor_initial_value;
         R               meshing_radius_factor_decrement;
@@ -235,6 +236,7 @@ class NLM_CellNetwork
             uint32_t        meshing_inner_loop_maxiter;
 
             bool            meshing_preserve_crease_edges;
+            R				meshing_cansurf_triangle_height_factor;
 
             R               meshing_radius_factor_initial_value;
             R               meshing_radius_factor_decrement;

@@ -263,7 +263,8 @@ CanalSurface<C2F, RadF, R>::generateMesh(
             typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
         >                                                  *end_circle_its,
     typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it,
-	bool                                                    preserve_crease_edges) const
+	bool                                                    preserve_crease_edges,
+	R														triangle_height_factor) const
 {
     debugl(0, "CanalSurface::generateMesh().\n");
     debugTabInc();
@@ -300,9 +301,9 @@ CanalSurface<C2F, RadF, R>::generateMesh(
         r       = this->radiusEval(t);
         l       = r*sqrt(2.0*(1.0 - cos(dphi))); 
         if (!preserve_crease_edges)
-        	h   = sqrt(3.0)*l / 2.0;
+        	h   = triangle_height_factor*sqrt(3.0)*l / 2.0;
         else
-        	h   = l;
+        	h   = triangle_height_factor*l;
 
         /* delta_t depends on the arc length: we want to advance a step of h in arc length, which
          * approximately amounts to an advance of h / l in t (for close to constant parametric

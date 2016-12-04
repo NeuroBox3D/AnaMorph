@@ -77,6 +77,7 @@ const std::list<
         { "meshing-outerloop-maxiter",              1 },
         { "meshing-innerloop-maxiter",              1 },
         { "preserve-crease-edges",                  0 },
+		{ "cansurf-triangle-height",        		1 },
         { "meshing-flush",                          1 },
         { "no-meshing-flush",                       0 },
         { "meshing-merging-initial-radiusfactor",   1 },
@@ -499,6 +500,7 @@ AnaMorph_cellgen::AnaMorph_cellgen(
     this->meshing_inner_loop_maxiter                = 8;
 
     this->meshing_preserve_crease_edges             = false;
+    this->meshing_cansurf_triangle_height_factor	= 1.0;
 
     this->meshing_radius_factor_initial_value       = 0.975;
     this->meshing_radius_factor_decrement           = 0.01;
@@ -826,6 +828,24 @@ AnaMorph_cellgen::processCommandLineArguments()
         else if (s == "preserve-crease-edges") {
             this->meshing_preserve_crease_edges = true;
         }
+        else if (s == "cansurf-triangle-height") {
+            try {
+                this->meshing_cansurf_triangle_height_factor = std::stod(s_args[0]);
+            }
+            catch (std::out_of_range ex) {
+                printf("ERROR: argument to switch \"cansurf-triangle-height\" out of range.\n");
+                return false;
+            }
+            catch (...) {
+                printf("ERROR: argument to switch \"cansurf-triangle-height\" could not be converted to a double precision floating point value.\n");
+                return false;
+            }
+            if (this->meshing_cansurf_triangle_height_factor <= 0) {
+                printf("ERROR: invalid argument to switch \"cansurf-triangle-height\". factor must be greater than 0.\n");
+                return false;
+            }
+        }
+
         else if (s == "meshing-flush") {
             try {
                 this->meshing_flush             = true;
@@ -991,6 +1011,7 @@ AnaMorph_cellgen::run()
             C_settings.meshing_inner_loop_maxiter               = this->meshing_inner_loop_maxiter;
 
             C_settings.meshing_preserve_crease_edges            = this->meshing_preserve_crease_edges;
+            C_settings.meshing_cansurf_triangle_height_factor	= this->meshing_cansurf_triangle_height_factor;
 
             C_settings.meshing_radius_factor_initial_value      = this->meshing_radius_factor_initial_value;
             C_settings.meshing_radius_factor_decrement          = this->meshing_radius_factor_decrement;
