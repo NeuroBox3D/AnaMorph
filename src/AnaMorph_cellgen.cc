@@ -82,7 +82,8 @@ const std::list<
         { "no-meshing-flush",                       0 },
         { "meshing-merging-initial-radiusfactor",   1 },
         { "meshing-merging-radiusfactor-decrement", 1 },
-        { "meshing-complexedge-max-growthfactor",   1 }
+        { "meshing-complexedge-max-growthfactor",   1 },
+        { "debug-lvl",                              2 }
     };
 
 const std::list<
@@ -463,6 +464,10 @@ const std::string usage_string =
 "\n"\
 "                                \"<CELLNETWORK>_post_processed.obj\".\n"\
 "\n"\
+" -debug-lvl <cmp> <lvl>         Enable debugging for component <cmp>\n"\
+"                                and set debug level to <lvl>.\n"\
+"                                Debug component 0 is global debugging.\n"\
+"\n"\
 " -h                             display this help message.\n";
 
 
@@ -515,7 +520,7 @@ AnaMorph_cellgen::AnaMorph_cellgen(
     this->pp_gec_alpha                              = 1.5;
     this->pp_gec_lambda                             = 0.125;
     this->pp_gec_mu                                 = 0.5;
-    this->pp_gec_d                                  = 7;
+    this->pp_gec_d                                  = 5;
 
     this->pp_hc                                     = true;
     this->pp_hc_alpha                               = 0.4;
@@ -926,6 +931,24 @@ AnaMorph_cellgen::processCommandLineArguments()
                 return false;
             }
         }
+        else if (s == "debug-lvl")
+        {
+            try
+            {
+                enableComponentDebug(stou(s_args[0]));
+                setMaxDebugLevel(stou(s_args[1]));
+            }
+            catch (std::out_of_range& ex)
+            {
+                printf("ERROR: One of the arguments to switch \"debug-lvl\" is out of range.\n");
+                return false;
+            }
+            catch (...)
+            {
+                printf("ERROR: Invalid argument to switch \"debug-lvl\".\n");
+                return false;
+            }
+        }
         else {
             printf("ERROR: unknown command line switch \"%s\".\n%s",
                 s.c_str(), this->usage_text.c_str());
@@ -976,12 +999,6 @@ AnaMorph_cellgen::run()
 
         /* analysis and mesh generation */
         if (this->ana) {
-            /* precompute inner products for power and bernstein polynomials */
-            printf("pre-computing data for numerical solvers.. ");fflush(stdout);
-            PowerPolynomial<double, double>::initPowerBasisInnerProducts(64);
-            BernsteinPolynomial<double, double>::initBernsteinBasisInnerProducts(32);
-            printf("done.\n");
-
             printf("reading network from input swc file \"%s.swc\"..", this->network_name.c_str());fflush(stdout);
             NLM_CellNetwork<double> C(this->network_name);
             C.readFromNeuroMorphoSWCFile( this->network_name + ".swc", false);

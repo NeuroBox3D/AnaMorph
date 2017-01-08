@@ -374,13 +374,13 @@ preliminaryPreconditioning(
                 else {
                     debugl(1, "neurite segment %d not relevant for processing.\n", e_id);
                 }
-                debugTabDec();
             }
             else {
                 debugl(1, "neurite segment %d no longer existent.\n");
             }
             debugTabDec();
         }
+        debugTabDec();
     }
     debugTabDec();
     debugl(0, "fixed point reached. returning..\n");

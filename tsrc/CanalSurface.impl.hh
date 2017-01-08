@@ -405,24 +405,18 @@ CanalSurface<C2F, RadF, R>::generateMesh(
     for (i = 1; i < ntsegments; i++) {
         /* if start is offset, then even values for i are not offset, odd values are offset.
          * otherwise, vice versa */
-        if (!preserve_crease_edges)
+        if (start_circle_offset)
         {
-			if (start_circle_offset) {
-				if (i % 2 == 0) {
-					phi_offset = phi_0 + dphi / 2.0;
-				}
-				else {
-					phi_offset = phi_0;
-				}
-			}
-			else {
-				if (i % 2 == 0) {
-					phi_offset = phi_0;
-				}
-				else {
-					phi_offset = phi_0 + dphi / 2.0;
-				}
-			}
+            if (!preserve_crease_edges && i % 2 == 0)
+                phi_offset = phi_0 + dphi / 2.0;
+            else
+                phi_offset = phi_0;
+        }
+        else {
+            if (preserve_crease_edges || i % 2 == 0)
+                phi_offset = phi_0;
+            else
+                phi_offset = phi_0 + dphi / 2.0;
         }
 
         //t = (R)i / (R)ntsegments;
@@ -450,7 +444,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
             M.faces.insert(last_circle[j], last_circle[j+1], current_circle[j+1], current_circle[j]);
         }
 
-        /* closing quad at index warp around */
+        /* closing quad at index wrap-around */
         M.faces.insert(last_circle[n_phi_segments - 1], last_circle[0], current_circle[0], current_circle[n_phi_segments - 1]);
     }
 
@@ -468,24 +462,19 @@ CanalSurface<C2F, RadF, R>::generateMesh(
     typename Mesh<Tm, Tv, Tf, R>::vertex_iterator   end_closing_vertex_it;
     
     /* last circle has index ntsegments, since we got (ntsegments + 1) circles */
-    if (!preserve_crease_edges)
+    if (start_circle_offset)
     {
-    	if (start_circle_offset) {
-			if (ntsegments % 2 == 0) {
-				phi_offset = phi_0 + dphi / 2.0;
-			}
-			else {
-				phi_offset = phi_0;
-			}
-		}
-		else {
-			if (ntsegments % 2 == 0) {
-				phi_offset = phi_0;
-			}
-			else {
-				phi_offset = phi_0 + dphi / 2.0;
-			}
-		}
+        if (!preserve_crease_edges && ntsegments % 2 == 0)
+            phi_offset = phi_0 + dphi / 2.0;
+        else
+            phi_offset = phi_0;
+    }
+    else
+    {
+        if (preserve_crease_edges || ntsegments % 2 == 0)
+            phi_offset = phi_0;
+        else
+            phi_offset = phi_0 + dphi / 2.0;
     }
 
     px.print_debugl(0);
@@ -543,134 +532,122 @@ CanalSurface<C2F, RadF, R>::generateMesh(
  *                        BezierCanalSurface implementation..                                                         *
  *                                                                                                                    *
  * ------------------------------------------------------------------------------------------------------------------ */
-template <typename RadF, typename R>
-BezierCanalSurface<RadF, R>::BezierCanalSurface()
-    : CanalSurface<BernsteinPolynomial<R, R>, RadF, R>()
+template <uint32_t degree, typename RadF, typename R>
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface()
+    : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>()
 {
     /* domain is always [0,1] for BezierCurves and hence also for BezierCanalSurface */
     this->t0 = 0;
     this->t1 = 1;
 }
 
-template <typename RadF, typename R>
-BezierCanalSurface<RadF, R>::BezierCanalSurface(
-    BezierCurve<R> const   &spine_curve,
+template <uint32_t degree, typename RadF, typename R>
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(
+    BezierCurve<degree, R> const   &spine_curve,
     RadF const             &radius_functor)
-        : CanalSurface<BernsteinPolynomial<R, R>, RadF, R>(spine_curve, radius_functor)
+        : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(spine_curve, radius_functor)
 {
     /* CanalSurface constructor sets [t0, t1] = [0,1] through domain of BezierCurve parameter spine_curve */
     this->spine_curve = spine_curve;
 }
 
-template <typename RadF, typename R>
-BezierCanalSurface<RadF, R>::BezierCanalSurface(
+template <uint32_t degree, typename RadF, typename R>
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(
     std::array<
-            BernsteinPolynomial<R, R>,
+            BernsteinPolynomial<degree, R, R>,
             3
         > const                        &component_functors,
     RadF const                         &radius_functor)
     /* in-line constructed BezierCurve from component_functors arrays is passed to base class CanalSurface ctor. */
-        : CanalSurface<BernsteinPolynomial<R, R>, RadF, R>(
-                BezierCurve<R>(component_functors),
+        : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(
+                BezierCurve<degree, R>(component_functors),
                 radius_functor
             )
 {
-    this->spine_curve = BezierCurve<R>(component_functors);
+    this->spine_curve = BezierCurve<degree, R>(component_functors);
 }
 
 /* same as previous constructor above for control-point based construction of BezierCurves */
-template <typename RadF, typename R>
-BezierCanalSurface<RadF, R>::BezierCanalSurface(
+template <uint32_t degree, typename RadF, typename R>
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(
     std::vector<Vec3<R>> const &control_points,
     RadF const                 &radius_functor)
     /* in-line constructed BezierCurve from component_functors arrays is passed to base class CanalSurface ctor. */
-        : CanalSurface<BernsteinPolynomial<R, R>, RadF, R>(
-                BezierCurve<R>(control_points),
+        : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(
+                BezierCurve<degree, R>(control_points),
                 radius_functor
             )
 {
-    this->spine_curve = BezierCurve<R>(control_points);
+    this->spine_curve = BezierCurve<degree, R>(control_points);
 }
 
-template <typename RadF, typename R>
-BezierCanalSurface<RadF, R>::BezierCanalSurface(BezierCanalSurface const &delta)
-    : CanalSurface<BernsteinPolynomial<R, R>, RadF, R>(delta)
+template <uint32_t degree, typename RadF, typename R>
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(BezierCanalSurface const &delta)
+    : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(delta)
 {
     this->spine_curve   = delta.spine_curve;
-    this->degree        = delta.degree;
     this->bb_set        = delta.bb_set;
     this->bb            = delta.bb;
 }
 
-template <typename RadF, typename R>
-BezierCanalSurface<RadF, R> &
-BezierCanalSurface<RadF, R>::operator=(BezierCanalSurface const &delta)
+template <uint32_t degree, typename RadF, typename R>
+BezierCanalSurface<degree, RadF, R>&
+BezierCanalSurface<degree, RadF, R>::operator=(const this_type& delta)
 {
-    CanalSurface<BernsteinPolynomial<R, R>, RadF, R>::operator=(delta);
+    CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>::operator=(delta);
     this->spine_curve   = delta.spine_curve;
-    this->degree        = delta.degree;
     this->bb_set        = delta.bb_set;
     this->bb            = delta.bb;
 
-    return (*this);
+    return *this;
 }
 
-template <typename RadF, typename R>
-BezierCanalSurface<RadF, R>::~BezierCanalSurface()
-{
-}
+template <uint32_t degree, typename RadF, typename R>
+BezierCanalSurface<degree, RadF, R>::~BezierCanalSurface()
+{}
 
 /* since spine_curve has been overridden with more specific type BezierCurve in BezierCanalSurface, also override
  * getSpineCurve() */
-template <typename RadF, typename R>
-BezierCurve<R>
-BezierCanalSurface<RadF, R>::getSpineCurve() const
+template <uint32_t degree, typename RadF, typename R>
+BezierCurve<degree, R>
+BezierCanalSurface<degree, RadF, R>::getSpineCurve() const
 {
-    return (this->spine_curve);
+    return this->spine_curve;
 }
 
-template <typename RadF, typename R>
-uint32_t
-BezierCanalSurface<RadF, R>::getDegree() const
-{
-    return (this->spine_curve.getDegree());
-}
-
-template <typename RadF, typename R>
+template <uint32_t degree, typename RadF, typename R>
 void
-BezierCanalSurface<RadF, R>::clipToInterval(
-    R const    &t0,
-    R const    &t1)
+BezierCanalSurface<degree, RadF, R>::clipToInterval(const R& t0, const R& t1)
 {
     if (t0 <= t1) {
         /* clip radius functor BEFORE clipping spine curve, since the old domain is needed to get radii */
         this->radius_functor.clipToInterval(t0, t1, this->spine_curve);
 
         /* clip this->spine_curve, which is a BezierCurve<R>. the spine_curve members from the base class
-         * CanalSurface< BernsteinPolynomial<R, R>, RadF, R> has been overridden in BezierCanalSurface, which
+         * CanalSurface< BernsteinPolynomial<degree, R, R>, RadF, R> has been overridden in BezierCanalSurface, which
          * necessitates the update below. */
         this->spine_curve.clipToInterval(t0, t1, &(this->spine_curve));
 
         /* update spine curve object in base class. note that BezierCanalSurface::spine_curve is a BezierCurve, which is
-         * a derived class of SpaceCurveReal< BernsteinPolynomial<R, R>, R>, which is in turn the spine curve type of
-         * the base class CanalSurface< BernsteinPolynomial<R, R>, RadF, R>.
+         * a derived class of SpaceCurveReal< BernsteinPolynomial<degree, R, R>, R>, which is in turn the spine curve type of
+         * the base class CanalSurface< BernsteinPolynomial<degree, R, R>, RadF, R>.
          *
          * after clipping the BezierCurve in (this) BezierCanalSurface, use the resulting clipped BezierCurve to update
-         * the base class member CanalSurface< BernsteinPolynomial<R, R>, RadF, R>::spine_curve. the following update
+         * the base class member CanalSurface< BernsteinPolynomial<degree, R, R>, RadF, R>::spine_curve. the following update
          * assignment "slices" the assigned BezierCurve, since the specifics of BezierCurve<R> are lost when assigning
-         * to an object of the base class type SpaceCurveReal< BernsteinPolynomial<R, R>, R>.  this slicing is
+         * to an object of the base class type SpaceCurveReal< BernsteinPolynomial<degree, R, R>, R>.  this slicing is
          * unproblematic here however, since the CanalSurface<..> base class of BezierCanalSurface only require the
          * functionality at the "sliced" base level of abstraction. */
-        CanalSurface< BernsteinPolynomial<R, R>, RadF, R>::spine_curve = this->spine_curve;
+        CanalSurface< BernsteinPolynomial<degree, R, R>, RadF, R>::spine_curve = this->spine_curve;
     }
     else {
         throw("BezierCanalSurface::clipToInterval(): malformed interval [t0, t1]: t0 > t1.");
     }
 }
 
-template <typename RadF, typename R>
+template <uint32_t degree, typename RadF, typename R>
 void
-BezierCanalSurface<RadF, R>::updateBoundingBox(uint32_t spine_curve_subdivision_depth)
+BezierCanalSurface<degree, RadF, R>::updateBoundingBox(uint32_t spine_curve_subdivision_depth)
 {
     using Aux::VecMat::onesVec3;
     using Aux::VecMat::fabsVec3;
@@ -688,9 +665,9 @@ BezierCanalSurface<RadF, R>::updateBoundingBox(uint32_t spine_curve_subdivision_
     this->bb_set    = true;
 }
 
-template <typename RadF, typename R>
+template <uint32_t degree, typename RadF, typename R>
 BoundingBox<R>
-BezierCanalSurface<RadF, R>::getBoundingBox() const
+BezierCanalSurface<degree, RadF, R>::getBoundingBox() const
 {
     if (this->bb_set) {
         return (this->bb);
@@ -700,18 +677,21 @@ BezierCanalSurface<RadF, R>::getBoundingBox() const
     }
 }
 
-template <typename RadF, typename R>
+template <uint32_t degree, typename RadF, typename R>
 R
-BezierCanalSurface<RadF, R>::checkRenderVector(Vec3<R> const &r) const
+BezierCanalSurface<degree, RadF, R>::checkRenderVector(Vec3<R> const &r) const
 {
     debugl(2, "BezierCanalSurface::checkRenderVector():\n");
     debugTabInc();
 
-    BezierCurve<R> const       &gamma   = this->spine_curve;
-    BezierCurve<R>              dgamma  = gamma.getDerivative();
+    BezierCurve<degree, R> const       &gamma   = this->spine_curve;
+    BezierCurve<derivDeg, R>            dgamma  = gamma.getDerivative();
 
-    BernsteinPolynomial<R, R>   p, r_cross_dgamma[3], q, z;
-   
+    BernsteinPolynomial<derivDeg, R, R>   r_cross_dgamma[3];
+    BernsteinPolynomial<2*derivDeg, R, R> p, q;
+    const int zDeg = 2*derivDeg + ((2*derivDeg>0) ? 2*derivDeg-1 : 0);
+    BernsteinPolynomial<zDeg, R, R> z;
+
     r_cross_dgamma[0]   = dgamma[2]*r[1] - dgamma[1]*r[2];
     r_cross_dgamma[1]   = dgamma[0]*r[2] - dgamma[2]*r[0];
     r_cross_dgamma[2]   = dgamma[1]*r[0] - dgamma[0]*r[1];
@@ -722,8 +702,8 @@ BezierCanalSurface<RadF, R>::checkRenderVector(Vec3<R> const &r) const
     z                   = (p.getDerivative()).multiply(q) - p.multiply(q.getDerivative());
 
     /* locate roots with bezier clipping */
-    std::vector<PolyAlg::RealInterval<R>> z_roots;
-    PolyAlg::BezClip_roots<R>(z, 0.0, 1.0, 1E-6, z_roots);
+    std::vector<PolyAlg::RealInterval<R> > z_roots;
+    PolyAlg::BezClip_roots<zDeg, R>(z, 0.0, 1.0, 1E-6, z_roots);
 
     R f_min = Aux::Numbers::inf<R>();
 
@@ -755,269 +735,168 @@ BezierCanalSurface<RadF, R>::checkRenderVector(Vec3<R> const &r) const
  *                        BLRCanalSurface implementation.                                                             *
  *                                                                                                                    *
  * ------------------------------------------------------------------------------------------------------------------ */
-template <typename R>
-BLRCanalSurface<R>::BLRCanalSurface()
-    : BezierCanalSurface<LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R, R>, R>, R>()
+template <uint32_t degree, typename R>
+BLRCanalSurface<degree, R>::BLRCanalSurface()
 {
-    /* domain is always [0,1], initialized by BezierCanalSurface ctor */
+    initGlobalSelfIntersectionData();
 }
 
-template <typename R>
-BLRCanalSurface<R>::BLRCanalSurface(
-    BezierCurve<R> const   &spine_curve,
-    R const                &r0,
-    R const                &r1)
-        : BezierCanalSurface<LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R, R>, R>, R>(
-            spine_curve,
-            LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R,R>, R>(r0, r1)
-        )
+template <uint32_t degree, typename R>
+BLRCanalSurface<degree, R>::BLRCanalSurface(const BezierCurve<degree, R>& spine_curve, const R& r0, const R& r1)
+: base_type(spine_curve, LinearRadiusInterpolatorArcLen<BernsteinPolynomial<degree, R, R>, R>(r0, r1))
 {
+    initGlobalSelfIntersectionData();
 }
 
-template <typename R>
-BLRCanalSurface<R>::BLRCanalSurface(
-    std::array<
-            BernsteinPolynomial<R, R>,
-            3
-        > const                        &component_functors,
-    R const                            &r0,
-    R const                            &r1)
-        : BezierCanalSurface<LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R, R>, R>, R>(
-            component_functors,
-            LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R,R>, R>(r0, r1)
-        )
+template <uint32_t degree, typename R>
+BLRCanalSurface<degree, R>::BLRCanalSurface
+(
+    const std::array<BernsteinPolynomial<degree, R, R>, 3>& component_functors,
+    const R& r0,
+    const R& r1
+)
+: base_type(component_functors, LinearRadiusInterpolatorArcLen<BernsteinPolynomial<degree, R, R>, R>(r0, r1))
 {
+    initGlobalSelfIntersectionData();
 }
 
 /* same as previous constructor above for control-point based construction of BezierCurves */
-template <typename R>
-BLRCanalSurface<R>::BLRCanalSurface(
-    std::vector<Vec3<R>> const &control_points,
-    R const                    &r0,
-    R const                    &r1)
-        : BezierCanalSurface<LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R, R>, R>, R>(
-            control_points,
-            LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R,R>, R>(r0, r1)
-        )
+template <uint32_t degree, typename R>
+BLRCanalSurface<degree, R>::BLRCanalSurface(const std::vector<Vec3<R> >& control_points, const R& r0, const R& r1)
+: base_type(control_points, LinearRadiusInterpolatorArcLen<BernsteinPolynomial<degree, R, R>, R>(r0, r1))
 {
+    initGlobalSelfIntersectionData();
 }
 
-template <typename R>
-BLRCanalSurface<R>::BLRCanalSurface(BLRCanalSurface const &delta)
-    : BezierCanalSurface<LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R, R>, R>, R>(delta)
+template <uint32_t degree, typename R>
+BLRCanalSurface<degree, R>::BLRCanalSurface(const this_type& delta)
+: base_type(delta)
 {
+    initGlobalSelfIntersectionData();
 }
 
-template <typename R>
-BLRCanalSurface<R> &
-BLRCanalSurface<R>::operator=(BLRCanalSurface const &delta)
+template <uint32_t degree, typename R>
+BLRCanalSurface<degree, R> &
+BLRCanalSurface<degree, R>::operator=(BLRCanalSurface const &delta)
 {
-    BezierCanalSurface<
-            LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R, R>, R>,
-            R
-        >::operator=(delta);
-
-    return (*this);
+    base_type::operator=(delta);
+    return *this;
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 void
-BLRCanalSurface<R>::initGlobalSelfIntersectionData(uint32_t gsi_max_n)
+BLRCanalSurface<degree, R>::initGlobalSelfIntersectionData()
 {
-    if (!BLRCanalSurface<R>::gsi_data_mutable) {
-        throw("(static) BLRCanalSurface<R>::initGlobalSelfIntersectionData(): can't process, since static global self-intersection data is set to immutable.");
+    uint32_t i, j, k, m;
+    std::vector<PowerPolynomial<degree, R, R> >  B_n_pow;
+    StaticMatrix<degree, degree, R> F_i_n_powercoeff;
+
+    // helper polynomials
+    StaticVector<degree+1, BiBernsteinPolynomial<degree-1, degree-1, R, R> > F;
+
+    // compute the monomial representation of each i-th Bernstein basis polynom B_i^n(t)
+    B_n_pow.resize(degree+1);
+    for (i = 0; i < degree + 1; ++i)
+        PolyAlg::convertBasis<degree, R>(B_n_pow[i], PolyAlg::computeBernsteinBasisPoly<degree, R, R>(i));
+
+    // compute all bivariate polynomials F_i^n(x,y), i = 0..n
+    for (i = 0; i < degree + 1; ++i)
+    {
+        // first, compute coefficients of F_i^n in M(n-1, n-1) => nxn coefficient matrix
+        // init F_i_n_powercoeff to zerod (n, n) matrix
+        F_i_n_powercoeff.fill(0.0);
+
+        for (k = 1; k < degree + 1; ++k)
+            for (m = 0; m < k; ++m)
+                F_i_n_powercoeff(m, k - 1 - m) += B_n_pow[i][k];
+
+        // now generate F_i^n from the power coefficient matrix F_i_n_powercoeff.
+        F[i].convertFromPowerBasis(F_i_n_powercoeff);
     }
 
-    uint32_t i, j, k, m, n;
-    std::vector<PowerPolynomial<R, R>>  B_n_pow;
-    Matrix<R>                           F_i_n_powercoeff;
+    // compute all bivariate polynomials G_{ij}^n, i, j = 0..n
+    BiBernsteinPolynomial<degree, degree, R, R> B_in_y, B_jn_y;
+    for (i = 0; i < degree + 1; ++i)
+    {
+        for (j = 0; j < degree + 1; ++j)
+        {
+            B_in_y = PolyAlg::BernsteinConvertToBiPoly<degree, degree, false>::get
+                     (PolyAlg::computeBernsteinBasisPoly<degree, R, R>(i));
+            B_jn_y = PolyAlg::BernsteinConvertToBiPoly<degree, degree, false>::get
+                     (PolyAlg::computeBernsteinBasisPoly<degree, R, R>(j));
 
-    /* resize tensors F and G to the required sizes. */
-
-    /*
-    F   = alloc2dArray<BernsteinBasisBiPoly>(CanalSurface::gsi_max_n + 1, CanalSurface::gsi_max_n + 1);
-    G   = alloc3dArray<BernsteinBasisBiPoly>(CanalSurface::gsi_max_n + 1, CanalSurface::gsi_max_n + 1, CanalSurface::gsi_max_n + 1);
-    */
-
-    BLRCanalSurface<R>::F.resize({ gsi_max_n + 1, gsi_max_n + 1});
-    BLRCanalSurface<R>::G.resize({ gsi_max_n + 1, gsi_max_n + 1, gsi_max_n + 1 });
-
-    /* up to the defined max value of n */
-    for (n = 1; n < gsi_max_n + 1; n++) {
-
-        /* compute the M(n) representation of B_i^n(t) for i = 0..n */
-        B_n_pow.resize(n+1);
-
-        for (i = 0; i < n + 1; i++) {
-            //B_n_pow[i].convertFromBernsteinBasis( Aux::VecMat::kronecker_vec(n+1, i) );
-
-            PolyAlg::convertBasis<R>(
-                    B_n_pow[i],
-                    PolyAlg::computeBernsteinBasisPoly<R, R>(n, i)
-                );
-        }
-
-        debugl(2, "\t B_i^n in M(n) computed, 0 <= i <= n\n");
-
-        /* compute all bivariate polynomials F_i^n(x,y), i = 0..n */
-        for (i = 0; i < n + 1; i++) {
-            /* first, compute coefficients of F_i_n in M(n-1, n-1) => nxn coefficient matrix */
-            debugl(3, "\n\t\t i = %d, computing M(n-1, n-1) coefficients of F_i_n ..\n", i);
-
-            /* init F_i_n_powercoeff to zerod (n, n) matrix */
-            F_i_n_powercoeff.resize(n, n);
-            F_i_n_powercoeff.fill(0.0);
-
-            for (k = 1; k < n + 1; k++) {
-                for (m = 0; m < k; m++) {
-                    debugl(3, "\t\t\t F_i_n_powercoeff(%d, %d) += %f\n", m, k-1-m, B_n_pow[i][k]);
-
-                    F_i_n_powercoeff(m, k - 1 - m) += B_n_pow[i][k];
-                }
-            }
-            debugl(3, "\t\t done.\n");
-            debugl(2, "\t\t i = %d, computing B(n-1, n-1) form of F_i_n through conversion .. ", i);
-
-            /* now generate F_i^n from the power coefficient matrix F_i_n_powercoeff. */
-            F({ n, i }).convertFromPowerBasis(F_i_n_powercoeff);
-
-            /* ------ */
-            uint32_t fm, fn;
-            F({ n, i }).getDegree(fm, fn);
-            debugl(2, "\t\tF[n][i = %d] computed in BB(%d, %d) ", i, fm, fn);
-            /* ------ */
-        }
-
-        uint32_t tmp_m, tmp_n;
-        
-        /* compute all bivariate polynomials G_{ij}^n, i, j = 0..n */
-        BiBernsteinPolynomial<R, R> B_in_y, B_jn_y;
-
-        debugl(2, "\t------- Computing Gij..\n");
-        for (i = 0; i < n + 1; i++) {
-            for (j = 0; j < n + 1; j++) {
-                debugl(3, "\t\t i = %d, j = %d\n", i, j);
-                /*
-                B_in_y = ( BB(n, i).convertToBiPoly(n, false) );
-                B_jn_y = ( BB(n, j).convertToBiPoly(n, false) );
-                */
-
-                B_in_y = PolyAlg::BernsteinConvertToBiPoly(
-                       PolyAlg::computeBernsteinBasisPoly<R, R>(n, i),
-                       n,
-                       false
-                    );
-
-                B_jn_y = PolyAlg::BernsteinConvertToBiPoly(
-                        PolyAlg::computeBernsteinBasisPoly<R, R>(n, j),
-                        n,
-                        false
-                    );
-
-                /* ----- */
-                B_in_y.getDegree(tmp_m, tmp_n);
-                debugl(3, "\t\t B_i^n(y) converted to bipoly: BB(%d, %d)\n", tmp_m, tmp_n);
-                B_jn_y.getDegree(tmp_m, tmp_n);
-                debugl(3, "\t\t B_j^n(y) converted to bipoly: BB(%d, %d)\n", tmp_m, tmp_n);
-                /* ----- */
-
-                /* compute coefficient G(n, i, j) */
-                //G[n][i][j] = B_jn_y.multiply( F[n][i] ) - B_in_y.multiply( F[n][j] );
-                G({ n, i, j }) = B_jn_y.multiply(F({ n, i })) - B_in_y.multiply(F({ n, j }));
-
-                /* ----- */
-                G({ n, i, j }).getDegree(tmp_m, tmp_n);
-                debugl(2, "\t G[n][i = %d][j = %d] computed in BB(%d, %d)\n", i, j, tmp_m, tmp_n);
-                /* ----- */
-            }
+            // compute coefficient G(i, j)
+            G(i, j) = B_jn_y.multiply(F(i)) - B_in_y.multiply(F(j));
         }
     }
-
-    /* update static members */
-    BLRCanalSurface<R>::gsi_max_n = gsi_max_n;
 }
 
-template <typename R>
-void
-BLRCanalSurface<R>::setGlobalSelfIntersectionDataMutable()
-{
-    BLRCanalSurface<R>::gsi_data_mutable = true;
-}
-
-template <typename R>
-void
-BLRCanalSurface<R>::setGlobalSelfIntersectionDataImmutable()
-{
-    BLRCanalSurface<R>::gsi_data_mutable = false;
-}
-
-template <typename R>
-BLRCanalSurface<R>::~BLRCanalSurface()
+template <uint32_t degree, typename R>
+BLRCanalSurface<degree, R>::~BLRCanalSurface()
 {
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 std::pair<R, R>
-BLRCanalSurface<R>::getRadii() const
+BLRCanalSurface<degree, R>::getRadii() const
 {
     return (this->radius_functor.getRadii());
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 R
-BLRCanalSurface<R>::getMinRadius() const
+BLRCanalSurface<degree, R>::getMinRadius() const
 {
     auto rpair = this->radius_functor.getRadii();
     return (std::min(rpair.first, rpair.second));
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 R
-BLRCanalSurface<R>::getMaxRadius() const
+BLRCanalSurface<degree, R>::getMaxRadius() const
 {
     auto rpair = this->radius_functor.getRadii();
     return (std::max(rpair.first, rpair.second));
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 void
-BLRCanalSurface<R>::spineCurveComputeRegularityPolynomial(BernsteinPolynomial<R, R> &p_reg) const
+BLRCanalSurface<degree, R>::spineCurveComputeRegularityPolynomial(BernsteinPolynomial<2*derivDeg, R, R> &p_reg) const
 {
     this->spine_curve.computeRegularityPolynomial(p_reg);
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 void
-BLRCanalSurface<R>::spineCurveComputeStationaryPointDistPoly(
+BLRCanalSurface<degree, R>::spineCurveComputeStationaryPointDistPoly(
     Vec3<R> const              &x,
-    BernsteinPolynomial<R, R>  &p) const
+    BernsteinPolynomial<degree+derivDeg, R, R>  &p) const
 {
     this->spine_curve.computeStationaryPointDistPoly(x, p);
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 void
-BLRCanalSurface<R>::computeLocalSelfIntersectionPolynomial(BernsteinPolynomial<R, R> &p_lsi) const
+BLRCanalSurface<degree, R>::computeLocalSelfIntersectionPolynomial(BernsteinPolynomial<6*derivDeg, R, R> &p_lsi) const
 {
     debugl(2, "BLRCanalSurface::computeLocalSelfIntersectionPolynomial()\n");
     debugTabInc();
 
     /* get degree, maximum radius, reference gamma to (this->spine_curve), first two derivatives dgamma and d2gamma of
      * spine_curve. */
-    uint32_t const              n       = this->getDegree();
     R const                     rmax    = this->getMaxRadius();
-    BezierCurve<R> const       &gamma   = this->spine_curve;
-    BezierCurve<R> const        dgamma  = gamma.getDerivative();
-    BezierCurve<R> const        d2gamma = dgamma.getDerivative();
+    BezierCurve<degree, R> const       &gamma   = this->spine_curve;
+    BezierCurve<derivDeg, R> const        dgamma  = gamma.getDerivative();
+    BezierCurve<deriv2Deg, R> const        d2gamma = dgamma.getDerivative();
 
     /* three components of the cross product (dgamma \cdot d2gamma). every summand is distinct
      * and has to be computed exactly once. */
-    BernsteinPolynomial<R, R>   d_d2_yz_minus_zy, d_d2_zx_minus_xz,d_d2_xy_minus_yx;
-    BernsteinPolynomial<R, R>   crossprod_square;
-    BernsteinPolynomial<R, R>   dgamma_square;
-    BernsteinPolynomial<R, R>   dgamma_sqcube;
+    BernsteinPolynomial<derivDeg+deriv2Deg, R, R>   d_d2_yz_minus_zy, d_d2_zx_minus_xz,d_d2_xy_minus_yx;
+    BernsteinPolynomial<2*(derivDeg+deriv2Deg), R, R> crossprod_square;
+    BernsteinPolynomial<2*derivDeg, R, R>   dgamma_square;
+    BernsteinPolynomial<6*derivDeg, R, R>   dgamma_sqcube;
 
-    /* the derivative dgamma is represented in BB(n-1), d2gamma in BB(n-2), no degree elevantion was performed!
+    /* the derivative dgamma is represented in BB(n-1), d2gamma in BB(n-2), no degree elevation was performed!
      * multiplying works nonetheless and yields a the summands of the cross product in in BB(2n-3) */
     d_d2_yz_minus_zy    = dgamma[1].multiply(d2gamma[2]) - dgamma[2].multiply(d2gamma[1]);
     d_d2_zx_minus_xz    = dgamma[2].multiply(d2gamma[0]) - dgamma[0].multiply(d2gamma[2]);
@@ -1046,145 +925,73 @@ BLRCanalSurface<R>::computeLocalSelfIntersectionPolynomial(BernsteinPolynomial<R
      * we need multinomial coefficient then I think...*/
     dgamma_sqcube       = (dgamma_square.multiply(dgamma_square)).multiply(dgamma_square);
 
-    /* elevante crossprod_square by 2n */
-    crossprod_square.elevateDegree(2*n);
+    /* elevate crossprod_square by 2n */
+    BernsteinPolynomial<6*derivDeg, R, R> crossProdSq_elev;
+    crossProdSq_elev = crossprod_square.template elevateDegree<6*derivDeg>();
 
     /* self-intersection polynomial is now simply the difference. to check if its negative over its
      * entire domain [0,1], check corners values and compute roots */
-    p_lsi               = crossprod_square - dgamma_sqcube;
+    p_lsi               = crossProdSq_elev - dgamma_sqcube;
 
     debugTabDec();
     debugl(2, "BLRCanalSurface::computeLocalSelfIntersectionPolynomial(): done.\n");
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 void
-BLRCanalSurface<R>::computeGlobalSelfIntersectionSystem(
-    BiBernsteinPolynomial<R, R>    &p,
-    BiBernsteinPolynomial<R, R>    &q,
-    BernsteinPolynomial<R, R>      &p_edge_t0,
-    BernsteinPolynomial<R, R>      &p_edge_t1) const
+BLRCanalSurface<degree, R>::computeGlobalSelfIntersectionSystem(
+    BiBernsteinPolynomial<2*degree-1+derivDeg, 2*degree-1, R, R>    &p,
+    BiBernsteinPolynomial<2*degree-1, 2*degree-1+derivDeg, R, R>    &q,
+    BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_t0,
+    BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_t1) const
 {
     debugl(1, "BLRCanalSurface::computeIntersectionSystem().\n");
     debugTabInc();
 
     /* for consistency with the above and the thesis, use const reference Gamma for "this" again */
-    uint32_t const              n       = this->getDegree();
-    BLRCanalSurface<R> const   &Gamma   = (*this);
-    BezierCurve<R> const       &gamma   = Gamma.spine_curve;
-    BezierCurve<R> const        dgamma  = gamma.getDerivative();
+    BLRCanalSurface<degree, R> const   &Gamma   = (*this);
+    BezierCurve<degree, R> const       &gamma   = Gamma.spine_curve;
+    BezierCurve<derivDeg, R> const      dgamma  = gamma.getDerivative();
 
     /* distance vector with trivial solution factored out */
-    std::vector<BiBernsteinPolynomial<R, R>> dist_nt(3, BiBernsteinPolynomial<R, R>(2*n-1, 2*n-1, 0));
-    std::vector<BiBernsteinPolynomial<R, R>> dist_trivial(3);
+    std::vector<BiBernsteinPolynomial<2*degree-1, 2*degree-1, R, R> >
+        dist_nt(3, BiBernsteinPolynomial<2*degree-1, 2*degree-1, R, R>(0));
 
-    /*
-    dist_nt[0].initConstant(2*n-1, 2*n-1, 0.0);
-    dist_nt[1].initConstant(2*n-1, 2*n-1, 0.0);
-    dist_nt[2].initConstant(2*n-1, 2*n-1, 0.0);
-    */
+    std::vector<BiBernsteinPolynomial<degree, degree, R, R> > dist_trivial(3);
+    BiBernsteinPolynomial<degree, degree, R, R> tmp;
 
-    dist_trivial[0] = PolyAlg::BernsteinConvertToBiPoly(gamma[0], n, true) - 
-                      PolyAlg::BernsteinConvertToBiPoly(gamma[0], n, false);
+    dist_trivial[0] = PolyAlg::BernsteinConvertToBiPoly<degree, degree, true>::get(gamma[0])
+                    - PolyAlg::BernsteinConvertToBiPoly<degree, degree, false>::get(gamma[0]);
 
-    dist_trivial[1] = PolyAlg::BernsteinConvertToBiPoly(gamma[1], n, true) - 
-                      PolyAlg::BernsteinConvertToBiPoly(gamma[1], n, false);
+    dist_trivial[1] = PolyAlg::BernsteinConvertToBiPoly<degree, degree, true>::get(gamma[1])
+                    - PolyAlg::BernsteinConvertToBiPoly<degree, degree, false>::get(gamma[1]);
 
-    dist_trivial[2] = PolyAlg::BernsteinConvertToBiPoly(gamma[2], n, true) - 
-                      PolyAlg::BernsteinConvertToBiPoly(gamma[2], n, false);
+    dist_trivial[2] = PolyAlg::BernsteinConvertToBiPoly<degree, degree, true>::get(gamma[2])
+                    - PolyAlg::BernsteinConvertToBiPoly<degree, degree, false>::get(gamma[2]);
 
     /* dist_nt can be computed with the precomputed bivariate polynomials G_{ij}^n */
     uint32_t i, j;
-    for (i = 0; i < n+1; i++) {
-        for (j = 0; j < n+1; j++) {
-            dist_nt[0] += (G({n, i, j}) * gamma[0][i]);
-            dist_nt[1] += (G({n, i, j}) * gamma[1][i]);
-            dist_nt[2] += (G({n, i, j}) * gamma[2][i]);
+    for (i = 0; i < degree+1; i++)
+    {
+        for (j = 0; j < degree+1; j++)
+        {
+            dist_nt[0] += G(i,j) * gamma[0][i];
+            dist_nt[1] += G(i,j) * gamma[1][i];
+            dist_nt[2] += G(i,j) * gamma[2][i];
         }
     }
-
-    /*
-    double  x, y;
-    Vec3    d_xy;
-    Vec3    test;
-    FILE    *df0, *df1, *df2;
-    df0 = fopen("dist_div_x_y_0.plot", "w");
-    df1 = fopen("dist_div_x_y_1.plot", "w");
-    df2 = fopen("dist_div_x_y_2.plot", "w");
-
-    uint32_t ticks = 100;
-    for (i = 0; i <= ticks; i++) {
-        x = (double)i / (double)ticks;
-        for (j = 0; j <= ticks; j++) {
-            y = (double)j / (double)ticks;
-               
-            d_xy = this->eval(x) - this->eval(y);
-            
-            if (x == y) {
-                fprintf(df0, "%12.5E %12.5E %12.5E\n", x, y, 0.0);
-                fprintf(df1, "%12.5E %12.5E %12.5E\n", x, y, 0.0);
-                fprintf(df2, "%12.5E %12.5E %12.5E\n", x, y, 0.0);
-            }
-            else {
-                fprintf(df0, "%12.5E %12.5E %12.5E\n", x, y, d_xy[0] / (x-y) - dist_nt[0].eval(x,y));
-                fprintf(df1, "%12.5E %12.5E %12.5E\n", x, y, d_xy[1] / (x-y) - dist_nt[1].eval(x,y));
-                fprintf(df2, "%12.5E %12.5E %12.5E\n", x, y, d_xy[2] / (x-y) - dist_nt[2].eval(x,y));
-            }
-        }
-        fprintf(df0, "\n");
-        fprintf(df1, "\n");
-        fprintf(df2, "\n");
-    }
-
-    fclose(df0);
-    fclose(df1);
-    fclose(df2);
-
-    dist_nt[0].writePlotFile(ticks, "dist_nt_0.plot");
-    dist_nt[1].writePlotFile(ticks, "dist_nt_1.plot");
-    dist_nt[2].writePlotFile(ticks, "dist_nt_2.plot");
-    */
 
     /* p and q are computed as for the intersection of two pipe surfaces, only the specially
      * prepared "non trivial" distance vector dist_nt is used. */
-    p = dist_nt[0].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[0], 0, true) ) +
-        dist_nt[1].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[1], 0, true) ) +
-        dist_nt[2].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[2], 0, true) );
 
-    q = dist_nt[0].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[0], 0, false) ) +
-        dist_nt[1].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[1], 0, false) ) +
-        dist_nt[2].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[2], 0, false) );
+    p = dist_nt[0].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, true>::get(dgamma[0])) +
+        dist_nt[1].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, true>::get(dgamma[1])) +
+        dist_nt[2].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, true>::get(dgamma[2]));
 
-    /*
-    BiBernsteinPolynomial<R, R> p_trivial, q_trivial;
+    q = dist_nt[0].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, false>::get(dgamma[0])) +
+        dist_nt[1].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, false>::get(dgamma[1])) +
+        dist_nt[2].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, false>::get(dgamma[2]));
 
-    p_trivial = 
-        dist_trivial[0].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[0], 0, true) ) +
-        dist_trivial[1].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[1], 0, true) ) +
-        dist_trivial[2].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[2], 0, true) );
-
-    q_trivial =
-        dist_trivial[0].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[0], 0, false) ) +
-        dist_trivial[1].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[1], 0, false) ) +
-        dist_trivial[2].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[2], 0, false) );
-
-    BiBernsteinPolynomial<R, R> ptmp = p, qtmp = q, r;
-    ptmp.elevateDegree(0, n-1);
-    qtmp.elevateDegree(n-1, 0);
-    r = ptmp - qtmp;
-
-    p.writePlotFile(200, "gsi_p.plot");
-    q.writePlotFile(200, "gsi_q.plot");
-    r.writePlotFile(200, "gsi_p_minus_q.plot");
-
-    p_trivial.writePlotFile(200, "gsi_p_trivial.plot");
-    q_trivial.writePlotFile(200, "gsi_q_trivial.plot");
-    */
-
-    uint32_t pm, pn, qm, qn;
-    p.getDegree(pm, pn);
-    q.getDegree(qm, qn);
-    debugl(2, "CanalSurface::computeGlobalSelfIntersectionSystem: done. n = %d, p is in BB(%d, %d), q in BB(%d, %d).\n", n, pm, pn, qm, qn );
 
     /* there are only two edge systems here, which are called p_edge_t0 and p_edge_t1. since Gamma
      * == Delta in this case, the edges E_x0 and E_y0 logically describe the same search problem
@@ -1193,15 +1000,15 @@ BLRCanalSurface<R>::computeGlobalSelfIntersectionSystem(
      * logically, since || gamma(1) - gamma(0) || = || gamma(0) - gamma(1) ||. so only one 
      * candidate non-trvial candidate point from the four corners.. either one */
     Vec3<R>                     vec_gamma_t0, vec_gamma_t1;
-    BernsteinPolynomial<R, R>   gamma_t0[3], gamma_t1[3];
+    BernsteinPolynomial<degree, R, R>   gamma_t0[3], gamma_t1[3];
 
     vec_gamma_t0 = gamma.eval(0.0);
     vec_gamma_t1 = gamma.eval(1.0);
 
     /* convert vectors to constant polynomials in BB(n) / BB(m) */
     for (j = 0; j < 3; j++) {
-        gamma_t0[j] = BernsteinPolynomial<R, R>(n, vec_gamma_t0[j]);
-        gamma_t1[j] = BernsteinPolynomial<R, R>(n, vec_gamma_t1[j]);
+        gamma_t0[j] = BernsteinPolynomial<degree, R, R>(vec_gamma_t0[j]);
+        gamma_t1[j] = BernsteinPolynomial<degree, R, R>(vec_gamma_t1[j]);
     }
 
     /* compute two edge polynomials */
@@ -1221,16 +1028,16 @@ BLRCanalSurface<R>::computeGlobalSelfIntersectionSystem(
     debugl(1, "BLRCanalSurface::computeIntersectionSystem(): done.\n");
 }
 
-template <typename R>
+template <uint32_t degree, typename R>
 void
-BLRCanalSurface<R>::computeIntersectionSystem(
-    BLRCanalSurface<R> const       &Delta,
-    BiBernsteinPolynomial<R, R>    &p,
-    BiBernsteinPolynomial<R, R>    &q,
-    BernsteinPolynomial<R, R>      &p_edge_x0,
-    BernsteinPolynomial<R, R>      &p_edge_x1,
-    BernsteinPolynomial<R, R>      &p_edge_y0,
-    BernsteinPolynomial<R, R>      &p_edge_y1) const
+BLRCanalSurface<degree, R>::computeIntersectionSystem(
+    const this_type& Delta,
+    BiBernsteinPolynomial<degree+derivDeg, degree, R, R>    &p,
+    BiBernsteinPolynomial<degree, degree+derivDeg, R, R>    &q,
+    BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_x0,
+    BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_x1,
+    BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_y0,
+    BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_y1) const
 {
     debugl(1, "BLRCanalSurface::computeIntersectionSystem().\n");
     debugTabInc();
@@ -1238,24 +1045,24 @@ BLRCanalSurface<R>::computeIntersectionSystem(
    /* NOTE: (this) is Gamma within this context: a const reference is used for better readability. its spine curve
     * is gamma (+ derivative dgamma). same for Delta, delta, ddelta. */
     BLRCanalSurface const  &Gamma   = (*this);
-    BezierCurve<R> const   &gamma   = Gamma.spine_curve;
-    BezierCurve<R> const   dgamma   = gamma.getDerivative();
+    BezierCurve<degree, R> const   &gamma   = Gamma.spine_curve;
+    BezierCurve<derivDeg, R> const   dgamma   = gamma.getDerivative();
 
-    BezierCurve<R> const   &delta   = Delta.spine_curve;
-    BezierCurve<R> const   ddelta   = delta.getDerivative();
+    BezierCurve<degree, R> const   &delta   = Delta.spine_curve;
+    BezierCurve<derivDeg, R> const   ddelta   = delta.getDerivative();
 
-    uint32_t const          m       = Gamma.getDegree(), n = Delta.getDegree();
-    uint32_t                i, j;
+    uint32_t i, j;
 
-    debugl(1, "CanalSurface::computeIntersectionSystem(): m = %d, n = %d\n", m, n);
+    debugl(1, "CanalSurface::computeIntersectionSystem(): m = %d, n = %d\n", degree, degree);
     debugTabInc();
 
     /* gamma[k] - delta[k] elevated to bidegree (m, n) */
-    std::vector<BiBernsteinPolynomial<R, R>>    dist_gamma_delta(3, BiBernsteinPolynomial<R, R>(m, n, 0));
+    std::vector<BiBernsteinPolynomial<degree, degree, R, R> >
+        dist_gamma_delta(3, BiBernsteinPolynomial<degree, degree, R, R>(0));
 
     /* compute common factor, the "distance vector" in BB(m, n) */
-    for (i = 0; i < m + 1; i++) {
-        for (j = 0; j < n + 1; j++) {
+    for (i = 0; i < degree + 1; i++) {
+        for (j = 0; j < degree + 1; j++) {
             dist_gamma_delta[0](i, j) = Gamma.spine_curve[0][i] - Delta.spine_curve[0][j];
             dist_gamma_delta[1](i, j) = Gamma.spine_curve[1][i] - Delta.spine_curve[1][j];
             dist_gamma_delta[2](i, j) = Gamma.spine_curve[2][i] - Delta.spine_curve[2][j];
@@ -1265,18 +1072,13 @@ BLRCanalSurface<R>::computeIntersectionSystem(
     /* p is the inner product of dgamma and the distance vector dist_gamma_delta. this is done
      * component-wise. for this purpose, the components of the derivatives dgamma and ddelta are
      * converted to bivariate polynomials in BB(m-1, 0) and BB(0, n-1), respectively */
-    p = dist_gamma_delta[0].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[0], 0, true) ) +
-        dist_gamma_delta[1].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[1], 0, true) ) +
-        dist_gamma_delta[2].multiply( PolyAlg::BernsteinConvertToBiPoly(dgamma[2], 0, true) );
+    p = dist_gamma_delta[0].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, true>::get(dgamma[0])) +
+        dist_gamma_delta[1].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, true>::get(dgamma[1])) +
+        dist_gamma_delta[2].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, true>::get(dgamma[2]));
 
-    q = dist_gamma_delta[0].multiply( PolyAlg::BernsteinConvertToBiPoly(ddelta[0], 0, false) ) +
-        dist_gamma_delta[1].multiply( PolyAlg::BernsteinConvertToBiPoly(ddelta[1], 0, false) ) +
-        dist_gamma_delta[2].multiply( PolyAlg::BernsteinConvertToBiPoly(ddelta[2], 0, false) );
-
-    uint32_t pm, pn, qm, qn;
-    p.getDegree(pm, pn);
-    q.getDegree(qm, qn);
-    debugl(2, "CanalSurface::computeIntersectionSystem: done. m = %d, n = %d, p is in BB(%d, %d), q in BB(%d, %d).\n", m, n, pm, pn, qm, qn );
+    q = dist_gamma_delta[0].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, false>::get(ddelta[0])) +
+        dist_gamma_delta[1].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, false>::get(ddelta[1])) +
+        dist_gamma_delta[2].multiply(PolyAlg::BernsteinConvertToBiPoly<derivDeg, 0, false>::get(ddelta[2]));
 
     /* compute edge polynomials */
     /* the edge polynomial p_edge_x0 are the stationary points of the distance function restricted to the edge E_x0 =
@@ -1288,7 +1090,7 @@ BLRCanalSurface<R>::computeIntersectionSystem(
      *
      * NOTE: we're working with the magnified curves -> x_0, y_0 = 0.0, x_1, y_1 = 1.0. */
     Vec3<R>                                 vec_gamma_x0, vec_gamma_x1, vec_delta_y0, vec_delta_y1; 
-    std::vector<BernsteinPolynomial<R, R>>  gamma_x0(3), gamma_x1(3), delta_y0(3), delta_y1(3);
+    std::vector<BernsteinPolynomial<degree, R, R>>  gamma_x0(3), gamma_x1(3), delta_y0(3), delta_y1(3);
 
     vec_gamma_x0    = gamma.eval(0.0);
     vec_gamma_x1    = gamma.eval(1.0);
@@ -1297,11 +1099,11 @@ BLRCanalSurface<R>::computeIntersectionSystem(
     
     /* convert vectors to constant polynomials in BB(n) / BB(m) */
     for (j = 0; j < 3; j++) {
-        gamma_x0[j] = BernsteinPolynomial<R, R>(n, vec_gamma_x0[j]);
-        gamma_x1[j] = BernsteinPolynomial<R, R>(n, vec_gamma_x1[j]);
+        gamma_x0[j] = BernsteinPolynomial<degree, R, R>(vec_gamma_x0[j]);
+        gamma_x1[j] = BernsteinPolynomial<degree, R, R>(vec_gamma_x1[j]);
 
-        delta_y0[j] = BernsteinPolynomial<R, R>(m, vec_delta_y0[j]);
-        delta_y1[j] = BernsteinPolynomial<R, R>(m, vec_delta_y1[j]);
+        delta_y0[j] = BernsteinPolynomial<degree, R, R>(vec_delta_y0[j]);
+        delta_y1[j] = BernsteinPolynomial<degree, R, R>(vec_delta_y1[j]);
     }
 
     /* compute four edge polynomials by component-wise evaluation of dot product */
@@ -1324,10 +1126,6 @@ BLRCanalSurface<R>::computeIntersectionSystem(
         dgamma[0].multiply(gamma[0] - delta_y1[0]) + 
         dgamma[1].multiply(gamma[1] - delta_y1[1]) + 
         dgamma[2].multiply(gamma[2] - delta_y1[2]);
-
-    /* p_edge_{x0,x1} are in BB(2n-1), p_edge_{y0,y1} are in BB(2m-1) */
-    debugl(2, "CanalSurface::computeIntersectionSystem: edge polynomials done. m = %d, n = %d, p_edge_x0: BB(%d), p_edge_x1: BB(%d), p_edge_y0: BB(%d), p_edge_y1: BB(%d)\n", 
-            m, n, p_edge_x0.getDegree(), p_edge_x1.getDegree(), p_edge_y0.getDegree(), p_edge_y1.getDegree());
 
     debugTabDec();
     debugl(1, "CanalSurface::computeIntersectionSystem(): done.\n");

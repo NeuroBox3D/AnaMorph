@@ -38,9 +38,51 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
+ *
+ * author of this file: mbreit
+ * creation: 04.01.2017
  * -------------------------------------------------------------------------------- */
 
-#include "Polynomial.hh"
-#include "BivariatePolynomial.hh"
+#ifndef STATIC_VECTOR_HH
+#define STATIC_VECTOR_HH
 
+template<uint32_t N, typename T = double>
+class StaticVector
+{
+    public:
+        typedef StaticVector<N, T> this_type;
 
+        StaticVector();
+        StaticVector(const T& x);
+        StaticVector(const this_type& v);
+
+        ~StaticVector();
+
+        this_type& operator=(const this_type& v);
+
+        uint32_t size() const;
+
+        void assign(const T& x);
+
+        T& operator()(uint32_t i);
+        T operator()(uint32_t i) const;
+
+        T& operator[](uint32_t i);
+        T operator[](uint32_t i) const;
+
+        this_type operator+(const this_type& v) const;
+        this_type& operator+=(const this_type& v);
+
+        this_type operator-(const this_type& v) const;
+        this_type& operator-=(const this_type& v);
+
+        this_type operator*(const T& alpha) const;
+        this_type& operator*=(const T& alpha);
+
+    protected:
+        T v[N];
+};
+
+#include "../tsrc/StaticVector.impl.hh"
+
+#endif // STATIC_VECTOR_HH

@@ -49,57 +49,60 @@
 namespace PolyAlg {
 
     /* polynomial base conversion algorithms */
-    template <typename R>
-    void
-    convertBasis(
-        BernsteinPolynomial<R, R>      &b,
-        PowerPolynomial<R, R> const    &p);
+    template <uint32_t deg, typename R>
+    void convertBasis(BernsteinPolynomial<deg, R, R>& b, const PowerPolynomial<deg, R, R>& p);
 
-    template <typename R>
-    void
-    convertBasis(
-        PowerPolynomial<R, R>              &p,
-        BernsteinPolynomial<R, R> const    &b);
+    template <uint32_t deg, typename R>
+    void convertBasis(PowerPolynomial<deg, R, R>& p, const BernsteinPolynomial<deg, R, R>& b);
 
     /* tensor multiplication of two univariate BernsteinPolynomials to produce a bivariate BiBernsteinPolynomial */
-    template<
-        typename F = double,
-        typename R = double
-    >
-    BiBernsteinPolynomial<F, R>
-    BernsteinTensorMultiply(
-        BernsteinPolynomial<F, R> const &p,
-        BernsteinPolynomial<F, R> const &q);
+    template <uint32_t deg1, uint32_t deg2, typename F, typename R>
+    BiBernsteinPolynomial<deg1, deg2, F, R>
+    BernsteinTensorMultiply
+    (
+        const BernsteinPolynomial<deg1, F, R>& p,
+        const BernsteinPolynomial<deg2, F, R>& q
+    );
 
     /* convert univariate BernsteinPolynomial in BB(k) to BiBernsteinPolynomial where one variable is just
      * unity: if as_x == true, use the univariate polynomial variable as x, otherwise as y => result basis is BB(k, d)
      * and BB(d, k), respectively, where k = deg(p) */
-    template <
-        typename F = double,
-        typename R = double
-    >
-    BiBernsteinPolynomial<F, R>
-    BernsteinConvertToBiPoly(
-        BernsteinPolynomial<F, R> const    &p,
-        uint32_t                            d,
-        bool                                as_x);
+    template <uint32_t deg1, uint32_t deg2, bool as_x, typename F = double, typename R = double>
+    struct BernsteinConvertToBiPoly
+    {
+        static BiBernsteinPolynomial<deg1, deg2, F, R> get(const BernsteinPolynomial<deg1, F, R>& p);
+        //BernsteinConvertToBiPoly
+        //(
+        //    const BernsteinPolynomial<deg1, F, R>& p,
+        //    BiBernsteinPolynomial<deg1, deg2, F, R>& out
+        //);
+    };
+    template <uint32_t deg1, uint32_t deg2, typename F, typename R>
+    struct BernsteinConvertToBiPoly<deg1, deg2, false, F, R>
+    {
+        static BiBernsteinPolynomial<deg2, deg1, F, R> get(const BernsteinPolynomial<deg1, F, R>& p);
+        //BernsteinConvertToBiPoly
+        //(
+        //    const BernsteinPolynomial<deg1, F, R>& p,
+        //    BiBernsteinPolynomial<deg2, deg1, F, R>& out
+        //);
+    };
+
 
     /* create bernstein basis polynomials in Bernstein-Bezier basis, which have a matching "kronecker delta" vector for
      * coefficients. */
-    template <
-        typename F,
-        typename R
-    >
-    BernsteinPolynomial<F, R>
-    computeBernsteinBasisPoly(uint32_t n, uint32_t i);
+
+    template <uint32_t deg, typename F, typename R>
+    BernsteinPolynomial<deg, F, R>
+    computeBernsteinBasisPoly(uint32_t i);
 
     /* compute the convex hull the control polygon of a BernsteinPolynomial over the reals,
      * where the polynomial may be interpreted as as a two-dimensional bezier-curve as described in
      * the thesis. */
-    template <typename R>
+    template <uint32_t deg, typename R>
     void
     computeBezierControlPolyConvexHull(
-        BernsteinPolynomial<R, R> const    &p,
+        BernsteinPolynomial<deg, R, R> const    &p,
         std::vector<Vec2>                  &cvhull,
         R const                            &eps_slope);
 
@@ -200,35 +203,32 @@ namespace PolyAlg {
     void
     freePolyAlgorithmData();
 
-    template <typename R = double>
+    template <uint32_t deg, typename R = double>
     void
     BezClip_roots(
-            BernsteinPolynomial<R, R> const    &pinput,
+            BernsteinPolynomial<deg, R, R> const    &pinput,
             R const                            &alpha,
             R const                            &beta,
             R const                            &tol,
-            std::vector<RealInterval<R>>       &roots,
+            std::vector<RealInterval<R> >       &roots,
             R const                            &eps             = 1E-11,
             R const                            &eps_slope       = 1E-8);
 
-    template <typename R>
+    template <uint32_t deg1, uint32_t deg2, typename R>
     void
     BiLinClip_getApproximationData(
-        uint32_t                                    m,
-        uint32_t                                    n,
-        bool                                        dynamic_recomputation_arg   = true,
-        BiBernsteinPolynomial<R, R>                *BiLinClip_L00               = NULL,
-        BiBernsteinPolynomial<R, R>                *BiLinClip_L10               = NULL,
-        BiBernsteinPolynomial<R, R>                *BiLinClip_L01               = NULL,
-        Matrix<R>                                  *BiLinClip_A00               = NULL,
-        Matrix<R>                                  *BiLinClip_A10               = NULL,
-        Matrix<R>                                  *BiLinClip_A01               = NULL);
+        const BiBernsteinPolynomial<deg1, deg2, R, R>** BiLinClip_L00 = NULL,
+            const BiBernsteinPolynomial<deg1, deg2, R, R>** BiLinClip_L10 = NULL,
+            const BiBernsteinPolynomial<deg1, deg2, R, R>** BiLinClip_L01 = NULL,
+            const StaticMatrix<deg1+1, deg2+1, R>** BiLinClip_A00 = NULL,
+            const StaticMatrix<deg1+1, deg2+1, R>** BiLinClip_A10 = NULL,
+            const StaticMatrix<deg1+1, deg2+1, R>** BiLinClip_A01 = NULL);
 
-    template <typename R = double>
+    template <uint32_t deg1, uint32_t deg2, typename R = double>
     void
     BiLinClip_roots(
-        BiBernsteinPolynomial<R, R> const  &pinput,
-        BiBernsteinPolynomial<R, R> const  &qinput,
+        BiBernsteinPolynomial<deg1, deg2, R, R> const  &pinput,
+        BiBernsteinPolynomial<deg1, deg2, R, R> const  &qinput,
         R const                            &alpha0,
         R const                            &alpha1,
         R const                            &beta0,
@@ -256,7 +256,8 @@ namespace PolyAlg {
             std::vector<ComplexInterval<R>>    &roots);
     */
 
-    #include "../tsrc/PolyAlgorithms.impl.hh"
-}
+} // namespace PolyAlg
+
+#include "../tsrc/PolyAlgorithms.impl.hh"
 
 #endif

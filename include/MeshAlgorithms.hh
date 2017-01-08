@@ -214,6 +214,44 @@ namespace MeshAlg {
             >                                           start_circle_its,
         typename Mesh<Tm, Tv, Tf, R>::vertex_iterator   closing_vertex_it);
 
+
+    template <typename TMesh>
+    struct EdgeFacePair
+    {
+        EdgeFacePair
+        (
+            typename TMesh::Vertex* const _vrt1,
+            typename TMesh::Vertex* const _vrt2,
+            typename TMesh::Face* const _f
+        )
+        :vrt1(_vrt1), vrt2(_vrt2), f(_f) {};
+
+        // for std::sort
+        bool operator<(const EdgeFacePair& b) const
+        {
+            if (vrt1->id() < b.vrt1->id()) return true;
+            if (b.vrt1->id() < vrt1->id()) return false;
+
+            if (vrt2->id() < b.vrt2->id()) return true;
+            if (b.vrt2->id() < vrt2->id()) return false;
+
+            if (f->id() < b.f->id()) return true;
+            return false;
+        }
+
+        // for std::unique
+        bool operator==(const EdgeFacePair& b) const
+        {
+            if (vrt1->id() != b.vrt1->id()) return false;
+            if (vrt2->id() != b.vrt2->id()) return false;
+            return f->id() == b.f->id();
+        }
+
+        typename TMesh::Vertex* vrt1;
+        typename TMesh::Vertex* vrt2;
+        typename TMesh::Face* f;
+    };
+
     /* for two given meshes X and Y, get pairs of potentially intersecting edges (from X, Y) / faces
      * (from Y, X) using a modified Octree-like construction and traversal.  an Octree is implicitly
      * constructed, but not stored, since it is not needed. instead, two lists given per reference
@@ -223,24 +261,8 @@ namespace MeshAlg {
     getPotentiallyIntersectingEdgeFacePairs(
         Mesh<Tm, Tv, Tf, R>                        &X,
         Mesh<Tm, Tv, Tf, R>                        &Y,
-        std::list<
-                std::pair<
-                    std::pair<
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *,
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *
-                    >,
-                    typename Mesh<Tm, Tv, Tf, R>::Face *
-                >
-            >                                      &X_edges_Y_faces_candidates,
-        std::list<
-                std::pair<
-                    typename std::pair<
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *,
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *
-                    >,
-                    typename Mesh<Tm, Tv, Tf, R>::Face *
-                >
-            >                                      &Y_edges_X_faces_candidates,
+        std::vector<EdgeFacePair<Mesh<Tm, Tv, Tf, R> > >&  X_edges_Y_faces_candidates,
+        std::vector<EdgeFacePair<Mesh<Tm, Tv, Tf, R> > >&  Y_edges_X_faces_candidates,
         uint32_t                                    max_components      = 128,
         uint32_t                                    max_recursion_depth = 7);
 

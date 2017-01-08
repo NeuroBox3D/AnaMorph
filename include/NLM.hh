@@ -180,7 +180,7 @@ namespace NLM {
                     typename NLM_CellNetwork<R>::neurite_segment_iterator
                 >                                   neurite_segments; 
             std::vector<R>                          neurite_vertex_parameters;
-            std::vector<BLRCanalSurface<R> *>       canal_segments_magnified;
+            std::vector<BLRCanalSurface<3ul, R> *>       canal_segments_magnified;
 
             NLM_CellNetwork<R>                     *C;
 
@@ -349,7 +349,7 @@ namespace NLM {
             uint32_t                                        npt_ns_idx;
 
             /* magnified neurite segment canal surface */
-            BLRCanalSurface<R>                                  canal_segment_magnified; 
+            BLRCanalSurface<3ul, R>                                  canal_segment_magnified;
 
             /* intersection-related members */
             bool                                                clean;
@@ -541,7 +541,7 @@ namespace NLM {
 
         private:
             /* initial cylinder for neurite root edge encoded as a bezier canal surface with linearly interpolated radii. */
-            BLRCanalSurface<R> initial_cylinder;
+            BLRCanalSurface<3ul, R> initial_cylinder;
 
         public:
             NeuriteRootEdgeInfo()

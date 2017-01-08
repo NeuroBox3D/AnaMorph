@@ -42,10 +42,11 @@
 
 #include "common.hh"
 
+#if 0
 /* generate B_k^n(t) in BB(n) => delta_{kn} coefficient vector.. */
 template <typename F, typename R>
 BernsteinPolynomial<F, R>
-BB(uint32_t k, uint32_t n);
+BB(uint32_t n, uint32_t k);
 
 /* deCasteljau's algorithm for bezier curve evaluation and splitting adapted for polynomials, i.e. only the "y"
  * coordinates of the control points are given (the "x'-coordinate equals the given splitpoint t).
@@ -323,6 +324,7 @@ Polynomial<F, R>::operator*(Polynomial<F, R> const &q) const
     }
     return res;
 }
+
 
 /* ----------------------------------------------------------------------------------------------------------------- *
  *
@@ -914,7 +916,7 @@ BernsteinPolynomial<F, R>::getBernsteinBasisInnerProduct(
 {
     uint32_t max_dim = std::max(m, n);
     if (bernstein_basis_inner_products_max_dim < max_dim) {
-        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable) {
+        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized) {
             BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(max_dim);
         }
         else {
@@ -928,21 +930,21 @@ template <typename F, typename R>
 void
 BernsteinPolynomial<F, R>::setInnerProductDataMutable()
 {
-    BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable = true;
+    BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized = true;
 }
 
 template <typename F, typename R>
 void
 BernsteinPolynomial<F, R>::setInnerProductDataImmutable()
 {
-    BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable = false;
+    BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized = false;
 }
 
 template <typename F, typename R>
 BernsteinPolynomial<F, R>::BernsteinPolynomial() : Polynomial<F, R>()
 {
     if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_max_dim == 0) {
-        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable) {
+        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized) {
             BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts();
         }
         else {
@@ -957,7 +959,7 @@ template <typename F, typename R>
 BernsteinPolynomial<F, R>::BernsteinPolynomial(uint32_t degree, F const &x) : Polynomial<F, R>(degree, x)
 {
     if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_max_dim < degree) {
-        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable) {
+        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized) {
             BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(degree);
         }
         else {
@@ -972,7 +974,7 @@ BernsteinPolynomial<F, R>::BernsteinPolynomial(Vector<F> const &coeff)
 {
     uint32_t const n = coeff.size() - 1;
     if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_max_dim < n) {
-        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable) {
+        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized) {
             BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(n);
         }
         else {
@@ -1014,7 +1016,7 @@ BernsteinPolynomial<F, R>::setCoeffs(Vector<F> const &coeff)
      * constructor. */
     uint32_t const n = this->getDegree();
     if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_max_dim < n) {
-        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable) {
+        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized) {
             BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(n);
         }
         else {
@@ -1214,7 +1216,7 @@ BernsteinPolynomial<F, R>::elevateDegree(uint32_t r_arg)
     /* update inner products */
     uint32_t const d = this->getDegree();
     if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_max_dim < d) {
-        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_mutable) {
+        if (BernsteinPolynomial<F, R>::bernstein_basis_inner_products_initialized) {
             BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(d);
         }
         else {
@@ -1284,4 +1286,990 @@ BernsteinPolynomial<F, R>
 BB(uint32_t n, uint32_t k)
 {
     return ( BernsteinPolynomial<F, R>(Aux::VecMat::kronecker_vec<F>(n+1, k)) );
+}
+
+#endif
+
+
+/* generate B_k^n(t) in BB(n) => delta_{kn} coefficient vector.. */
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>
+BB(uint32_t k);
+
+/* deCasteljau's algorithm for bezier curve evaluation and splitting adapted for polynomials, i.e. only the "y"
+ * coordinates of the control points are given (the "x'-coordinate equals the given splitpoint t).
+ * with Vec2, this would of course work for general bezier curves, but that's unnecessary for its use here. */
+template <uint32_t degree, typename F, typename R>
+F
+deCasteljau(const StaticVector<degree+1, F>& coeff, const R& t)
+{
+    uint32_t i, k;
+
+    /* initialize Pi(0) to bezier coefficients */
+    StaticVector<degree+1, F> Pi = coeff;
+    F plast_i;
+
+    for (k = 1; k <= degree; k++)
+    {
+        /* save old value of Pi[0] as plast_i for first iteration */
+        plast_i = Pi[0];
+
+        /* compute new values of Pi, the old "lookahead" value plast_i is always saved */
+        for (i = 0; i <= degree - k; i++)
+        {
+            Pi[i] = (1.0 - t) * plast_i + t*Pi[i+1];
+
+            /* save old value of p[i+1] as pilast_i for next iteration */
+            plast_i = Pi[i+1];
+        }
+    }
+    return Pi[0];
+}
+
+template <uint32_t degree, typename F, typename R>
+void
+deCasteljauSplit
+(
+    const StaticVector<degree+1, F>& coeff,
+    const R& t,
+    StaticVector<degree+1, F>& coeff_left,
+    StaticVector<degree+1, F>& coeff_right)
+{
+    uint32_t i, k;
+
+    /* initialize Pi to b as above */
+    StaticVector<degree+1, F> Pi = coeff;
+    F plast_i;
+
+    coeff_left.assign(0);
+    coeff_right.assign(0);
+
+    coeff_left[0] = Pi[0];
+    coeff_right[degree] = Pi[degree];
+
+    for (k = 1; k <= degree; k++)
+    {
+        /* save old value of Pi[0] as plast_i for first iteration */
+        plast_i = Pi[0];
+
+        /* compute new values of Pi, the old "lookahead" value plast_i is always saved */
+        for (i = 0; i <= degree - k; i++)
+        {
+            Pi[i] = (1.0 - t) * plast_i + t*Pi[i+1];
+
+            /* save old value of p[i+1] as pilast_i for next iteration */
+            plast_i = Pi[i+1];
+        }
+
+        /* Pi contains Pi(k). store relevant values for left and right polynomial */
+        coeff_left[k] = Pi[0];
+        coeff_right[degree - k] = Pi[degree - k];
+    }
+}
+
+
+
+/* ----------------------------------------------------------------------------------------------------------------- *
+ *
+ *                        implementation of abstract univariate polynomial class....
+ *
+ * ----------------------------------------------------------------------------------------------------------------- */
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R>::Polynomial()
+: coeff(0.0)
+{}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R>::Polynomial(const F& x)
+: coeff(x)
+{}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R>::Polynomial(const coeff_type& _coeff)
+: coeff(_coeff)
+{}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R>::Polynomial(const this_type& q)
+: coeff(q.coeff)
+{}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R>::~Polynomial()
+{}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R>&
+Polynomial<degree, F, R>::operator=(const this_type& q)
+{
+    coeff = q.coeff;
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+uint32_t
+Polynomial<degree, F, R>::getDegree() const
+{
+    return degree;
+}
+
+template <uint32_t degree, typename F, typename R>
+const StaticVector<degree+1, F>&
+Polynomial<degree, F, R>::getCoeffs() const
+{
+    return coeff;
+}
+
+template <uint32_t degree, typename F, typename R>
+StaticVector<degree+1, F>&
+Polynomial<degree, F, R>::getCoeffs()
+{
+    return coeff;
+}
+
+template <uint32_t degree, typename F, typename R>
+void
+Polynomial<degree, F, R>::setCoeffs(const coeff_type& _coeff)
+{
+    coeff = _coeff;
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+Polynomial<degree, F, R>::getMaxAbsCoeff() const
+{
+    F cmax = std::abs(this->coeff[0]);
+    F abs_i;
+    for (uint32_t i = 1; i < degree + 1; i++)
+    {
+        abs_i = fabs(this->coeff[i]);
+        if (abs_i > cmax)
+            cmax = abs_i;
+    }
+    return cmax;
+}
+
+template <uint32_t degree, typename F, typename R>
+void
+Polynomial<degree, F, R>::zero()
+{
+    initConstant(0);
+}
+
+template <uint32_t degree, typename F, typename R>
+F&
+Polynomial<degree, F, R>::operator()(uint32_t cidx)
+{
+    return coeff[cidx];
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+Polynomial<degree, F, R>::operator()(uint32_t cidx) const
+{
+    return coeff[cidx];
+}
+
+template <uint32_t degree, typename F, typename R>
+F &
+Polynomial<degree, F, R>::operator[](uint32_t cidx)
+{
+    return coeff[cidx];
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+Polynomial<degree, F, R>::operator[](uint32_t cidx) const
+{
+    return coeff[cidx];
+}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R> &
+Polynomial<degree, F, R>::operator+=(const this_type& q)
+{
+    for (uint32_t i = 0; i < degree+1; i++)
+        coeff[i] += q[i];
+
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R> &
+Polynomial<degree, F, R>::operator-=(const this_type& q)
+{
+    for (uint32_t i = 0; i < degree+1; i++)
+        coeff[i] -= q[i];
+
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R> &
+Polynomial<degree, F, R>::operator*=(F const &x)
+{
+    for (uint32_t i = 0; i < degree+1; i++)
+        coeff[i] *= x;
+
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+Polynomial<degree, F, R> &
+Polynomial<degree, F, R>::operator/=(F const &x)
+{
+    for (uint32_t i = 0; i < degree+1; i++)
+        coeff[i] /= x;
+
+    return *this;
+}
+
+
+// TODO: This method clearly cannot work, since the pure virtual getBasisInnerProduct
+//       it calls has never been declared, let alone defined.
+template <uint32_t degree, typename F, typename R>
+F
+Polynomial<degree, F, R>::operator*(const this_type& q) const
+{
+    const Polynomial<degree, F, R>& p = *this;
+    uint32_t i, j;
+    F res = 0;
+
+    for (i = 0; i < degree+1; i++) {
+        for (j = 0; j < degree+1; j++) {
+            /* use virtual method getBasisInnerProduct, which is pure-virtual in Polynomial<F, R>
+             * and must be implemented by all derived classes. this enables the reuse of this method
+             * from derived classes through late-binding. due to type safety however, every derived
+             * class needs to reimplement operator* as a wrapper, which calls this method as
+             * Polynomial<degree, F, R>::operator*(..) (or implement a completely custom one obviously). */
+            res += p(i)*q(j)*this->getBasisInnerProduct(i, j);
+        }
+    }
+    return res;
+}
+
+
+template <uint32_t degree, typename F, typename R>
+void
+Polynomial<degree, F, R>::printCoeff() const
+{
+    PrintCoeffImpl<F, R>(*this);
+}
+
+/* print coefficients: specializations for R = F = {float, double} */
+template <uint32_t degree, typename F, typename R>
+template <typename dummy>
+Polynomial<degree, F, R>::PrintCoeffImpl<float, float, dummy>::PrintCoeffImpl
+(const Polynomial<degree, F, R>& p)
+{
+    uint32_t        i;
+    static char     s[1024];
+    static char     tmp[256];
+
+    sprintf(s, "[ ");
+    for (i = 0; i < degree + 1; i++) {
+        sprintf(tmp, "%+20.13E ", p.coeff[i]);
+        strncat(s, tmp, 256);
+    }
+    strncat(s, "]\n", 2);
+    debugl(0, "%s", s);
+}
+
+template <uint32_t degree, typename F, typename R>
+template <typename dummy>
+Polynomial<degree, F, R>::PrintCoeffImpl<double, double, dummy>::PrintCoeffImpl
+(const Polynomial<degree, F, R>& p)
+{
+    uint32_t        i;
+    static char     s[1024];
+    static char     tmp[256];
+
+    sprintf(s, "[ ");
+    for (i = 0; i < degree + 1; i++) {
+        sprintf(tmp, "%+20.13E ", p.coeff[i]);
+        strncat(s, tmp, 256);
+    }
+    strncat(s, "]\n", 2);
+    debugl(0, "%s", s);
+    printf("%s", s);
+}
+
+
+template <uint32_t degree, typename F, typename R>
+void
+Polynomial<degree, F, R>::writePlotFile(R t0, R t1, uint32_t ticks, const std::string& filename) const
+{
+    WritePlotFileImpl<F, R>(t0, t1, ticks, filename, *this);
+}
+
+template <uint32_t degree, typename F, typename R>
+template <typename dummy>
+Polynomial<degree, F, R>::WritePlotFileImpl<float, float, dummy>::WritePlotFileImpl
+(R t0, R t1, uint32_t ticks, const std::string& filename, const Polynomial<degree, F, R>& p)
+{
+    FILE *fout = fopen(filename.c_str(), "w");
+    if (!fout) {
+        fprintf(stderr, "Polynomial::writePlotFile(): can't open file \"%s\" for writing.\n", filename.c_str() );
+        return;;
+    }
+
+    uint32_t    i;
+    float       t;
+
+    for (i = 0; i <= ticks; i++) {
+        t = t0 + ((float)i / (float)ticks)*(t1 - t0);
+        fprintf(fout, "%12.5E %12.5E\n", t, p.eval(t));
+    }
+    fclose(fout);
+}
+
+template <uint32_t degree, typename F, typename R>
+template <typename dummy>
+Polynomial<degree, F, R>::WritePlotFileImpl<double, double, dummy>::WritePlotFileImpl
+(R t0, R t1, uint32_t ticks, const std::string& filename, const Polynomial<degree, F, R>& p)
+{
+    FILE *fout = fopen(filename.c_str(), "w");
+    if (!fout) {
+        fprintf(stderr, "Polynomial::writePlotFile(): can't open file \"%s\" for writing.\n", filename.c_str() );
+        return;;
+    }
+
+    uint32_t    i;
+    double      t;
+
+    for (i = 0; i <= ticks; i++) {
+        t = t0 + ((double)i / (double)ticks)*(t1 - t0);
+        fprintf(fout, "%12.5E %12.5E\n", t, p.eval(t));
+    }
+    fclose(fout);
+}
+
+
+
+/* ----------------------------------------------------------------------------------------------------------------- *
+ *
+ * implementation of univariate power basis (aka monomial basis) polynomial class, horner scheme for evaluation, etc.
+ *
+ * ----------------------------------------------------------------------------------------------------------------- */
+
+/* the power basis inner products do not depend on the degree of the representation, but only on the degrees of the
+ * monomials: x^i * x^j = \int_0^1{x^{i+j}dx} = 1 / (i + j + 1)
+ *
+ * => use only 2d tensor (array) instead of 4d array with custom init method.
+ *
+ * note that for BernsteinPolynomial, the inner products do depend on the degree of the representation and hence the 4d
+ * array is really necessary. for legendre polynomials on the other hand, even a 1d array will suffice due to
+ * orthogonality. */
+template <uint32_t degree, typename F, typename R>
+void
+PowerPolynomial<degree, F, R>::initPowerBasisInnerProducts()
+{
+    static bool recompute = true;
+
+    if (recompute)
+    {
+        debugl(1, "(static) PowerPolynomial::initPowerBasisInnerProducts(): degree %u\n", degree);
+        debugTabInc();
+
+        for (uint32_t i = 0; i < degree + 1; ++i)
+            for (uint32_t j = 0; j < degree + 1; ++j)
+                power_basis_inner_products(i, j) = computePowerBasisInnerProduct(i, j);
+
+        recompute = false;
+
+        debugTabDec();
+        debugl(1, "(static) PowerPolynomial::initPowerBasisInnerProducts(): done..\n");
+    }
+}
+
+/* indices m and n for representation degree are irrelevant: inner products depends only on i and j in
+ * integral over x^i*x^j = x^{i + j}. */
+template <uint32_t degree, typename F, typename R>
+F
+PowerPolynomial<degree, F, R>::computePowerBasisInnerProduct(uint32_t i, uint32_t j)
+{
+    debugl(4, "PowerPolynomial()::computePowerBasisInnerProduct(%d, %d)\n", i, j);
+    return (F)1 / (F)(i + j + 1);
+}
+
+/* return pre-computed inner product value from static PowerPolynomial<degree, F, R>::power_basis_inner_products. if value has
+ * not been precomputed yet, do it now if dynamic recomputation is enabled */
+template <uint32_t degree, typename F, typename R>
+F
+PowerPolynomial<degree, F, R>::getPowerBasisInnerProduct(uint32_t i, uint32_t j)
+{
+    if (i > degree || j > degree)
+    {
+        std::ostringstream oss;
+        oss << "PowerPolynomial<" << degree << ">::getPowerBasisInnerProduct(): "
+               "Requested illegal product (" << i << ", " << j << ").";
+        throw(oss.str().c_str());
+    }
+
+    // initialize if necessary
+    initPowerBasisInnerProducts();
+
+    return power_basis_inner_products(i, j);
+}
+
+
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>::PowerPolynomial()
+{}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>::PowerPolynomial(const F& x)
+: Polynomial<degree, F, R>(0)
+{}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>::PowerPolynomial(const coeff_type& coeff)
+: Polynomial<degree, F, R>(coeff)
+{}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>::PowerPolynomial(const this_type& q)
+: Polynomial<degree, F, R>(q)
+{}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>::~PowerPolynomial()
+{}
+
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>&
+PowerPolynomial<degree, F, R>::operator=(const this_type& q)
+{
+    Polynomial<degree, F, R>::operator=(q);
+    return (*this);
+}
+
+template <uint32_t degree, typename F, typename R>
+void
+PowerPolynomial<degree, F, R>::initConstant(const F& x)
+{
+    coeff.assign(0);
+    coeff[0] = x;
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+PowerPolynomial<degree, F, R>::eval(const R& x) const
+{
+    int i;
+    F p_x = coeff[degree];
+
+    for (i = degree-1; i >= 0; i--)
+        p_x = p_x*x + coeff[i];
+
+    return p_x;
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+PowerPolynomial<degree, F, R>::eval_d(const R& x) const
+{
+    if (degree > 0)
+    {
+        int i;
+        F dp_x = coeff[degree] * (R)degree;
+
+        for (i = degree-1; i >= 1; i--)
+            dp_x = dp_x*x + coeff[i] * (R)i;
+
+        return dp_x;
+    }
+    else return 0;
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+PowerPolynomial<degree, F, R>::eval_d2(const R& x) const
+{
+    if (degree > 1)
+    {
+        int i;
+        F   dp2_x = (R)(degree*(degree-1)) * coeff[degree];
+
+        for (i = degree - 1; i >= 2; i--)
+            dp2_x = dp2_x*x + (R)(i*(i-1)) * coeff[i];
+
+        return dp2_x;
+    }
+    else return 0;
+}
+
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>
+PowerPolynomial<degree, F, R>::operator+(const this_type& q) const
+{
+    return PowerPolynomial(coeff) += q;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>&
+PowerPolynomial<degree, F, R>::operator+=(const this_type& q)
+{
+    Polynomial<degree, F, R>::operator+=(q);
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>
+PowerPolynomial<degree, F, R>::operator-(const this_type& q) const
+{
+    return PowerPolynomial(coeff) -= q;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>&
+PowerPolynomial<degree, F, R>::operator-=(const this_type& q)
+{
+    Polynomial<degree, F, R>::operator-=(q);
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>
+PowerPolynomial<degree, F, R>::operator*(const F& x) const
+{
+    return PowerPolynomial(coeff) *= x;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>&
+PowerPolynomial<degree, F, R>::operator*=(const F& x)
+{
+    Polynomial<degree, F, R>::operator*=(x);
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>
+PowerPolynomial<degree, F, R>::operator/(const F& x) const
+{
+    return PowerPolynomial(coeff) /= x;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<degree, F, R>&
+PowerPolynomial<degree, F, R>::operator/=(const F& x)
+{
+    Polynomial<degree, F, R>::operator/=(x);
+    return *this;
+}
+
+/* inner product with respect to L2 norm \int_0^1{p(t)q(t) dt}:
+ * use individually computed 2d monomial basis inner products array. */
+template <uint32_t degree, typename F, typename R>
+F
+PowerPolynomial<degree, F, R>::operator*(const this_type& q) const
+{
+    // p = const reference to (this) polynomial
+    const Polynomial<degree, F, R>& p = *this;
+    uint32_t i, j;
+
+    F res = 0;
+    for (i = 0; i < degree+1; i++)
+        for (j = 0; j < degree+1; j++)
+            res += p(i)*q(j)*PowerPolynomial::power_basis_inner_products( {i, j} );
+
+    return res;
+}
+
+template <uint32_t degree, typename F, typename R>
+template <uint32_t deg>
+PowerPolynomial<degree+deg, F, R>
+PowerPolynomial<degree, F, R>::multiply(const PowerPolynomial<deg, F, R>& q) const
+{
+    int k, i;
+    const PowerPolynomial<degree, F, R>& p = *this;
+
+    PowerPolynomial<degree+deg, F, R> res(0);
+    for (k = 0; k < deg + degree + 1; ++k)
+    {
+        res(k) = 0;
+        for (i = std::max(0, k-(int)deg); i <= std::min(k, (int)degree); ++i)
+            res(k) += p(i)*q(k-i);
+    }
+
+    return res;
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<2*degree, F, R>
+PowerPolynomial<degree, F, R>::square() const
+{
+    return multiply(*this);
+}
+
+template <uint32_t degree, typename F, typename R>
+PowerPolynomial<(degree>0) ? degree-1 : 0, F, R>
+PowerPolynomial<degree, F, R>::getDerivative() const
+{
+    uint32_t k;
+
+    PowerPolynomial<(degree>0) ? degree-1 : 0, F, R> d(0);
+    for (k = 0; k < degree; k++)
+        d(k) = (F)(k+1) * coeff[k+1];
+
+    return d;
+}
+
+
+/* elevate degree: pad coefficients with trailing zeros */
+template <uint32_t degree, typename F, typename R>
+template <uint32_t deg>
+PowerPolynomial<degree+deg, F, R>
+PowerPolynomial<degree, F, R>::elevateDegree()
+{
+    PowerPolynomial<degree+deg, F, R> p(0);
+    for (uint32_t i = 0; i < deg+1; ++i)
+        p(i) = coeff[i];
+    return p;
+}
+
+
+
+/* ----------------------------------------------------------------------------------------------------------------- *
+ *
+ * implementation of univariate bernstein-bezier basis polynomial class, deCasteljau algorithm for evaluation, etc..
+ *
+ * ----------------------------------------------------------------------------------------------------------------- */
+template <uint32_t degree, typename F, typename R>
+void
+BernsteinPolynomial<degree, F, R>::initBernsteinBasisInnerProducts()
+{
+    static bool recompute = true;
+
+    // initialize if necessary
+    if (recompute)
+    {
+        debugl(1, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): degree %u\n", degree);
+        debugTabInc();
+
+        for (uint32_t i = 0; i < degree + 1; ++i)
+            for (uint32_t j = 0; j < degree + 1; ++j)
+                bernstein_basis_inner_products(i, j) = computeBernsteinBasisInnerProduct(i, j);
+
+        recompute = false;
+
+        debugTabDec();
+        debugl(0, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): done..\n");
+    }
+}
+
+/* implementation of the virtual computation function for the inner product of the basis polynomials
+ * with respect to the L2-norm on [0,1]. for the Bernstein-Bezier representation, this depends both
+ * on the degree of the representation and the index of the basis function:
+ * */
+template <uint32_t degree, typename F, typename R>
+F
+BernsteinPolynomial<degree, F, R>::computeBernsteinBasisInnerProduct(uint32_t i, uint32_t j)
+{
+    using Aux::Numbers::bicof;
+    debugl(4, "BernsteinPolynomial()::computeBasisInnerProduct(%d, %d, %d, %d)\n", degree, degree, i, j);
+
+    /* instead of SFINAE, use this (in my humble opinion much more readable) way of distinguishing
+     * between different types. this has the advantage that the method type signature or return type
+     * are not polluted by std::enable_if<..> and additional template parameters to make SFINAE
+     * applicable.
+     *
+     * if the field type F is a floating point type (float, double, long double), use the following
+     * implementation.  otherwise, throw an exception. further implementations (e.g. for custom
+     * rational types) can be added with #elif */
+    bool F_is_floating_point = std::is_floating_point<F>::value;
+    if (F_is_floating_point) {
+        /* compute new inner products up to given maximum degree if necessary */
+        return bicof<F>(degree, i) * bicof<F>(degree, j)
+                / ((F)(degree + degree + 1) * bicof<F>(degree + degree, i + j));
+    }
+    // else if (F_is_rational) {.. }
+    else {
+        throw("BernsteinPolynomial<degree, F, R>::computeBasisInnerProduct(): not implemented for given type F.");
+    }
+}
+
+/* return precomputed inner product value. this method relies on the fact that every BernsteinPolynomial constructor
+ * (and degree-modifying method) precomputes bernstein basis polynomial inner products for higher degrees if necessary.
+ * */
+template <uint32_t degree, typename F, typename R>
+F
+BernsteinPolynomial<degree, F, R>::getBernsteinBasisInnerProduct(uint32_t i, uint32_t j)
+{
+    if (i > degree || j > degree)
+    {
+        std::ostringstream oss;
+        oss << "PowerPolynomial<" << degree << ">::getPowerBasisInnerProduct(): "
+               "Requested illegal product (" << i << ", " << j << ").";
+        throw(oss.str().c_str());
+    }
+
+    // initialize if necessary
+    initBernsteinBasisInnerProducts();
+
+    return bernstein_basis_inner_products(i, j);
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>::BernsteinPolynomial()
+{}
+
+/* for bernstein-bezier polynomials, filling coeff with x amounts to setting the polynomial to the
+ * BB(degree) representation of the constant x */
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>::BernsteinPolynomial(F const &x)
+: base_type(x)
+{}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>::BernsteinPolynomial(const coeff_type& coeff)
+: base_type(coeff)
+{}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>::BernsteinPolynomial(const this_type& q)
+: base_type(q)
+{}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>::~BernsteinPolynomial()
+{}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>&
+BernsteinPolynomial<degree, F, R>::operator=(const this_type& q)
+{
+    /* call template base class Polynomial<F, R> (matching F) assignment operator on q, which can be
+     * implicitly cast to suitable base class reference. */
+    base_type::operator=(q);
+
+    /* return (*this) */
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+void
+BernsteinPolynomial<degree, F, R>::setCoeffs(const coeff_type& coeff)
+{
+    base_type::setCoeffs(coeff);
+}
+
+template <uint32_t degree, typename F, typename R>
+void
+BernsteinPolynomial<degree, F, R>::initConstant(const F& x)
+{
+    coeff.assign(x);
+}
+
+/* use de-Casteljau algorithm for bezier curves to evaluate polynomial. x-value is x, y-value is
+ * evaluated using the algorithm */
+template <uint32_t degree, typename F, typename R>
+F
+BernsteinPolynomial<degree, F, R>::eval(const R& x) const
+{
+    return deCasteljau<degree, F>(coeff, x);
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+BernsteinPolynomial<degree, F, R>::eval_d(const R& x) const
+{
+    if (degree > 1)
+        return getDerivative().eval(x);
+    else return 0;
+}
+
+template <uint32_t degree, typename F, typename R>
+F
+BernsteinPolynomial<degree, F, R>::eval_d2(const R& x) const
+{
+    if (degree > 2) {
+        return getDerivative().getDerivative().eval(x);
+    }
+    else return 0;
+}
+
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>
+BernsteinPolynomial<degree, F, R>::operator+(const this_type& q) const
+{
+    return this_type(coeff) += q;
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R> &
+BernsteinPolynomial<degree, F, R>::operator+=(const this_type& q)
+{
+    base_type::operator+=(q);
+    return (*this);
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>
+BernsteinPolynomial<degree, F, R>::operator-(const this_type& q) const
+{
+    return this_type(coeff) -= q;
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R> &
+BernsteinPolynomial<degree, F, R>::operator-=(const this_type& q)
+{
+    base_type::operator-=(q);
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>
+BernsteinPolynomial<degree, F, R>::operator*(const F& x) const
+{
+    return this_type(coeff) *= x;
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R> &
+BernsteinPolynomial<degree, F, R>::operator*=(const F& x)
+{
+    base_type::operator*=(x);
+    return *this;
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>
+BernsteinPolynomial<degree, F, R>::operator/(const F& x) const
+{
+    return this_type(coeff) /= x;
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R> &
+BernsteinPolynomial<degree, F, R>::operator/=(const F& x)
+{
+    base_type::operator/=(x);
+    return *this;
+}
+
+/* inner product with respect to L2 norm \int_0^1{p(t)q(t) dt} */
+template <uint32_t degree, typename F, typename R>
+F
+BernsteinPolynomial<degree, F, R>::operator*(const this_type& q) const
+{
+    return (base_type::operator*(q));
+}
+
+/* multiplication as polynomials over |R or a suitably defined ring */
+template <uint32_t degree, typename F, typename R>
+template <uint32_t deg>
+BernsteinPolynomial<degree+deg, F, R>
+BernsteinPolynomial<degree, F, R>::multiply(const BernsteinPolynomial<deg, F, R>& q) const
+{
+    using Aux::Numbers::bicof;
+
+    int i, k;
+    const this_type& p = *this;
+
+    BernsteinPolynomial<degree+deg, F, R> res(0);
+
+    for (k = 0; k < (int)deg + (int)degree + 1; k++)
+    {
+        res(k) = 0;
+        for (i = std::max(0, k - (int)deg); i < std::min((int)degree, k) + 1; i++)
+            res(k) += p(i) * q(k-i) * bicof<F>(degree, i) * bicof<F>(deg, k-i) / bicof<F>(deg+degree, k);
+    }
+
+    return res;
+}
+
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<2*degree, F, R>
+BernsteinPolynomial<degree, F, R>::square() const
+{
+    return multiply(*this);
+}
+
+/* derivative computation */
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<(degree>0) ? degree-1 : 0, F, R>
+BernsteinPolynomial<degree, F, R>::getDerivative() const
+{
+    uint32_t k;
+
+    BernsteinPolynomial<(degree>0) ? degree-1 : 0, F, R> d(0);
+    F n_F(degree);
+    for (k = 0; k < degree; k++)
+        d(k) = n_F * (coeff[k+1] - coeff[k]);
+    return d;
+}
+
+/* degree elevation by r, effectively like multiplication with 1(t) in BB(r). this is done
+ * in-place, though. update static inner products data since new degree (n+r) might be new maximum
+ * degree ever seen. */
+template <uint32_t degree, typename F, typename R>
+template <uint32_t deg>
+BernsteinPolynomial<deg, F, R>
+BernsteinPolynomial<degree, F, R>::elevateDegree()
+{
+    using Aux::Numbers::bicof;
+
+    int i, k;
+    BernsteinPolynomial<deg, F, R> res(0);
+    StaticVector<deg+1, F> elev_coeff;
+
+    /* equivalent: perform "multiplication" with 1(t) with coefficients (1, .., 1) in BB(r) */
+    for (k = 0; k < (int)deg + 1; k++)
+    {
+        elev_coeff[k] = 0;
+        for (i = std::max(0, k - (int)deg + (int)degree); i < std::min((int)degree, k) + 1; i++)
+            elev_coeff[k] += coeff[i] * bicof<F>(degree, i) * bicof<F>(deg-degree, k-i) / bicof<F>(deg, k);
+    }
+
+    res.setCoeffs(elev_coeff);
+    return res;
+}
+
+
+template <uint32_t degree, typename F, typename R>
+void
+BernsteinPolynomial<degree, F, R>::split(const R& t, this_type* pleft, this_type* pright) const
+{
+    coeff_type coeff_left, coeff_right;
+    deCasteljauSplit<degree, F, R>(coeff, t, coeff_left, coeff_right);
+
+    /* update values for polynomials pleft and pright if present */
+    if (pleft)  pleft->setCoeffs(coeff_left);
+    if (pright) pright->setCoeffs(coeff_right);
+}
+
+template <uint32_t degree, typename F, typename R>
+void
+BernsteinPolynomial<degree, F, R>::clipToInterval(const R& t0, const R& t1, this_type* pclip) const
+{
+    /* first, clip at t0 and only save right part, then clip at position (t1 - t0) / (1 - t0),
+     * which is the relative position of t1 with respect to the intermediate interval [t0, 1].
+     * save only left part then, and we're done.. */
+    if (pclip)
+    {
+        split(t0, NULL, pclip);
+        pclip->split((t1 - t0) / (1.0 - t0), pclip, NULL);
+    }
+}
+
+/* ----------------------------------------------------------------------------------------------------------------- *
+ *
+ *                                       auxiliary functions..
+ *
+ * ----------------------------------------------------------------------------------------------------------------- */
+
+/* generate B_k^n(t) in BB(n) => delta_{kn} coefficient vector.. */
+template <uint32_t degree, typename F, typename R>
+BernsteinPolynomial<degree, F, R>
+BB(uint32_t k)
+{
+    return BernsteinPolynomial<degree, F, R>(Aux::VecMat::kronecker_static_vec<degree+1, F>(k));
 }

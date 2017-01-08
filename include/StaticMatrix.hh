@@ -38,9 +38,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
+ *
+ * author of this file: mbreit
+ * creation: 04.01.2017
  * -------------------------------------------------------------------------------- */
 
-#include "Polynomial.hh"
-#include "BivariatePolynomial.hh"
+#ifndef STATIC_MATRIX_HH
+#define STATIC_MATRIX_HH
 
+#include "StaticVector.hh"
 
+template<uint32_t M, uint32_t N, typename T = double>
+class StaticMatrix
+{
+    public:
+        typedef StaticMatrix<M, N, T> this_type;
+        typedef StaticVector<N, T> row_type;
+        typedef StaticVector<M, T> col_type;
+
+        StaticMatrix();
+        ~StaticMatrix();
+
+        uint32_t numRows() const;
+        uint32_t numCols() const;
+
+        void fill(const T& x);
+
+        T& operator()(uint32_t i, uint32_t j);
+        T operator()(uint32_t i, uint32_t j) const;
+
+        this_type operator+(const this_type& m) const;
+        this_type& operator+=(const this_type& m);
+
+        this_type operator-(const this_type& m) const;
+        this_type& operator-=(const this_type& m);
+
+        template <uint32_t L>
+        StaticMatrix<M, L, T> operator*(const StaticMatrix<N, L, T>& m) const;
+
+        this_type operator*(const T& alpha) const;
+        this_type& operator*=(const T& alpha);
+
+        const StaticVector<N, T>& getRow(uint32_t i) const;
+        StaticVector<N, T>& getRow(uint32_t i);
+        StaticVector<M, T> getCol(uint32_t j) const;
+
+    protected:
+        StaticVector<N,T> m[M];
+};
+
+#include "../tsrc/StaticMatrix.impl.hh"
+
+#endif // STATIC_MATRIX_HH

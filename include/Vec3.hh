@@ -44,6 +44,7 @@
 #define VEC3_H
 
 #include "Vector.hh"
+#include "StaticVector.hh"
 #include "debug.hh"
 
 template <typename R>
@@ -111,6 +112,71 @@ class Vec3 : public Vector<R> {
         void                                print() const;
         void                                print_debugl(uint32_t level) const;
 };
+
+
+// EDIT: mbreit, 04.01.2017
+// this is very inefficient for vectors of known size!
+// I therefore give a specialization for Vec3(double)
+template <>
+class Vec3<double>
+: public StaticVector<3, double>
+{
+    public:
+        typedef StaticVector<3, double> base_type;
+
+        // constructors
+        Vec3();
+        Vec3(double x, double y, double z);
+        Vec3(const Vec3& v);
+
+        // destructor
+        ~Vec3();
+
+        // assignment operator
+        Vec3& operator=(const Vec3& v);
+
+        // resizing (only for compatibility)
+        void resize(uint32_t size);
+
+        // arithmetic
+        Vec3 operator+(const Vec3& v) const;
+        Vec3& operator+=(const Vec3& v);
+        Vec3 operator-(const Vec3& v) const;
+        Vec3& operator-=(const Vec3& v);
+
+        Vec3 operator*(double x) const;
+        Vec3& operator*=(double x);
+        Vec3 operator/(double x) const;
+        Vec3& operator/=(double x);
+
+        // scalar product, cross product
+        double operator*(const Vec3& v) const;
+        Vec3 cross(const Vec3& v) const;
+
+        // relational operators
+        bool operator==(const Vec3& v) const;
+        bool operator!=(const Vec3& v);
+
+        // tuple-like comparison operators
+        bool operator<(const Vec3& v) const;
+        bool operator>(const Vec3& v) const;
+        bool operator>=(const Vec3& v) const;
+        bool operator<=(const Vec3& v) const;
+
+        // norm
+        double len2(void) const;
+        double len2squared(void) const;
+
+        Vec3 &normalize();
+
+        // output
+        void print() const;
+        void print_debugl(uint32_t level) const;
+
+    private:
+        using StaticVector::v;
+};
+
 
 #include "../tsrc/Vec3.impl.hh"
 

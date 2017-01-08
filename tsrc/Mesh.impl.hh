@@ -224,6 +224,15 @@ Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStarIterators(
     }
 }
 
+
+template <typename Tm, typename Tv, typename Tf, typename R>
+const std::list<typename Mesh<Tm, Tv, Tf, R>::Face*>&
+Mesh<Tm, Tv, Tf, R>::Vertex::getFaceStar() const
+{
+    return incident_faces;
+}
+
+
 template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::Vertex::getFaceStar(std::list<Face *> &fstar) const
@@ -691,7 +700,8 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 bool
 Mesh<Tm, Tv, Tf, R>::Face::gotNeighbour(const Face * const &f) const
 {
-    std::list<Face *> f_nbs;
+    std::vector<Face*> f_nbs;
+    f_nbs.reserve(4);
     this->getFaceNeighbours(f_nbs);
 
     for (auto &g : f_nbs) {
@@ -706,7 +716,8 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 bool
 Mesh<Tm, Tv, Tf, R>::Face::gotNeighbour(const uint32_t &f_id) const
 {
-    std::list<Face *> f_nbs;
+    std::vector<Face*> f_nbs;
+    f_nbs.reserve(4);
     this->getFaceNeighbours(f_nbs);
 
     for (auto &g : f_nbs) {
@@ -883,14 +894,12 @@ Mesh<Tm, Tv, Tf, R>::Face::getEdges(
 template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::Face::getFaceNeighbours(
-    std::list<Face *> &nb_faces) const
+    std::vector<Face*>& nb_faces) const
 {
     this->checkTriQuad("Mesh::Face::getFaceNeighbours()");
 
-    /* clear result list */
-    nb_faces.clear();
-
-    std::list<Face *> tmp;
+    Face* thisFace = Face::getPtr(this->m_fit);
+    Face* tmp[2];
     if (this->isTri()) {
         vertex_const_iterator   v_it[3];
         for (int i = 0; i < 3; i++) {
@@ -898,20 +907,14 @@ Mesh<Tm, Tv, Tf, R>::Face::getFaceNeighbours(
         }
 
         /* get all faces incident to edges (0, 1), (1, 2) and (2,0) */
-        this->mesh->getFacesIncidentToEdge(v_it[0], v_it[1], nb_faces);
-
-        this->mesh->getFacesIncidentToEdge(v_it[1], v_it[2], tmp);
-        nb_faces.splice(nb_faces.end(), tmp);
-
-        this->mesh->getFacesIncidentToEdge(v_it[2], v_it[0], tmp);
-        nb_faces.splice(nb_faces.end(), tmp);
-
-        /* sort, unique(), get rid of the pointer to (this) face in the list, since we only want
-         * neighbours.  as this method is const, we can't use (this) directly, but use
-         * Face::getPtr() with the stored iterator to get a non-const pointer to (this) Face */
-        nb_faces.sort(Mesh::Face::ptr_less);
-        nb_faces.unique();
-        Aux::Alg::removeFirstOccurrenceFromList<Face *>(nb_faces, Face::getPtr(this->m_fit) );
+        for (size_t i = 0; i < 3; ++i)
+        {
+            size_t nIF = 2;
+            this->mesh->getFacesIncidentToEdge(v_it[i], v_it[(i+1)%3], tmp, nIF);
+            for (size_t j = 0; j < nIF; ++j)
+                if (tmp[j] != thisFace)
+                    nb_faces.push_back(tmp[j]);
+        }
     }
     /* same for quads */
     else {
@@ -920,50 +923,56 @@ Mesh<Tm, Tv, Tf, R>::Face::getFaceNeighbours(
             v_it[i] = this->vertices[i]->iterator();
         }
 
-        this->mesh->getFacesIncidentToEdge(v_it[0], v_it[1], nb_faces);
-
-        this->mesh->getFacesIncidentToEdge(v_it[1], v_it[2], tmp);
-        nb_faces.splice(nb_faces.end(), tmp);
-
-        this->mesh->getFacesIncidentToEdge(v_it[2], v_it[3], tmp);
-        nb_faces.splice(nb_faces.end(), tmp);
-
-        this->mesh->getFacesIncidentToEdge(v_it[3], v_it[0], tmp);
-        nb_faces.splice(nb_faces.end(), tmp);
-
-        nb_faces.sort(Mesh::Face::ptr_less);
-        nb_faces.unique();
-        Aux::Alg::removeFirstOccurrenceFromList<Face *>(nb_faces, Face::getPtr(this->m_fit) );
+        for (size_t i = 0; i < 4; ++i)
+        {
+            size_t nIF = 2;
+            this->mesh->getFacesIncidentToEdge(v_it[i], v_it[(i+1)%4], tmp, nIF);
+            for (size_t j = 0; j < nIF; ++j)
+                if (tmp[j] != thisFace)
+                    nb_faces.push_back(tmp[j]);
+        }
     }
+
+    // not required, is it?
+    /*
+    std::sort(nb_faces.begin(), nb_faces.end(), Mesh::Face::ptr_less);
+    auto newEnd = std::unique(nb_faces.begin(), nb_faces.end());
+    nb_faces.erase(newEnd, nb_faces.end());
+    */
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::Face::getFaceNeighbourhood(
     uint32_t            max_depth,
-    std::list<Face *>  &face_neighbourhood)
+    std::vector<Face*>  &face_neighbourhood)
 {
-    std::list< std::pair<Face *, uint32_t> >    Q;
+    std::queue< std::pair<Face*, uint32_t> >    Q;
     Face                                       *f;
     uint32_t                                    f_depth;
-    std::list<Face *>                           f_neighbours;
+    std::vector<Face*>                          f_neighbours;
+    f_neighbours.reserve(3);
 
     /* get new traversal id */
     const uint32_t                              traversal_id = this->mesh->getFreshTraversalId();
 
-    /* clear result list */
+    // each new element can have two new neighbors at most (triangles)
+    // this leads to a maximum of 3*2^n-2 triangles in the neighborhood
+    // be careful if depth parameter is chosen ridiculously high
     face_neighbourhood.clear();
+    face_neighbourhood.reserve(3*pow(2,std::min(f_depth,7u))-2);
 
     /* initialize Q: we start at (this) face in depth 0 */
-    Q.push_back( {this, 0} );
+    Q.push({this, 0});
 
     //printf("go..\n");
-    while ( !Q.empty() ) {
+    while (!Q.empty())
+    {
         //printf("Q.size(): %d\n", Q.size());
         /* get front element and dequeue */
         f       = Q.front().first;
         f_depth = Q.front().second;
-        Q.pop_front();
+        Q.pop();
 
         /* append to face_list, set f's traversal state to done */
         face_neighbourhood.push_back(f);
@@ -975,15 +984,20 @@ Mesh<Tm, Tv, Tf, R>::Face::getFaceNeighbourhood(
             f->getFaceNeighbours(f_neighbours);
             for (Face *nb : f_neighbours) {
                 if (nb->getTraversalState(traversal_id) == TRAV_UNSEEN) {
-                    Q.push_back( {nb, f_depth + 1} );
+                    Q.push({nb, f_depth + 1});
                     nb->setTraversalState(traversal_id, TRAV_ENQUEUED);
                 }
             }
+            f_neighbours.clear();
         }
     }
 
-    face_neighbourhood.sort(Mesh::Face::ptr_less);
-    face_neighbourhood.unique();
+    // why would this be necessary!?
+    /*
+    std::sort(face_neighbourhood.begin(), face_neighbourhood.end(), Mesh::Face::ptr_less);
+    auto newEnd = std::unique(face_neighbourhood.begin(), face_neighbourhood.end());
+    face_neighbourhood.erase(newEnd, face_neighbourhood.end());
+    */
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2396,7 +2410,6 @@ restart_loop:
         Vertex                 *s, *v;
         std::list<Vertex *>     v_vstar;
         std::list<Face *>       v_fstar;
-        std::list<Face *>       vu_incident_faces;
 
         std::queue<Vertex *>    Q;
 
@@ -2471,18 +2484,21 @@ restart_loop:
                          * can be either enqueued or unseen), otherwise u has already handled the
                          * edge in direction {u -> v} */
                         if (u_state != TRAV_DONE) {
+                            Face* vu_incident_faces[2];
+
                             /* get faces containing edge {v, u} */
-                            this->getFacesIncidentToEdge(v->iterator(), u->iterator(), vu_incident_faces);
+                            size_t nIF = 2;
+                            this->getFacesIncidentToEdge(v->iterator(), u->iterator(), vu_incident_faces, nIF);
 
                             /* in case of border edge {v, u}, delete connected component of v and
                              * restart the loop */
-                            if (vu_incident_faces.size() == 1) {
+                            if (nIF == 1) {
                                 this->deleteConnectedComponent( v->iterator() );
                                 done = false;
                                 goto restart_loop;
                             }
                             /* isolated edge, this should be impossible */
-                            else if (vu_incident_faces.size() == 0) {
+                            else if (nIF == 0) {
                                 debugl(0, "Mesh::deleteBorderCCsAndIsolatedVertices(): isolated edge (%d, %d) found.\n", v->id(), u->id());
                                 throw MeshEx(MESH_LOGIC_ERROR, "Mesh::deleteBorderCCsAndIsolatedVertices(): isolated edge found. this should never happen due to internal invariants => internal logic error.");
                             }
@@ -3168,7 +3184,12 @@ Mesh<Tm, Tv, Tf, R>::checkEdge(
     const vertex_const_iterator    &u_it,
     const vertex_const_iterator    &v_it) const
 {
-    this->checkEdge(std::string(fn), u_it, v_it);
+    if (!u_it.checkContainer( *this ) || !u_it.sameContainer(v_it) || u_it == v_it) {
+        throw MeshEx(MESH_LOGIC_ERROR, std::string(fn) + "given edge (u, v) invalid: u and v not from (this) mesh or identical.");
+    }
+    else if (!u_it->gotNeighbour(v_it)) {
+        throw MeshEx(MESH_LOGIC_ERROR, std::string(fn) + "given edge (u, v) invalid: both vertices from (this) mesh, yet edge does not exist.");
+    }
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -3176,10 +3197,13 @@ void
 Mesh<Tm, Tv, Tf, R>::getFacesIncidentToEdge(
     const vertex_const_iterator    &u_it,
     const vertex_const_iterator    &v_it,
-    std::list<Face *>              &incident_faces) const
+    Face**                          incident_faces,
+    size_t&                         sizeInOut) const
 {
     this->checkEdge("Mesh::getFacesIncidentToEdge()", u_it, v_it);
 
+    // this is extremely slow due to recurring call of new operator for creation of lists
+#if 0
     std::list<Face *> ufaces, vfaces;
 
     u_it->getFaceStar(ufaces);
@@ -3192,10 +3216,33 @@ Mesh<Tm, Tv, Tf, R>::getFacesIncidentToEdge(
 
     /* use back_inserter to compile result into incident_faces */
     std::set_intersection(ufaces.begin(), ufaces.end(), vfaces.begin(), vfaces.end(), std::back_inserter(incident_faces) );
+#endif
 
-    if (incident_faces.empty()) {
-        throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getFacesIncidentToEdge(): input edge invalid or non-existent.");
+    // we do it brute force without sorting and are still faster
+    size_t sz = 0;
+    const std::list<Face*>& uFaces = u_it->getFaceStar();
+    const std::list<Face*>& vFaces = v_it->getFaceStar();
+    typename std::list<Face*>::const_iterator itU = uFaces.begin();
+    typename std::list<Face*>::const_iterator itV;
+    typename std::list<Face*>::const_iterator itUend = uFaces.end();
+    typename std::list<Face*>::const_iterator itVend = vFaces.end();
+    for (; itU != itUend; ++itU)
+    {
+        for (itV = vFaces.begin(); itV != itVend; ++itV)
+        {
+            if (*itU == *itV)
+            {
+                if (++sz > sizeInOut)
+                    throw MeshEx(MESH_LOGIC_ERROR, "Found more incident faces to edge than expected.");
+                incident_faces[sz-1] = *itU;
+                break;
+            }
+        }
     }
+
+    if (!sz)
+        throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getFacesIncidentToEdge(): input edge invalid or non-existent.");
+    sizeInOut = sz;
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -3203,7 +3250,8 @@ void
 Mesh<Tm, Tv, Tf, R>::getFacesIncidentToEdge(
     uint32_t                u,
     uint32_t                v,
-    std::list<Face *>      &incident_faces) const
+    Face**                  incident_faces,
+    size_t&                 sizeInOut) const
 {
     /* get face with ids u and v and both lists of incident faces */
     vertex_const_iterator u_it, v_it;
@@ -3216,7 +3264,7 @@ Mesh<Tm, Tv, Tf, R>::getFacesIncidentToEdge(
     else this->checkEdge("Mesh::getFacesIncidentToEdge()", u_it, v_it);
 
     /* call version with iterators as parameters */
-    this->getFacesIncidentToEdge(u_it, v_it, incident_faces);
+    this->getFacesIncidentToEdge(u_it, v_it, incident_faces, sizeInOut);
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -3229,15 +3277,16 @@ Mesh<Tm, Tv, Tf, R>::getFacesIncidentToManifoldEdge(
 {
     this->checkEdge("Mesh::getFacesIncidentToManifoldEdge()", u_it, v_it);
 
-    std::list<Face *> uv_faces;
-    this->getFacesIncidentToEdge(u_it, v_it, uv_faces);
+    Face* uv_faces[2];
+    size_t nIF = 2;
+    this->getFacesIncidentToEdge(u_it, v_it, uv_faces, nIF);
 
-    if (uv_faces.size() != 2) {
+    if (nIF != 2) {
         throw MeshEx(MESH_LOGIC_ERROR, "getFacesIncidentToManifoldEdge(): specified edge not a manifold edge.");
     }
     else {
-        fst_face = uv_faces.front()->iterator();
-        snd_face = uv_faces.back()->iterator();
+        fst_face = uv_faces[0]->iterator();
+        snd_face = uv_faces[1]->iterator();
     }
 }
 
@@ -3250,12 +3299,13 @@ Mesh<Tm, Tv, Tf, R>::getOtherFaceIncidentToManifoldEdge(
 {
     this->checkEdge("Mesh::getOtherFaceIncidentToManifoldEdge()", u_it, v_it);
 
-    std::list<Face *> nbfaces;
-    this->getFacesIncidentToEdge(u_it, v_it, nbfaces);
+    Face* nbfaces[2];
+    size_t nIF = 2;
+    this->getFacesIncidentToEdge(u_it, v_it, nbfaces, nIF);
 
     /* if there are not exactly two faces, throw exception */
-    if (nbfaces.size() != 2) {
-        if (nbfaces.size() == 0) {
+    if (nIF != 2) {
+        if (nIF == 0) {
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getFacesIncidentToManifoldEdge(): edge has no incident faces.");
         }
         else {
@@ -3263,14 +3313,11 @@ Mesh<Tm, Tv, Tf, R>::getOtherFaceIncidentToManifoldEdge(
         }
     }
     else {
-        Face *fst_face, *snd_face;
-        fst_face = nbfaces.front();
-        snd_face = nbfaces.back();
-        if ( known_face_it->id() == fst_face->id() ) {
-            return snd_face->iterator();
+        if ( known_face_it->id() == nbfaces[0]->id() ) {
+            return nbfaces[1]->iterator();
         }
-        else if (known_face_it->id() == snd_face->id() ) {
-            return fst_face->iterator();
+        else if (known_face_it->id() == nbfaces[1]->id() ) {
+            return nbfaces[0]->iterator();
         }
         else {
             throw MeshEx(MESH_NOT_FOUND, "Mesh::getOtherFaceIncidentToManifoldEdge(): given known face id is not incident to specified edge.");
@@ -3407,27 +3454,36 @@ Mesh<Tm, Tv, Tf, R>::getSharedTri(
 {
     /* find all faces incident to (u1, v1) and all faces incident to (u2, v2), compute intersection,
      * which must contain exactly one triangle. if not, throw exception */
-    std::list<Face *> u1_v1_faces;
-    std::list<Face *> u2_v2_faces;
-    std::list<Face *> common_faces;
 
-    this->getFacesIncidentToEdge(u1_it, v1_it, u1_v1_faces);
-    this->getFacesIncidentToEdge(u2_it, v2_it, u2_v2_faces);
+    Face* u1_v1_faces[2];
+    Face* u2_v2_faces[2];
+    size_t nIF1 = 2;
+    size_t nIF2 = 2;
+    this->getFacesIncidentToEdge(u1_it, v1_it, u1_v1_faces, nIF1);
+    this->getFacesIncidentToEdge(u2_it, v2_it, u2_v2_faces, nIF2);
 
-    u1_v1_faces.sort(std::less<Face *>() );
-    u2_v2_faces.sort(std::less<Face *>() );
-
-    /* compute set intersection */
-    std::set_intersection(u1_v1_faces.begin(), u1_v1_faces.end(), u2_v2_faces.begin(), u2_v2_faces.end(), std::back_inserter(common_faces) );
+    Face* f = NULL;
+    size_t commonFaces = 0;
+    for (size_t i = 0; i < nIF1; ++i)
+    {
+        for (size_t j = 0; j < nIF2; ++j)
+        {
+            if (u1_v1_faces[i] == u2_v2_faces[j])
+            {
+               ++commonFaces;
+               f = u1_v1_faces[i];
+               break;
+            }
+        }
+    }
 
     /* must contain exactly one triangle */
-    if (common_faces.size() != 1) {
-        debugl(0, "Mesh::getSharedTri(): edges (%5d, %5d) / (%5d, %5d) share %5d faces, not exactly one.\n", 
-            u1_it->id(), v1_it->id(), u2_it->id(), v2_it->id(), common_faces.size());
+    if (commonFaces != 1) {
+        debugl(0, "Mesh::getSharedTri(): edges (%5d, %5d) / (%5d, %5d) share %du faces, not exactly one.\n",
+           u1_it->id(), v1_it->id(), u2_it->id(), v2_it->id(), commonFaces);
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getSharedTri(): given two edges are not contained in exactly one face.");
     }
 
-    Face *f = common_faces.front();
     if (f->isQuad()) {
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getSharedTri(): face containing two given edges is a quad, not a triangle");
     }
@@ -4019,7 +4075,6 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
     Vertex                 *s, *v;
     std::list<Vertex *>     v_vstar;
     std::list<Face *>       v_fstar;
-    std::list<Face *>       vu_incident_faces;
 
     std::queue<Vertex *>    Q;
 
@@ -4086,26 +4141,28 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
                      * either enqueued or unseen), otherwise u has already handled the edge in
                      * direction {u -> v} */
                     if (u_state != TRAV_DONE) {
+                        Face* vu_incident_faces[2];
+                        size_t nIF = 2;
                         /* get faces containing edge {v, u} */
-                        this->getFacesIncidentToEdge(v->iterator(), u->iterator(), vu_incident_faces);
-                        if (vu_incident_faces.size() > 2) {
+                        this->getFacesIncidentToEdge(v->iterator(), u->iterator(), vu_incident_faces, nIF);
+                        if (nIF > 2) {
                             debugl(0, "Mesh::checkTopology(): FATAL: non-manifold edge (%d, %d) found. faces: \n", v->id() , u->id() );
                             throw("Mesh::checkTopology(): FATAL: non-manifold edge found.");
                         }
-                        else if (vu_incident_faces.size() == 1) {
+                        else if (nIF == 1) {
                             debugl(0, "Mesh::checkTopology(): FATAL: border edge (%d, %d) found!\n", v->id(), u->id() );
                             throw("Mesh::checkTopology(): FATAL: border edge found.");
                         }
-                        else if (vu_incident_faces.size() == 0) {
+                        else if (nIF == 0) {
                             debugl(0, "Mesh::checkTopology(): FATAL: isolated edge (%d, %d) found.\n", v->id(), u->id());
                             throw("Mesh::checkTopology(): FATAL: isolated edge found.");
                         }
 
                         /* get two faces, check if their are triangles, get orientation of shared
                          * edge, check for orientability */
-                        else if (vu_incident_faces.size() == 2) { 
-                            Face   *t1 = vu_incident_faces.front();  
-                            Face   *t2 = vu_incident_faces.back();  
+                        else if (nIF == 2) {
+                            Face   *t1 = vu_incident_faces[0];
+                            Face   *t2 = vu_incident_faces[1];
                             bool    t1_uv_orient, t2_uv_orient;
                             
                             /* get orientations in both triangles */
@@ -5192,20 +5249,20 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::erase(face_iterator it)
         /* now remove vertex adjacencies created by this edge. the adjacency lists might contain
          * multiple duplicate entries, because an edge might be incident to several faces. remove
          * only ONE copy from the adjacency list. with a set, this would be very problematic */
-        removeFirstOccurrenceFromList<Vertex *>(v_i->adjacent_vertices, v_l);
-        removeFirstOccurrenceFromList<Vertex *>(v_i->adjacent_vertices, v_j);
+        removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_l);
+        removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_j);
         v_i->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
 
-        removeFirstOccurrenceFromList<Vertex *>(v_j->adjacent_vertices, v_i);
-        removeFirstOccurrenceFromList<Vertex *>(v_j->adjacent_vertices, v_k);
+        removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_i);
+        removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_k);
         v_j->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
 
-        removeFirstOccurrenceFromList<Vertex *>(v_k->adjacent_vertices, v_j);
-        removeFirstOccurrenceFromList<Vertex *>(v_k->adjacent_vertices, v_l);
+        removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_j);
+        removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_l);
         v_k->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
 
-        removeFirstOccurrenceFromList<Vertex *>(v_l->adjacent_vertices, v_k);
-        removeFirstOccurrenceFromList<Vertex *>(v_l->adjacent_vertices, v_i);
+        removeFirstOccurrenceFromList(v_l->adjacent_vertices, v_k);
+        removeFirstOccurrenceFromList(v_l->adjacent_vertices, v_i);
         v_l->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
     }
     /* same for triangles */
@@ -5224,16 +5281,16 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::erase(face_iterator it)
         }
 
         /* remove one occurance of adjacencies from the face */
-        removeFirstOccurrenceFromList<Vertex *>(v_i->adjacent_vertices, v_k);
-        removeFirstOccurrenceFromList<Vertex *>(v_i->adjacent_vertices, v_j);
+        removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_k);
+        removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_j);
         v_i->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
 
-        removeFirstOccurrenceFromList<Vertex *>(v_j->adjacent_vertices, v_i);
-        removeFirstOccurrenceFromList<Vertex *>(v_j->adjacent_vertices, v_k);
+        removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_i);
+        removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_k);
         v_j->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
 
-        removeFirstOccurrenceFromList<Vertex *>(v_k->adjacent_vertices, v_j);
-        removeFirstOccurrenceFromList<Vertex *>(v_k->adjacent_vertices, v_i);
+        removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_j);
+        removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_i);
         v_k->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
     }
     else { 

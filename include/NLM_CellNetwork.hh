@@ -901,34 +901,34 @@ class NLM_CellNetwork
                                                             >  const                                       &selection_algorithm);
         /* static intersection analysis methods */
         static bool                                 checkCanalSegmentRegularity(
-                                                        BLRCanalSurface<R> const   &Gamma,
+                                                        BLRCanalSurface<3u, R> const   &Gamma,
                                                         R const                    &univar_solver_eps,
                                                         std::vector<NLM::p2<R>>    &checkpoly_roots);
 
         static bool                                 checkSomaNeuriteIntersection(
                                                         NLM::SomaSphere<R> const   &S,
-                                                        BLRCanalSurface<R> const   &Gamma,
+                                                        BLRCanalSurface<3u, R> const   &Gamma,
                                                         bool                        neurite_root_segment,
                                                         R const                    &univar_solver_eps,
                                                         std::vector<NLM::p2<R>>    &isec_stat_points);
 
         /* local self intersection of neurite canal segment */
         static bool                                 checkNeuriteLocalSelfIntersection(
-                                                        BLRCanalSurface<R> const   &Gamma,
+                                                        BLRCanalSurface<3u, R> const   &Gamma,
                                                         R const                    &univar_solver_eps,
                                                         std::vector<NLM::p2<R>>    &lsi_neg_points);
 
         /* global self intersection of neurite canal segment */
         static bool                                 checkNeuriteGlobalSelfIntersection(
-                                                        BLRCanalSurface<R> const   &Gamma,
+                                                        BLRCanalSurface<3u, R> const   &Gamma,
                                                         R const                    &univar_solver_eps,
                                                         R const                    &bivar_solver_eps,
                                                         std::vector<NLM::p3<R>>    &gsi_stat_points);   
 
         /* neurite / neurite intersection for non-adjacent neurite segment canal surfaces */
         static bool                                 checkNeuriteNeuriteIntersection(
-                                                        BLRCanalSurface<R> const   &Gamma,
-                                                        BLRCanalSurface<R> const   &Delta,
+                                                        BLRCanalSurface<3u, R> const   &Gamma,
+                                                        BLRCanalSurface<3u, R> const   &Delta,
                                                         R const                    &univar_solver_eps,
                                                         R const                    &bivar_solver_eps,
                                                         std::vector<NLM::p3<R>>    &isec_stat_points);
@@ -937,8 +937,8 @@ class NLM_CellNetwork
          * point, then Gamma and Delta MUST be given in the order that  satisfies gamma(1.0) = delta(0.0),
          * i.e. the endpoint of Gamma's spine curve must be the starting point of Delta's spine curve. */
         static bool                                 checkAdjacentNeuriteNeuriteIntersection(
-                                                        BLRCanalSurface<R> const   &Gamma,
-                                                        BLRCanalSurface<R> const   &Delta,
+                                                        BLRCanalSurface<3u, R> const   &Gamma,
+                                                        BLRCanalSurface<3u, R> const   &Delta,
                                                         R const                    &univar_solver_eps,
                                                         R const                    &bivar_solver_eps,
                                                         bool                        fst_end_snd_start,

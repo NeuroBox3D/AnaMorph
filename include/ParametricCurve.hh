@@ -52,7 +52,7 @@
 template <
     typename    C2F,
     typename    T  = double,
-    typename    Tr = Vector<double>
+    typename    Tr = StaticVector<3u, double>
 >
 class ParametricCurve {
     protected:
@@ -120,7 +120,7 @@ template<
     typename C2F,
     typename R = double
 >
-class SpaceCurveReal : public ParametricCurve<C2F, R, Vec3<R>>
+class SpaceCurveReal : public ParametricCurve<C2F, R, Vec3<R> >
 {
     protected:
         bool                    arclen_set;
@@ -181,63 +181,62 @@ class SpaceCurveReal : public ParametricCurve<C2F, R, Vec3<R>>
         void                    updateArcLength(R const &dt = 1E-4);
 };
 
-template<typename R = double>
-class BezierCurve : public SpaceCurveReal< BernsteinPolynomial<R, R>, R >
+template<uint32_t degree, typename R = double>
+class BezierCurve : public SpaceCurveReal< BernsteinPolynomial<degree, R, R>, R >
 {
     private:
+        typedef BezierCurve<degree, R> this_type;
+        typedef BezierCurve<(degree>0) ? degree-1 : 0, R> this_deriv_type;
+        static const uint32_t derivDeg = degree>0 ? degree-1 : 0;
+        static const uint32_t deriv2Deg = degree>1 ? degree-2 : 0;
+        typedef BernsteinPolynomial<degree, R, R> pol_type;
+        typedef BernsteinPolynomial<derivDeg, R, R>  pol_deriv_type;
+        typedef BernsteinPolynomial<deriv2Deg, R, R>  pol_deriv2_type;
+
         /* also STORE first and second derivative of polynomial component functions.
          * component_functors has already been declared in template base class ParametricCurve */
-        std::vector<BernsteinPolynomial<R, R>>  d_component_functors;
-        std::vector<BernsteinPolynomial<R, R>>  d2_component_functors;
+        std::vector<pol_deriv_type>  d_component_functors;
+        std::vector<pol_deriv2_type>  d2_component_functors;
 
     public:
         /* ctors, dtor */
-                                BezierCurve();
-                                BezierCurve(std::array<BernsteinPolynomial<R, R>, 3> const &component_functors);
-                                BezierCurve(std::vector<Vec3<R>> const &control_points);
-                                BezierCurve(BezierCurve<R> const &x);
-        BezierCurve<R>         &operator=(BezierCurve<R> const &x);
-                                
-                               ~BezierCurve();
+        BezierCurve();
+        BezierCurve(const std::array<pol_type, 3>& component_functors);
+        BezierCurve(const std::vector<Vec3<R> >& control_points);
+        BezierCurve(const this_type& x);
+
+        ~BezierCurve();
+
+        this_type& operator=(const this_type& x);
 
         /* arithmetic */
-        BezierCurve<R>          operator+(BezierCurve<R> const &x) const;
-        BezierCurve<R>         &operator+=(BezierCurve<R> const &x);
+        this_type operator+(const this_type& x) const;
+        this_type& operator+=(const this_type& x);
 
-        BezierCurve<R>          operator-(BezierCurve<R> const &x) const;
-        BezierCurve<R>         &operator-=(BezierCurve<R> const &x);
+        this_type operator-(const this_type& x) const;
+        this_type& operator-=(const this_type& x);
 
-        BezierCurve<R>          operator*(R const &x) const;
-        BezierCurve<R>         &operator*=(R const &x);
+        this_type operator*(const R& x) const;
+        this_type& operator*=(const R& x);
 
-        BezierCurve<R>          operator/(R const &x) const;
-        BezierCurve<R>         &operator/=(R const &x);
+        this_type operator/(const R& x) const;
+        this_type& operator/=(const R& x);
 
         /* methods specific to BezierCurve */
-        BezierCurve<R>          getDerivative() const;
+        this_deriv_type getDerivative() const;
 
-        std::list<Vec3<R>>      getControlPoints() const;
+        std::list<Vec3<R> > getControlPoints() const;
 
-        void                    split(
-                                    R const        &t,
-                                    BezierCurve<R> *cleft,
-                                    BezierCurve<R> *cright) const;
+        void split(const R& xt, this_type* cleft, this_type* cright) const;
 
-        void                    clipToInterval(
-                                    R const        &t0,
-                                    R const        &t1,
-                                    BezierCurve<R>  *cclip) const;
+        void clipToInterval(const R& t0, const R& t1, this_type* cclip) const;
 
         /* get bounding box using recursive subdivision up to a certain level and then the bounding box of all control
          * points */
-        BoundingBox<R>          getBoundingBox(uint32_t        subdivision_detph = 0) const;
+        BoundingBox<R> getBoundingBox(uint32_t subdivision_detph = 0) const;
 
-        /* degree n of internally used BB(n) representation for all three component polynomials */
-        uint32_t                getDegree() const;
-        void                    computeRegularityPolynomial(BernsteinPolynomial<R, R> &p_reg) const;
-        void                    computeStationaryPointDistPoly(
-                                    Vec3<R> const              &x,
-                                    BernsteinPolynomial<R, R>  &p) const;
+        void computeRegularityPolynomial(BernsteinPolynomial<2*derivDeg, R, R>& p_reg) const;
+        void computeStationaryPointDistPoly(const Vec3<R>& x, BernsteinPolynomial<degree+derivDeg, R, R>& p) const;
 };
 
 #include "../tsrc/ParametricCurve.impl.hh"

@@ -536,9 +536,9 @@ SpaceCurveReal<C2F, R>::updateArcLength(R const &dt)
  *                                                                                                                    *
  * ------------------------------------------------------------------------------------------------------------------ */
 
-template<typename R>
-BezierCurve<R>::BezierCurve()
-    : SpaceCurveReal<BernsteinPolynomial<R, R>, R>()
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>::BezierCurve()
+    : SpaceCurveReal<pol_type, R>()
 {
     /* domain is _always_ [0,1] for bezier curves. */
     this->t0    = 0;
@@ -548,9 +548,8 @@ BezierCurve<R>::BezierCurve()
     this->d2_component_functors.resize(3);
 }
 
-template<typename R>
-BezierCurve<R>::BezierCurve(
-    std::array<BernsteinPolynomial<R, R>, 3> const &component_functors)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>::BezierCurve(const std::array<pol_type, 3>& component_functors)
 {
     /* check if all component polynomials have same degree */
     if (component_functors[0].getDegree() == component_functors[1].getDegree() &&
@@ -577,8 +576,8 @@ BezierCurve<R>::BezierCurve(
     this->t1    = 1;
 }
 
-template<typename R>
-BezierCurve<R>::BezierCurve(std::vector<Vec3<R>> const &control_points)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>::BezierCurve(const std::vector<Vec3<R> >& control_points)
 {
     /* resize vectors for component functions and its derivatives */
     this->component_functors.resize(3);
@@ -586,7 +585,7 @@ BezierCurve<R>::BezierCurve(std::vector<Vec3<R>> const &control_points)
     this->d2_component_functors.resize(3);
 
     /* set bb component polynomial coefficients and compute derivatives from control points */
-    Vector<R> gamma_i_coeff(4);
+    typename pol_type::coeff_type gamma_i_coeff(0);
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 4; j++) {
             gamma_i_coeff[j] = control_points[j][i];
@@ -602,97 +601,97 @@ BezierCurve<R>::BezierCurve(std::vector<Vec3<R>> const &control_points)
     this->t1    = 1;
 }
 
-template<typename R>
-BezierCurve<R>::BezierCurve(BezierCurve const &x)
-    : SpaceCurveReal<BernsteinPolynomial<R, R>, R>(x)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>::BezierCurve(const this_type& x)
+    : SpaceCurveReal<pol_type, R>(x)
 {
     this->d_component_functors  = x.d_component_functors;
     this->d2_component_functors = x.d2_component_functors;
 }
 
-template<typename R>
-BezierCurve<R> &
-BezierCurve<R>::operator=(BezierCurve const &x)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>&
+BezierCurve<degree, R>::operator=(const this_type& x)
 {
-    SpaceCurveReal<BernsteinPolynomial<R, R>, R>::operator=(x);
+    SpaceCurveReal<pol_type, R>::operator=(x);
     this->d_component_functors  = x.d_component_functors;
     this->d2_component_functors = x.d2_component_functors;
 
-    return (*this);
+    return *this;
 }
 
-template<typename R>
-BezierCurve<R>::~BezierCurve()
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>::~BezierCurve()
 {
 }
 
 /* arithmetic */
-template <typename R>
-BezierCurve<R>
-BezierCurve<R>::operator+(BezierCurve<R> const &x) const
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>
+BezierCurve<degree, R>::operator+(const this_type& x) const
 {
-    return (BezierCurve<R>(*this) += x);
+    return this_type(*this) += x;
 }
 
-template <typename R>
-BezierCurve<R> &
-BezierCurve<R>::operator+=(BezierCurve<R> const &x)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>&
+BezierCurve<degree, R>::operator+=(const this_type& x)
 {
-    SpaceCurveReal< BernsteinPolynomial<R, R>, R>::operator+=(x);
-    return (*this);
+    SpaceCurveReal<pol_type, R>::operator+=(x);
+    return *this;
 }
 
-template <typename R>
-BezierCurve<R>
-BezierCurve<R>::operator-(BezierCurve<R> const &x) const
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>
+BezierCurve<degree, R>::operator-(const this_type& x) const
 {
-    return (BezierCurve<R>(*this) -= x);
+    return this_type(*this) -= x;
 }
 
-template <typename R>
-BezierCurve<R> &
-BezierCurve<R>::operator-=(BezierCurve<R> const &x)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>&
+BezierCurve<degree, R>::operator-=(const this_type& x)
 {
-    SpaceCurveReal< BernsteinPolynomial<R, R>, R>::operator-=(x);
-    return (*this);
+    SpaceCurveReal<pol_type, R>::operator-=(x);
+    return *this;
 }
 
-template <typename R>
-BezierCurve<R>
-BezierCurve<R>::operator*(R const &x) const
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>
+BezierCurve<degree, R>::operator*(const R& x) const
 {
-    return (BezierCurve<R>(*this) * x);
+    return this_type(*this) * x;
 }
 
-template <typename R>
-BezierCurve<R> &
-BezierCurve<R>::operator*=(R const &x)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>&
+BezierCurve<degree, R>::operator*=(const R& x)
 {
-    SpaceCurveReal< BernsteinPolynomial<R, R>, R>::operator*=(x);
-    return (*this);
+    SpaceCurveReal<pol_type, R>::operator*=(x);
+    return *this;
 }
 
-template <typename R>
-BezierCurve<R>
-BezierCurve<R>::operator/(R const &x) const
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>
+BezierCurve<degree, R>::operator/(const R& x) const
 {
-    return (BezierCurve<R>(*this) / x);
+    return this_type(*this) / x;
 }
 
-template <typename R>
-BezierCurve<R> &
-BezierCurve<R>::operator/=(R const &x)
+template <uint32_t degree, typename R>
+BezierCurve<degree, R>&
+BezierCurve<degree, R>::operator/=(const R& x)
 {
-    SpaceCurveReal< BernsteinPolynomial<R, R>, R>::operator/=(x);
-    return (*this);
+    SpaceCurveReal<pol_type, R>::operator/=(x);
+    return *this;
 }
 
 /* get derivative curve */
-template<typename R>
-BezierCurve<R>
-BezierCurve<R>::getDerivative() const
+template <uint32_t degree, typename R>
+BezierCurve<(degree>0) ? degree-1 : 0, R>
+BezierCurve<degree, R>::getDerivative() const
 {
-    return  BezierCurve<R>( {
+    return this_deriv_type( {
                 this->operator[](0).getDerivative(),
                 this->operator[](1).getDerivative(),
                 this->operator[](2).getDerivative()
@@ -700,12 +699,12 @@ BezierCurve<R>::getDerivative() const
 }
 
 /* get control points */
-template<typename R>
-std::list<Vec3<R>>
-BezierCurve<R>::getControlPoints() const
+template <uint32_t degree, typename R>
+std::list<Vec3<R> >
+BezierCurve<degree, R>::getControlPoints() const
 {
     std::list<Vec3<R>> control_points;
-    for (uint32_t i = 0; i < this->getDegree() + 1; i++) {
+    for (uint32_t i = 0; i < degree+1; i++) {
         control_points.push_back({
                 this->component_functors[0][i],
                 this->component_functors[1][i],
@@ -715,32 +714,29 @@ BezierCurve<R>::getControlPoints() const
     return control_points;
 }
 
-template<typename R>
+template <uint32_t degree, typename R>
 void
-BezierCurve<R>::split(
-    R const        &t,
-    BezierCurve<R> *cleft,
-    BezierCurve<R> *cright) const
+BezierCurve<degree, R>::split(
+    const R& t,
+    this_type* cleft,
+    this_type* cright) const
 {
     if (t < 0 || t > 1) {
         throw("BezierCurve::split(): given value of t not in [0,1].");
     }
-    std::array<BernsteinPolynomial<R, R>, 3> comps_left, comps_right;
+    std::array<pol_type, 3> comps_left, comps_right;
 
     for (uint32_t i = 0; i < 3; i++) {
         this->operator[](i).split(t, &comps_left[i], &comps_right[i]);
     }
 
-    if (cleft)  *cleft   = BezierCurve<R>(comps_left);
-    if (cright) *cright  = BezierCurve<R>(comps_right);
+    if (cleft) *cleft = this_type(comps_left);
+    if (cright) *cright = this_type(comps_right);
 }
 
-template<typename R>
+template <uint32_t degree, typename R>
 void
-BezierCurve<R>::clipToInterval(
-    R const        &t0,
-    R const        &t1,
-    BezierCurve<R> *cclip) const
+BezierCurve<degree, R>::clipToInterval(const R& t0, const R& t1, this_type* cclip) const
 {
     if (t0 > t1 || t0 < 0 || t0 > 1 || t1 < 0 || t1 > 1) {
         throw("BezierCurve::clipToInterval(): given interval [t0, t1] not subset of [0,1] or t1 < t0.");
@@ -752,9 +748,9 @@ BezierCurve<R>::clipToInterval(
     }
 }
 
-template<typename R>
+template <uint32_t degree, typename R>
 BoundingBox<R>
-BezierCurve<R>::getBoundingBox(uint32_t subdivision_detph) const
+BezierCurve<degree, R>::getBoundingBox(uint32_t subdivision_detph) const
 {
     using Aux::Numbers::inf;
     using Aux::VecMat::onesVec3;
@@ -762,9 +758,9 @@ BezierCurve<R>::getBoundingBox(uint32_t subdivision_detph) const
     using Aux::VecMat::minVec3;
     using Aux::VecMat::maxVec3;
 
-    std::list<BezierCurve<R>>   l1 = { *this }, l2;
-    std::list<BezierCurve<R>>  *l = &l1, *lswap = &l2;
-    BezierCurve<R>             *c, c1, c2; 
+    std::list<this_type>   l1 = { *this }, l2;
+    std::list<this_type>  *l = &l1, *lswap = &l2;
+    this_type             *c, c1, c2;
     for (uint32_t i = 0; i < subdivision_detph; i++) {
         /* clear swap list */
         lswap->clear();
@@ -783,7 +779,7 @@ BezierCurve<R>::getBoundingBox(uint32_t subdivision_detph) const
 
     /* l now contains (potentially a lot) of BezierCurve's from the iterated subdivision. get minimum / maximum
      * component vectgor from all control points */
-    std::list<BezierCurve<R>> &list = *l;
+    std::list<this_type> &list = *l;
     Vec3<R> bb_min                  =  onesVec3<R>() * inf<R>();
     Vec3<R> bb_max                  =  onesVec3<R>() * (-inf<R>());
     for (auto &bc : list) {
@@ -798,42 +794,33 @@ BezierCurve<R>::getBoundingBox(uint32_t subdivision_detph) const
     return (BoundingBox<R>({ bb_min, bb_max}).extend(0.025, Vec3<R>(1E-3, 1E-3, 1E-3)));
 }
 
-template<typename R>
-uint32_t
-BezierCurve<R>::getDegree() const
-{
-    return (this->component_functors[0].getDegree());
-}
-
-template<typename R>
+template <uint32_t degree, typename R>
 void
-BezierCurve<R>::computeRegularityPolynomial(BernsteinPolynomial<R, R> &p_reg) const
+BezierCurve<degree, R>::computeRegularityPolynomial(BernsteinPolynomial<2*derivDeg, R, R>& p_reg) const
 {
     p_reg = this->d_component_functors[0].square() + 
             this->d_component_functors[1].square() +
             this->d_component_functors[2].square();
 }
 
-template<typename R>
+template <uint32_t degree, typename R>
 void
-BezierCurve<R>::computeStationaryPointDistPoly(
+BezierCurve<degree, R>::computeStationaryPointDistPoly(
     Vec3<R> const              &x,
-    BernsteinPolynomial<R, R>  &p) const
+    BernsteinPolynomial<degree+derivDeg, R, R>& p) const
 {
-    uint32_t n = this->getDegree();
-
     /* convert components of x to three (constant) polynomials in BB(n), which can be subtracted
      * from gamma[j], j = 0..2 */
-    BernsteinPolynomial<R, R> x_bb[3];
+    pol_type x_bb[3];
 
-    x_bb[0] = BernsteinPolynomial<R, R>(n, x[0]);
-    x_bb[1] = BernsteinPolynomial<R, R>(n, x[1]);
-    x_bb[2] = BernsteinPolynomial<R, R>(n, x[2]);
+    x_bb[0] = pol_type(x[0]);
+    x_bb[1] = pol_type(x[1]);
+    x_bb[2] = pol_type(x[2]);
 
     /* evaluate polynomial whose roots are stationary points as described in the thesis */
     p = this->d_component_functors[0].multiply(this->component_functors[0] - x_bb[0]) + 
         this->d_component_functors[1].multiply(this->component_functors[1] - x_bb[1]) + 
         this->d_component_functors[2].multiply(this->component_functors[2] - x_bb[2]);
 
-    debugl(2, "CanalSurface::computeStationaryPointDistPoly(): n = %d, stationary point polynomial computed in BB(%d)\n", n, p.getDegree() );
+    debugl(2, "CanalSurface::computeStationaryPointDistPoly(): n = %d, stationary point polynomial computed in BB(%d)\n", degree, degree);
 }

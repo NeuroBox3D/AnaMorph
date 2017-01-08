@@ -372,11 +372,11 @@ namespace NLM {
         /* for all n segments, assemble spine curve segment in power basis, convert to BezierCurve by converting
          * component functions to BernsteinPolynomials and finally create neurite canal segment BLRCanalSurface using the
          * radii of the two neurite vertices forming the neurite segment. */
-        Vector<R>                                   powercoeff_tmp(4, 0);
-        PowerPolynomial<R, R>                       powerpoly_tmp;
-        BernsteinPolynomial<R, R>                   bbpoly_tmp;
-        std::array<BernsteinPolynomial<R, R>, 3>    segment_i_components;
-        BezierCurve<R>                              segment_i_curve;
+        typename PowerPolynomial<3u, double, double>::coeff_type powercoeff_tmp(0);
+        PowerPolynomial<3u, R, R>                                powerpoly_tmp;
+        BernsteinPolynomial<3u, R, R>                            bbpoly_tmp;
+        std::array<BernsteinPolynomial<3u, R, R>, 3>             segment_i_components;
+        BezierCurve<3u, R>                                           segment_i_curve;
         Vec3<R>                                     segment_i_bb_min, segment_i_bb_max;
 
         /* reset bounding box of neurite path */
@@ -402,7 +402,7 @@ namespace NLM {
                 powercoeff_tmp[0] = result_powercoeff[j][coeff_index + 3];
 
                 /* create temporary power polynomial for component j of segment i */
-                powerpoly_tmp = PowerPolynomial<R, R>(powercoeff_tmp); 
+                powerpoly_tmp = PowerPolynomial<3u, R, R>(powercoeff_tmp);
 
                 /* convert to BernsteinPolynomial */
                 PolyAlg::convertBasis(bbpoly_tmp, powerpoly_tmp);
@@ -417,14 +417,14 @@ namespace NLM {
 
             debugl(1, "creating bezier curve from three component BernsteinPolynomials\n");
             /* create bezier spine curve for segment i */
-            segment_i_curve = BezierCurve<R>(segment_i_components);
+            segment_i_curve = BezierCurve<3u, R>(segment_i_components);
 
             debugl(1, "creating BLRCanalSurface neurite canal segment..\n");
             /* finally, create BLRCanalSurface and store in NLM::NeuriteSegmentInfo of neurite segment i of (this) path. */
             NLM::NeuriteSegmentInfo<R> &segment_i_info  = this->neurite_segments[i]->neurite_segment_data;
 
             segment_i_info.canal_segment_magnified      =
-                BLRCanalSurface<R>(
+                BLRCanalSurface<3u, R>(
                     segment_i_curve, 
                     this->neurite_segments[i]->getSourceVertex()->getRadius(),
                     this->neurite_segments[i]->getDestinationVertex()->getRadius()
@@ -470,8 +470,8 @@ namespace NLM {
                 Vec3<R> d       = v0_pos - s_pos;
                 R       r_v0    = v0_it->getRadius();
 
-                re_info.initial_cylinder = BLRCanalSurface<R>(
-                    BezierCurve<R>({ s_pos, s_pos + d / 3.0, s_pos + d * (2.0 / 3.0), v0_pos }),
+                re_info.initial_cylinder = BLRCanalSurface<3u, R>(
+                    BezierCurve<3u, R>({ s_pos, s_pos + d / 3.0, s_pos + d * (2.0 / 3.0), v0_pos }),
                     r_v0,
                     r_v0);
 
@@ -629,9 +629,9 @@ namespace NLM {
                 radius_reduction_factor);
 
             /* copy first canal segment and reduce the start vertex radius with radius_reduction_factor */
-            BLRCanalSurface<R> const &C0    = *(this->canal_segments_magnified[0]);
+            BLRCanalSurface<3u, R> const &C0    = *(this->canal_segments_magnified[0]);
             std::pair<R, R>     C0_radii    = C0.getRadii();
-            BLRCanalSurface<R>  C0_copy(
+            BLRCanalSurface<3u, R>  C0_copy(
                     C0.getSpineCurve(),
                     C0_radii.first * radius_reduction_factor,
                     C0_radii.second
@@ -1733,14 +1733,14 @@ NLM_CellNetwork<R>::updateCellGeometry(
 template <typename R>
 bool
 NLM_CellNetwork<R>::checkCanalSegmentRegularity(
-    BLRCanalSurface<R> const   &Gamma,
+    BLRCanalSurface<3u, R> const   &Gamma,
     R const                    &univar_solver_eps,
     std::vector<NLM::p2<R>>    &checkpoly_roots)
 {
     bool                                    result;
     uint32_t                                i;
     R                                       val, feps, t_i;
-    BernsteinPolynomial<R, R>               gamma_reg;
+    BernsteinPolynomial<4u, R, R>               gamma_reg;
     std::vector<PolyAlg::RealInterval<R>>   roots;
 
     /* compute "regularity" check polynomial, which is just the square of the parametric speed of
@@ -1754,7 +1754,7 @@ NLM_CellNetwork<R>::checkCanalSegmentRegularity(
     feps   *= 1E-10;
 
     /* find roots of regularity polynomial with bezier clipping algorithm. */
-    PolyAlg::BezClip_roots<R>(gamma_reg, 0.0, 1.0, univar_solver_eps, roots);
+    PolyAlg::BezClip_roots<4u, R>(gamma_reg, 0.0, 1.0, univar_solver_eps, roots);
 
     /* evaluate all candidate points and check against threshold */
     checkpoly_roots.clear();
@@ -1775,7 +1775,7 @@ template <typename R>
 bool
 NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     NLM::SomaSphere<R> const   &S,
-    BLRCanalSurface<R> const   &Gamma,
+    BLRCanalSurface<3u, R> const   &Gamma,
     bool                        neurite_root_segment,
     R const                    &univar_solver_eps,
     std::vector<NLM::p2<R>>    &isec_stat_points)
@@ -1785,10 +1785,10 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     uint32_t                                i;
     R                                       r_S, r_Gamma_max, thres, dist, feps, t_i;
     Vec3<R>                                 S_c;
-    BernsteinPolynomial<R, R>               p;
+    BernsteinPolynomial<5u, R, R>               p;
     R const                                 offset = 2.0 * univar_solver_eps;
-    std::vector<PolyAlg::RealInterval<R>>   roots;
-    std::vector<PolyAlg::RealInterval<R>>   candidate_points;
+    std::vector<PolyAlg::RealInterval<R> >   roots;
+    std::vector<PolyAlg::RealInterval<R> >   candidate_points;
 
     debugl(0, "getting data from soma sphere..\n");
     /* get soma centre, radius and max radius of pipe surface. compute threshold, which is (rmax + S_r)^2 */
@@ -1816,7 +1816,7 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     feps   *= 1E-10;
 
     /* find roots of regularity polynomial and append roots to candidate_points. */
-    PolyAlg::BezClip_roots<R>(p, 0.0, 1.0, univar_solver_eps, roots);
+    PolyAlg::BezClip_roots<5u, R>(p, 0.0, 1.0, univar_solver_eps, roots);
     candidate_points.insert(candidate_points.end(), roots.begin(), roots.end());
 
     /* evaluate all candidate points and check against threshold */
@@ -1843,14 +1843,14 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
 template <typename R>
 bool
 NLM_CellNetwork<R>::checkNeuriteLocalSelfIntersection(
-    BLRCanalSurface<R> const   &Gamma,
+    BLRCanalSurface<3u, R> const   &Gamma,
     R const                    &univar_solver_eps,
     std::vector<NLM::p2<R>>    &lsi_neg_points)
 {
     bool                                    result;
     uint32_t                                i;
     R                                       feps, pval, t_i;
-    BernsteinPolynomial<R, R>               p_si;
+    BernsteinPolynomial<12u, R, R>               p_si;
     std::vector<PolyAlg::RealInterval<R>>   roots;
     std::vector<PolyAlg::RealInterval<R>>   candidate_points;
 
@@ -1868,7 +1868,7 @@ NLM_CellNetwork<R>::checkNeuriteLocalSelfIntersection(
     feps   *= 1E-10;
 
     /* find roots of regularity polynomial and append them to candidate_points */
-    PolyAlg::BezClip_roots<R>(p_si, 0.0, 1.0, univar_solver_eps, roots);
+    PolyAlg::BezClip_roots<12u, R>(p_si, 0.0, 1.0, univar_solver_eps, roots);
     candidate_points.insert(candidate_points.end(), roots.begin(), roots.end());
 
     /* check all candidate points. we got a focal point or a point between focal points if self-intersection polynomial
@@ -1891,7 +1891,7 @@ NLM_CellNetwork<R>::checkNeuriteLocalSelfIntersection(
 template <typename R>
 bool
 NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
-    BLRCanalSurface<R> const   &Gamma,
+    BLRCanalSurface<3u, R> const   &Gamma,
     R const                    &univar_solver_eps,
     R const                    &bivar_solver_eps,
     std::vector<NLM::p3<R>>    &gsi_stat_points)
@@ -1900,14 +1900,14 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
 
     bool                                    result;
     uint32_t                                i;
-    uint32_t const                          n = Gamma.getDegree();
     R                                       rmax_sum, thres, dist; //, feps;
     R const                                 offset = 2.0 * std::max(univar_solver_eps, bivar_solver_eps);
 
-    BiBernsteinPolynomial<R, R>             p, q;
+    BiBernsteinPolynomial<7u, 5u, R, R>             p;
+    BiBernsteinPolynomial<5u, 7u, R, R>             q;
     std::vector<PolyAlg::RealRectangle<R>>  pq_roots;
 
-    BernsteinPolynomial<R, R>               pe_t0, pe_t1;
+    BernsteinPolynomial<5u, R, R>               pe_t0, pe_t1;
     std::vector<PolyAlg::RealInterval<R>>   edge_roots;
 
     std::vector<PolyAlg::RealRectangle<R>>  candidate_points;
@@ -1936,15 +1936,16 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
      * basis, because the same legendre approximation matrices are used. this is not necessary, but inconvenient to
      * change right now, so: p is in BB(3n-2, 2n-1), q in BB(2n-1, 3n-2) => elevate p by (0, n-1) and q by (n-1, 0),
      * then both are in (3n-2, 3n-2) */
-    p.elevateDegree( 0, n-1 );
-    q.elevateDegree( n-1, 0 );
+    BiBernsteinPolynomial<7u, 7u, R, R> p_elev, q_elev;
+    p_elev = p.template elevateDegree<0,2u>();
+    q_elev = q.template elevateDegree<2u,0>();
     try {
-        PolyAlg::BiLinClip_roots<R>(p, q, 0.0, 1.0, 0.0, 1.0, bivar_solver_eps, pq_roots);
+        PolyAlg::BiLinClip_roots<7u, 7u, R>(p_elev, q_elev, 0.0, 1.0, 0.0, 1.0, bivar_solver_eps, pq_roots);
     }
     catch (const char *err) {
         debugl(0, "checkNeuriteGlobalSelfIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system and rethrowing.\n", err);
-        p.writePlotFile(200, "gsi_exception_p.plot");
-        q.writePlotFile(200, "gsi_exception_q.plot");
+        p_elev.writePlotFile(200, "gsi_exception_p.plot");
+        q_elev.writePlotFile(200, "gsi_exception_q.plot");
 
         /* exception caught, default to intersection */
         result = true;
@@ -1957,7 +1958,7 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
 
     /* solve _two_ edge polynomial systems and append respective roots, converted to rectangles, to candidate_points. */
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_t0, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_t0, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         //debugl(0, "t0 edge poly root interval (%20.13E, %20.13E)\n", edge_roots[i].x0, edge_roots[i].x1);
         candidate_points.push_back( { 0.0, 0.0, edge_roots[i].t0, edge_roots[i].t1 } );
@@ -1970,7 +1971,7 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
     }
 
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_t1, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_t1, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         //debugl(0, "t1 edge poly root interval (%20.13E, %20.13E)\n", edge_roots[i].x0, edge_roots[i].x1);
         candidate_points.push_back( { 1.0, 1.0, edge_roots[i].t0, edge_roots[i].t1 } );
@@ -2016,8 +2017,8 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
 template <typename R>
 bool
 NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
-    BLRCanalSurface<R> const   &Gamma,
-    BLRCanalSurface<R> const   &Delta,
+    BLRCanalSurface<3u, R> const   &Gamma,
+    BLRCanalSurface<3u, R> const   &Delta,
     R const                    &univar_solver_eps,
     R const                    &bivar_solver_eps,
     std::vector<NLM::p3<R>>    &isec_stat_points)
@@ -2025,14 +2026,14 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection():\n");
 
     bool                                    result;
-    uint32_t const                          m = Gamma.getDegree(), n = Delta.getDegree();
     uint32_t                                i;
     R                                       rmax_sum, thres, dist, feps;
 
-    BiBernsteinPolynomial<R, R>             p, q;
+    BiBernsteinPolynomial<5u, 3u, R, R>             p;
+    BiBernsteinPolynomial<3u, 5u, R, R>             q;
     std::vector<PolyAlg::RealRectangle<R>>  pq_roots;
 
-    BernsteinPolynomial<R, R>               pe_x0, pe_x1, pe_y0, pe_y1;
+    BernsteinPolynomial<5u, R, R>               pe_x0, pe_x1, pe_y0, pe_y1;
     std::vector<PolyAlg::RealInterval<R>>   edge_roots;
 
     std::vector<PolyAlg::RealRectangle<R>>  candidate_points;
@@ -2064,11 +2065,12 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
      * to be in the same basis, because the same legendre approximation matrices are used. this is
      * not necessary, but inconvenient to change right now, so:
      * p is in BB(2m-1, n), q in BB(m, 2n-1) => elevate p by (0, n-1) and q by (m-1, 0) */
-    p.elevateDegree(0, n-1);
-    q.elevateDegree(m-1, 0);
+    BiBernsteinPolynomial<5u, 5u, R, R> p_elev, q_elev;
+    p_elev = p.template elevateDegree<0,2u>();
+    q_elev = q.template elevateDegree<2u,0>();
     std::vector<PolyAlg::RealRectangle<R>> roots;
     try {
-        PolyAlg::BiLinClip_roots<R>(p, q, 0.0, 1.0, 0.0, 1.0, bivar_solver_eps, pq_roots);
+        PolyAlg::BiLinClip_roots<5u, 5u, R>(p_elev, q_elev, 0.0, 1.0, 0.0, 1.0, bivar_solver_eps, pq_roots);
     }
     catch (const char *err) {
         debugl(0, "checkNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system and defaulting to intersection.\n", err);
@@ -2088,7 +2090,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     debugl(0, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving four univariate edge polynomial systems.\n");
     /* solve four edge polynomial systems and append respective roots, converted to rectangles, to candidate_points. */
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_x0, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_x0, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { 0.0, 0.0, edge_roots[i].midpoint(), edge_roots[i].midpoint() } );
             /*
@@ -2101,7 +2103,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     }
 
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_x1, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_x1, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { 1.0, 1.0, edge_roots[i].midpoint(), edge_roots[i].midpoint() } );
             /*
@@ -2113,7 +2115,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     }
 
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_y0, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_y0, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { edge_roots[i].midpoint(), edge_roots[i].midpoint(), 0.0, 0.0 } );
             /*
@@ -2125,7 +2127,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     }
 
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_y1, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_y1, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { edge_roots[i].midpoint(), edge_roots[i].midpoint(), 1.0, 1.0 } );
             /*
@@ -2173,8 +2175,8 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
 template <typename R>
 bool
 NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
-    BLRCanalSurface<R> const   &Gamma,
-    BLRCanalSurface<R> const   &Delta,
+    BLRCanalSurface<3u, R> const   &Gamma,
+    BLRCanalSurface<3u, R> const   &Delta,
     R const                    &univar_solver_eps,
     R const                    &bivar_solver_eps,
     bool                        fst_end_snd_start,
@@ -2184,15 +2186,15 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
 
     bool                                    result;
     uint32_t                                i;
-    uint32_t const                          m = Gamma.getDegree(), n = Delta.getDegree();
     R                                       rmax_sum, thres, dist, feps;
     R const                                 offset = 1E-2; //2.0 * std::max(univar_solver_eps, bivar_solver_eps);
 
-    BiBernsteinPolynomial<R, R>             p, q;
+    BiBernsteinPolynomial<5u, 3u, R, R>     p;
+    BiBernsteinPolynomial<3u, 5u, R, R>     q;
     std::vector<PolyAlg::RealRectangle<R>>  pq_roots;
     std::vector<PolyAlg::RealRectangle<R>>  pq_blacklist;
 
-    BernsteinPolynomial<R, R>               pe_x0, pe_x1, pe_y0, pe_y1;
+    BernsteinPolynomial<5u, R, R>               pe_x0, pe_x1, pe_y0, pe_y1;
     std::vector<PolyAlg::RealInterval<R>>   edge_roots;
 
     std::vector<PolyAlg::RealRectangle<R>>  candidate_points;
@@ -2227,8 +2229,9 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
      * linaer clipping implementation requires both polynomials to be in the same basis, because the same legendre
      * approximation matrices are used. this is not necessary, but inconvenient to change right now, so: p is in
      * BB(2m-1, n), q in BB(m, 2n-1) => elevate p by (0, n-1) and q by (m-1, 0) */
-    p.elevateDegree(0, n-1);
-    q.elevateDegree(m-1, 0);
+    BiBernsteinPolynomial<5u, 5u, R, R> p_elev, q_elev;
+    p_elev = p.template elevateDegree<0,2u>();
+    q_elev = q.template elevateDegree<2u,0>();
 
     /* Gamma and Delta adjacent: blacklist a small rectangle around the corner point (1,0) or (0,0), depending on the
      * value of fst_end_snd_start:
@@ -2260,8 +2263,8 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
 
     /* call solver */
     try {
-        PolyAlg::BiLinClip_roots<R>(
-                p, q,
+        PolyAlg::BiLinClip_roots<5u, 5u, R>(
+                p_elev, q_elev,
                 0.0, 1.0, 0.0, 1.0,
                 bivar_solver_eps,
                 pq_roots,
@@ -2274,7 +2277,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
         debugl(0, "checkAdjacentNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system..\n", err);
         debugl(0, "checkAdjacentNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system..\n", err);
 
-        //p.writePlotFile(200, "consecutive_exception_p.plot");
+        //p_elev.writePlotFile(200, "consecutive_exception_p.plot");
         //q.writePlotFile(200, "consecutive_exception_q.plot");
 
         /* default to intersection */
@@ -2288,7 +2291,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
 
     /* solve four edge polynomial systems and append respective roots, converted to rectangles, to candidate_points. */
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_x0, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_x0, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { 0.0, 0.0, edge_roots[i].midpoint(), edge_roots[i].midpoint() } );
             /*
@@ -2300,7 +2303,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
     }
 
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_x1, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_x1, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { 1.0, 1.0, edge_roots[i].midpoint(), edge_roots[i].midpoint() } );
             /*
@@ -2312,7 +2315,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
     }
 
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_y0, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_y0, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { edge_roots[i].midpoint(), edge_roots[i].midpoint(), 0.0, 0.0 } );
             /*
@@ -2324,7 +2327,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
     }
 
     edge_roots.clear();
-    PolyAlg::BezClip_roots<R>(pe_y1, 0.0, 1.0, univar_solver_eps, edge_roots);
+    PolyAlg::BezClip_roots<5u, R>(pe_y1, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
         candidate_points.push_back( { edge_roots[i].midpoint(), edge_roots[i].midpoint(), 1.0, 1.0 } );
             /*
@@ -2423,7 +2426,7 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
                 case JOB_REG:
                     reg_job                         = dynamic_cast<REG_Job *>(generic_job);
                     if (reg_job) {
-                        BLRCanalSurface<R> const &Gamma = reg_job->ns_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Gamma = reg_job->ns_it->neurite_segment_data.canal_segment_magnified;
 
                         reg_job->result                 = checkCanalSegmentRegularity(
                                 Gamma,
@@ -2438,7 +2441,7 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
                 case JOB_LSI:
                     lsi_job = dynamic_cast<LSI_Job *>(generic_job);
                     if (lsi_job) {
-                        BLRCanalSurface<R> const &Gamma = lsi_job->ns_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Gamma = lsi_job->ns_it->neurite_segment_data.canal_segment_magnified;
 
                         lsi_job->result                 = checkNeuriteLocalSelfIntersection(
                                 Gamma,
@@ -2454,7 +2457,7 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
                     gsi_job = dynamic_cast<GSI_Job *>(generic_job);
 
                     if (gsi_job) {
-                        BLRCanalSurface<R> const &Gamma = gsi_job->ns_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Gamma = gsi_job->ns_it->neurite_segment_data.canal_segment_magnified;
 
                         gsi_job->result                 = checkNeuriteGlobalSelfIntersection(
                                 Gamma,
@@ -2471,7 +2474,7 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
                     sons_job = dynamic_cast<SONS_Job *>(generic_job);
 
                     if (sons_job) {
-                        BLRCanalSurface<R> const &Gamma = sons_job->ns_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Gamma = sons_job->ns_it->neurite_segment_data.canal_segment_magnified;
 
                         sons_job->result                = checkSomaNeuriteIntersection(
                                 sons_job->s_it->soma_data.soma_sphere,
@@ -2489,8 +2492,8 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
                     nsns_adj_job            = dynamic_cast<NSNS_Adj_Job *>(generic_job);
 
                     if (nsns_adj_job) {
-                        BLRCanalSurface<R> const &Gamma = nsns_adj_job->ns_first_it->neurite_segment_data.canal_segment_magnified;
-                        BLRCanalSurface<R> const &Delta = nsns_adj_job->ns_second_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Gamma = nsns_adj_job->ns_first_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Delta = nsns_adj_job->ns_second_it->neurite_segment_data.canal_segment_magnified;
 
                         nsns_adj_job->result            = checkAdjacentNeuriteNeuriteIntersection(
                                 Gamma,
@@ -2509,8 +2512,8 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
                     nsns_nonadj_job = dynamic_cast<NSNS_NonAdj_Job *>(generic_job);
 
                     if (nsns_nonadj_job) {
-                        BLRCanalSurface<R> const &Gamma = nsns_nonadj_job->ns_first_it->neurite_segment_data.canal_segment_magnified;
-                        BLRCanalSurface<R> const &Delta = nsns_nonadj_job->ns_second_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Gamma = nsns_nonadj_job->ns_first_it->neurite_segment_data.canal_segment_magnified;
+                        BLRCanalSurface<3u, R> const &Delta = nsns_nonadj_job->ns_second_it->neurite_segment_data.canal_segment_magnified;
 
                         nsns_nonadj_job->result         = checkNeuriteNeuriteIntersection(
                                 Gamma,
@@ -2632,7 +2635,7 @@ NLM_CellNetwork<R>::computeFullAnalysisIntersectionJobs(
          * NSNS_NonAdj_Jobs are generated. */
         for (uint32_t i = 0; i < P.canal_segments_magnified.size() - 1; i++) {
             /* get reference to canal segment C_i as well as its bounding box */
-            BLRCanalSurface<R> const &P_Gamma_i = *(P.canal_segments_magnified[i]);
+            BLRCanalSurface<3u, R> const &P_Gamma_i = *(P.canal_segments_magnified[i]);
             auto P_Gamma_i_bb                   = P_Gamma_i.getBoundingBox();
 
             /* check for intersection of P_Gamma_i with all somas and generate SONS_Jobs if necessary. */
@@ -2667,7 +2670,7 @@ NLM_CellNetwork<R>::computeFullAnalysisIntersectionJobs(
             
             /* check the rest: j = i + 2, .. */
             for (uint32_t j = i + 2; j < P.canal_segments_magnified.size(); j++) {
-                BLRCanalSurface<R> const &P_Gamma_j = *(P.canal_segments_magnified[j]);
+                BLRCanalSurface<3u, R> const &P_Gamma_j = *(P.canal_segments_magnified[j]);
                 auto P_Gamma_j_bb                   = P_Gamma_j.getBoundingBox();
 
                 /* check for bounding box intersection */
@@ -2707,7 +2710,7 @@ NLM_CellNetwork<R>::computeFullAnalysisIntersectionJobs(
                  * intersection and generate an NSNS_NonAdj_Job if necessary. */
                 for (auto &P_c : P.neurite_segments) {
                     NLM::NeuriteSegmentInfo<R> const &P_c_info  = P_c->neurite_segment_data;
-                    BLRCanalSurface<R> const &P_Gamma           = P_c_info.canal_segment_magnified;
+                    BLRCanalSurface<3u, R> const &P_Gamma           = P_c_info.canal_segment_magnified;
                     auto P_Gamma_bb                             = P_Gamma.getBoundingBox();
 
                     for (auto &Q_d : Q.neurite_segments) {
@@ -2761,7 +2764,7 @@ NLM_CellNetwork<R>::computeFullAnalysisIntersectionJobs(
                         }
                         /* P_c and Q_d are non-adjacent => check for bounding box intersection */
                         else {
-                            BLRCanalSurface<R> const &Q_Delta   = Q_d_info.canal_segment_magnified;
+                            BLRCanalSurface<3u, R> const &Q_Delta   = Q_d_info.canal_segment_magnified;
                             auto Q_Delta_bb                     = Q_Delta.getBoundingBox();
 
                             if (P_Gamma_bb && Q_Delta_bb) {
@@ -2806,7 +2809,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
     debugl(0, "NLM_CellNetwork::processIntersectionJobs(). number of jobs: %ld\n", job_queue.size());
     //debugl(0, "NLM_CellNetwork::processIntersectionJobs(). number of jobs: %ld\n", job_queue.size());
 
-    /* if not single-threaded, set njobs_per_thread to 1/5*nthreads of the number of total jobs, but not less than 500. just a
+    /* if not single-threaded, set njobs_per_thread to 1/(5*nthreads) of the number of total jobs, but not less than 500. just a
      * heuristic setting to avoid too low or too high work load */
     uint32_t njobs_per_thread;
     if (nthreads == 1) {
@@ -2863,7 +2866,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                         njobs_remaining -= thread_slots[i].job_list.size();
 
                         /* create new thread */
-                        debugl(0, "Thread slot %2d: launching new thread for %5zu jobs. job queue contains another %5ld waiting jobs.\n",
+                        debugl(0, "Thread slot %2d: launching new thread for %5zu jobs. job queue contains another %u waiting jobs.\n",
                                 i, thread_slots[i].job_list.size(), njobs_remaining );
 
                         try {
@@ -2994,19 +2997,21 @@ NLM_CellNetwork<R>::performFullAnalysis()
      * (8, 8) is sufficient for the currently considered modelling settings (mainly cubic bezier curves as spine
      * curves). should the settings be insufficient, the solvers will throw exceptions. in single-threaded environments,
      * it is safe to dynamically recompute the data as needed. */
-    BernsteinPolynomial<R, R>::initBernsteinBasisInnerProducts(24);
-    BernsteinPolynomial<R, R>::setInnerProductDataImmutable();
+    // EDIT (mbreit, 06-01-2017): This is no longer necessary as the polynomials are now templated by their degree
+    // and sizes of the precomputed arrays do no longer change (once initialized).
+    // Same goes for BLRCanalSurfaces.
+    /*
+    BernsteinPolynomial<3u, R, R>::initBernsteinBasisInnerProducts(24);
+    BernsteinPolynomial<3u, R, R>::setInnerProductDataImmutable();
 
     debugl(0, "various approximation data for univariate and bivariate numerical solvers..\n");
-    PolyAlg::BiLinClip_getApproximationData<R>(
-            /* for bivariate systems, set m_max = n_max = 8 */
-            8, 8,
-            /* disable dynamic recomputation after computation to be thread-safe. */
+    PolyAlg::BiLinClip_getApproximationData<8u, 8u, R>(
+            // disable dynamic recomputation after computation to be thread-safe.
             false);
 
     debugl(0, "global self-intersection data for maximum radius pipe surface approximation..\n");
-    BLRCanalSurface<R>::initGlobalSelfIntersectionData(8);
-    BLRCanalSurface<R>::setGlobalSelfIntersectionDataImmutable();
+    BLRCanalSurface<3u, R>::initGlobalSelfIntersectionData();
+    */
 
     /* update mdv information */
     this->updateAllMDVInformation();
@@ -3636,7 +3641,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
             debugl(1, "tail path mesh appended. appending terminal half-sphere.\n");
 
             /* append a terminal "half-sphere" at the end neurite point of P */
-            BLRCanalSurface<R> &C_end   = *(P.canal_segments_magnified.back());
+            BLRCanalSurface<3u, R> &C_end   = *(P.canal_segments_magnified.back());
             Vec3<R> start               = C_end.spineCurveEval(1.0);
             Vec3<R> direction           = C_end.spineCurveEval_d(1.0);
             R       radius              = C_end.radiusEval(1.0);
@@ -3854,8 +3859,8 @@ NLM_CellNetwork<R>::writeMorphViewFile(std::string filename) const
             /* get const reference to neurite segment curve and neurite segment info */
             neurite_segment_const_iterator ns_it        = P->neurite_segments[i];
             NLM::NeuriteSegmentInfo<R> const &ns_info   = ns_it->neurite_segment_data;
-            BLRCanalSurface<R> const &Gamma             = ns_info.canal_segment_magnified;
-            BezierCurve<R> const &gamma                 = Gamma.getSpineCurve();
+            BLRCanalSurface<3u, R> const &Gamma             = ns_info.canal_segment_magnified;
+            BezierCurve<3u, R> const &gamma                 = Gamma.getSpineCurve();
 
             /* dump coefficients of component functions to file */
             /* for all three component functions */

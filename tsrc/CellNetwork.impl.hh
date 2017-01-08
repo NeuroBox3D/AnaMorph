@@ -5836,6 +5836,9 @@ readFromNeuroMorphoSWCFile(
     debugl(1, "computing preliminary tree structure.\n");
     /* compute tree structure among nodes and get all soma nodes, that is: all nodes with parent_id -1. other nodes may
      * refer encode information for the same soma and will be merged below */
+    // FIXME: The assertion "soma nodes are nodes with parent_id -1" is not true in general.
+    //        Root nodes (parent_id == -1) are not required to be soma nodes (and vice-versa).
+    //        I get a hard-to-track RTE for a geometry where this is the root node is a dendritic node.
     std::list<uint32_t> soma_root_node_ids;
     for (auto &node : swc_nodes) {
         /* get parent of node, add node as child of parent */

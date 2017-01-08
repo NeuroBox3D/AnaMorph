@@ -364,27 +364,13 @@ void
 MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
     Mesh<Tm, Tv, Tf, R>                        &X,
     Mesh<Tm, Tv, Tf, R>                        &Y,
-    std::list<
-            std::pair<
-                std::pair<
-                    typename Mesh<Tm, Tv, Tf, R>::Vertex *,
-                    typename Mesh<Tm, Tv, Tf, R>::Vertex *
-                >,
-                typename Mesh<Tm, Tv, Tf, R>::Face *
-            >
-        >                                      &X_edges_Y_faces_candidates,
-    std::list<
-            std::pair<
-                typename std::pair<
-                    typename Mesh<Tm, Tv, Tf, R>::Vertex *,
-                    typename Mesh<Tm, Tv, Tf, R>::Vertex *
-                >,
-                typename Mesh<Tm, Tv, Tf, R>::Face *
-            >
-        >                                      &Y_edges_X_faces_candidates,
+    std::vector<EdgeFacePair<Mesh<Tm, Tv, Tf, R> > >&  X_edges_Y_faces_candidates,
+    std::vector<EdgeFacePair<Mesh<Tm, Tv, Tf, R> > >&  Y_edges_X_faces_candidates,
     uint32_t                                    max_components,
     uint32_t                                    max_recursion_depth)
 {
+    typedef EdgeFacePair<Mesh<Tm, Tv, Tf, R> > EFPtype;
+    typedef typename Mesh<Tm, Tv, Tf, R>::Face FaceType;
     using namespace Aux::Timing;
     tick(12);
 
@@ -396,54 +382,29 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
 
     /* store lists of all faces of X and Y in root lists for recursive top-down Octree-like algorithm 
      * Common::Geometry::computeSpatialIntersectionCandidatePairs() */
-    std::list<
-            std::pair<
-                typename Mesh<Tm, Tv, Tf, R>::Face *,
-                BoundingBox<R>
-            >
-        >                                               X_face_info_list, Y_face_info_list;
+    std::vector<std::pair<FaceType*, BoundingBox<R> > > X_face_info_list, Y_face_info_list;
+    X_face_info_list.reserve(X.numFaces());
+    Y_face_info_list.reserve(Y.numFaces());
+    for (auto &f : X.faces)
+        X_face_info_list.push_back({&f, f.getBoundingBox()});
+    for (auto &f : Y.faces)
+        Y_face_info_list.push_back({&f, f.getBoundingBox()});
 
-    for (auto &f : X.faces) {
-        X_face_info_list.push_back( { &f, f.getBoundingBox() } );
-    }
-    for (auto &f : Y.faces) {
-        Y_face_info_list.push_back( { &f, f.getBoundingBox() } );
-    }
-
-    /* define face getter function as lambda expression */
-    /*
-    auto face_bb_getter =
-        [] (typename Mesh<Tm, Tv, Tf, R>::Face * const &f) -> std::pair<Vec3<R>, Vec3<R>> 
-        {
-            Vec3<R> f_aabb_min, f_aabb_max;
-            f->getBoundingBox(f_aabb_min, f_aabb_max);
-            return std::pair<Vec3<R>, Vec3<R>>(f_aabb_min, f_aabb_max);
-        };
-    */
-
-    std::list<
-            std::pair<
-                typename Mesh<Tm, Tv, Tf, R>::Face *,
-                typename Mesh<Tm, Tv, Tf, R>::Face *
-            >
-        > candidate_pairs;
+    std::vector<std::pair<FaceType*, FaceType*> > candidate_pairs;
 
     /* call recursive top-down spatial intersection algorithm */
     debugl(0, "MeshAlg::getPotentialEdgeFacePairs(): calling Aux::Geometry::computeSpatialIntersectionCandidatePairs().\n");
     Aux::Timing::tick(16);
 
-    Aux::Geometry::computeSpatialIntersectionCandidatePairs<
-            typename Mesh<Tm, Tv, Tf, R>::Face *,
-            typename Mesh<Tm, Tv, Tf, R>::Face *,
-            R
-        >(
-            XY_bb,
-            X_face_info_list, Y_face_info_list,
-            //face_bb_getter, face_bb_getter,
-            //NULL, NULL,
-            0, max_components, max_recursion_depth,
-            candidate_pairs
-        );
+    Aux::Geometry::computeSpatialIntersectionCandidatePairs<FaceType*, FaceType*, R>
+    (
+        XY_bb,
+        X_face_info_list, Y_face_info_list,
+        //face_bb_getter, face_bb_getter,
+        //NULL, NULL,
+        0, max_components, max_recursion_depth,
+        candidate_pairs
+    );
 
     debugl(0, "MeshAlg::getPotentialEdgeFacePairs(): done. time: %5.4f\n", Aux::Timing::tack(16));
 
@@ -459,14 +420,14 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
             const std::pair<typename Mesh<Tm, Tv, Tf, R>::Face *, typename Mesh<Tm, Tv, Tf, R>::Face *> &y)
         -> bool 
         {
-            return (
-                    uPair<uint32_t>(x.first->id(), x.second->id()) <
-                    uPair<uint32_t>(y.first->id(), y.second->id())
-                );
+            if (x.first->id() < y.first->id()) return true;
+            if (y.first->id() < x.first->id()) return false;
+            return x.second->id() < y.second->id();
         };
 
-    candidate_pairs.sort(face_ptr_pair_cmp);
-    candidate_pairs.unique();
+    std::sort(candidate_pairs.begin(), candidate_pairs.end(), face_ptr_pair_cmp);
+    auto newPairEnd = std::unique(candidate_pairs.begin(), candidate_pairs.end());
+    candidate_pairs.erase(newPairEnd, candidate_pairs.end());
 
     debugl(1, "returned candidate pairs: %d\n", candidate_pairs.size());
 
@@ -496,7 +457,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
                 std::swap(e_u, e_v);
             }
 
-            X_edges_Y_faces_candidates.push_back( { { e_u, e_v }, Y_face } );
+            X_edges_Y_faces_candidates.push_back(EFPtype(e_u, e_v, Y_face));
         }
 
         /* and vice versa for all edges e of Y_face and the corresponding pairs (e, X_face) */
@@ -511,56 +472,17 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
             }
 
             //Y_edges_X_faces_candidates.push_back( { { &(*e.first), &(*e.second) }, X_face } );
-            Y_edges_X_faces_candidates.push_back( { { e_u, e_v }, X_face } );
+            Y_edges_X_faces_candidates.push_back(EFPtype(e_u, e_v, X_face));
         }
     }
 
-    /* sort() and unique() edge / face pair lists, again with custom comparison function for the sort()ing step.
-     * comparison of pairs uses lexicographic comparison on the pair types, which in turn indirectly calls the built-in
-     * operator< / operator> for pointers. as explained above, this can result in U.B. a rather unfortunate design
-     * decision of C++ indeed.. choosing the built-in operators for pointers to provide a total ordering by default and
-     * leaving the RAW pointer hacking as the non-default case would have been fare more intuitive in my humble
-     * opinion.. */
-    auto vertex_ptr_pair_cmp = 
-        [] (
-            const std::pair<typename Mesh<Tm, Tv, Tf, R>::Vertex *, typename Mesh<Tm, Tv, Tf, R>::Vertex *> &x, 
-            const std::pair<typename Mesh<Tm, Tv, Tf, R>::Vertex *, typename Mesh<Tm, Tv, Tf, R>::Vertex *> &y)
-        -> bool 
-        {
-            return (
-                    uPair<uint32_t>(x.first->id(), x.second->id()) <
-                    uPair<uint32_t>(y.first->id(), y.second->id())
-                );
-        };
+    std::sort(X_edges_Y_faces_candidates.begin(), X_edges_Y_faces_candidates.end());
+    auto newEnd = std::unique(X_edges_Y_faces_candidates.begin(), X_edges_Y_faces_candidates.end());
+    X_edges_Y_faces_candidates.erase(newEnd, X_edges_Y_faces_candidates.end());
 
-    auto edge_face_cand_cmp = 
-        [vertex_ptr_pair_cmp] (
-            std::pair<
-                    std::pair<
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *,
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *
-                    >,
-                    typename Mesh<Tm, Tv, Tf, R>::Face *
-                > const &x,
-            std::pair<
-                    std::pair<
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *,
-                        typename Mesh<Tm, Tv, Tf, R>::Vertex *
-                    >,
-                    typename Mesh<Tm, Tv, Tf, R>::Face *
-                > const &y)
-        -> bool 
-        {
-            return ( vertex_ptr_pair_cmp(x.first, y.first) ||
-                    (x.first == y.first && x.second->id() < y.second->id())
-                );
-        };
-
-    X_edges_Y_faces_candidates.sort(edge_face_cand_cmp);
-    X_edges_Y_faces_candidates.unique();
-
-    Y_edges_X_faces_candidates.sort(edge_face_cand_cmp);
-    Y_edges_X_faces_candidates.unique();
+    std::sort(Y_edges_X_faces_candidates.begin(), Y_edges_X_faces_candidates.end());
+    newEnd = std::unique(Y_edges_X_faces_candidates.begin(), Y_edges_X_faces_candidates.end());
+    Y_edges_X_faces_candidates.erase(newEnd, Y_edges_X_faces_candidates.end());
 
     debugTabDec();
 
@@ -674,15 +596,7 @@ RedBlue_generateRBTupleList(
     Mesh<Tm, Tv, Tf, TR>                                   &X,
     Mesh<Tm, Tv, Tf, TR>                                   &Y,
     bool                                                    X_red,
-    std::list<
-        std::pair<
-            std::pair<
-                typename Mesh<Tm, Tv, Tf, TR>::Vertex *,
-                typename Mesh<Tm, Tv, Tf, TR>::Vertex *
-            >,
-            typename Mesh<Tm, Tv, Tf, TR>::Face *
-        >
-    >                                                      &X_edges_Y_faces_candidates,
+    std::vector<MeshAlg::EdgeFacePair<Mesh<Tm, Tv, Tf, TR> > > &X_edges_Y_faces_candidates,
     std::list<RB_Tuple<Tm, Tv, Tf, TR>>                    &X_colour_tuples,
     std::list<RedBlue_EdgeIsecInfo<TR>>                    &complex_edge_info_list);
 
@@ -731,25 +645,8 @@ MeshAlg::RedBlueAlgorithm(
      *  
      *      (red edge / blue face)  and  (blue edge / red face)
      */
-    std::list<
-            std::pair<
-                std::pair<
-                    typename Mesh<Tm, Tv, Tf, TR>::Vertex *,
-                    typename Mesh<Tm, Tv, Tf, TR>::Vertex *
-                >,
-                typename Mesh<Tm, Tv, Tf, TR>::Face *
-            >
-        >                                       R_edges_B_faces_candidates;
-
-    std::list<
-            std::pair<
-                std::pair<
-                    typename Mesh<Tm, Tv, Tf, TR>::Vertex *,
-                    typename Mesh<Tm, Tv, Tf, TR>::Vertex *
-                >,
-                typename Mesh<Tm, Tv, Tf, TR>::Face *
-            >
-        >                                       B_edges_R_faces_candidates;
+    std::vector<EdgeFacePair<Mesh<Tm, Tv, Tf, TR> > > R_edges_B_faces_candidates;
+    std::vector<EdgeFacePair<Mesh<Tm, Tv, Tf, TR> > > B_edges_R_faces_candidates;
 
     /* retrieve candidate lists, where std::pair comparison operators are defined in the
      * straight-forward way form the comparison operators for the components. face pointers are
@@ -766,9 +663,9 @@ MeshAlg::RedBlueAlgorithm(
     debugTabInc();
     for (auto &R_B_cand : R_edges_B_faces_candidates) {
         debugl(2, "red edge:  (%5d, %5d), blue face: %5d\n",
-                R_B_cand.first.first->id(), 
-                R_B_cand.first.second->id(), 
-                R_B_cand.second->id());
+                R_B_cand.vrt1->id(),
+                R_B_cand.vrt2->id(),
+                R_B_cand.f->id());
     }
     debugTabDec();
 
@@ -776,9 +673,9 @@ MeshAlg::RedBlueAlgorithm(
     debugTabInc();
     for (auto &B_R_cand : B_edges_R_faces_candidates) {
         debugl(2, "blue edge: (%5d, %5d), red face:  %5d\n",
-                B_R_cand.first.first->id(), 
-                B_R_cand.first.second->id(), 
-                B_R_cand.second->id());
+                B_R_cand.vrt1->id(),
+                B_R_cand.vrt2->id(),
+                B_R_cand.f->id());
     }
     debugTabDec();
 #endif
@@ -1185,15 +1082,7 @@ RedBlue_generateRBTupleList(
     Mesh<Tm, Tv, Tf, TR>                                   &X,
     Mesh<Tm, Tv, Tf, TR>                                   &Y,
     bool                                                    X_red,
-    std::list<
-        std::pair<
-            std::pair<
-                typename Mesh<Tm, Tv, Tf, TR>::Vertex *,
-                typename Mesh<Tm, Tv, Tf, TR>::Vertex *
-            >,
-            typename Mesh<Tm, Tv, Tf, TR>::Face *
-        >
-    >                                                      &X_edges_Y_faces_candidates,
+    std::vector<MeshAlg::EdgeFacePair<Mesh<Tm, Tv, Tf, TR> > > &X_edges_Y_faces_candidates,
     std::list<RB_Tuple<Tm, Tv, Tf, TR>>                    &X_colour_tuples,
     /* RB edge info for exception handling */
     std::list<RedBlue_EdgeIsecInfo<TR>>                    &complex_edge_info_list)
@@ -1217,42 +1106,39 @@ RedBlue_generateRBTupleList(
 
     /* red edge e = (u, v) identified by iterators u_it, v_it */
     std::list<typename Mesh<Tm, Tv, Tf, TR>::Face *>        e_Y_candidate_tris;
-    std::pair<
-            typename Mesh<Tm, Tv, Tf, TR>::Vertex *,
-            typename Mesh<Tm, Tv, Tf, TR>::Vertex *
-        >                                                   e_ptr_pair;
     uint32_t                                                uv_nisec_faces;
 
     /* for all red edges e_r = (u, v): extract all potentially intersected blue faces from the
      * R_edges_B_faces_candidates list */
     debugTabInc();
-    while ( !X_edges_Y_faces_candidates.empty()) {
+    size_t sz = X_edges_Y_faces_candidates.size();
+    for (size_t i = 0; i < sz;)
+    {
         /* clear candidate faces and reset intersected face counter */
         e_Y_candidate_tris.clear();
         uv_nisec_faces = 0;
 
         /* extract the edge e = (u, v) from the current front() element of X_edges_Y_faces_candidates */ 
         debugl(0, "-----------------\n");
-        u_it        = X_edges_Y_faces_candidates.front().first.first->iterator();
-        v_it        = X_edges_Y_faces_candidates.front().first.second->iterator();
-
-        /* edge e as pair of vertex pointers */
-        e_ptr_pair  = { &(*u_it), &(*v_it) };
+        u_it        = X_edges_Y_faces_candidates[i].vrt1->iterator();
+        v_it        = X_edges_Y_faces_candidates[i].vrt2->iterator();
 
         u           = u_it->pos();
         v           = v_it->pos();
 
         /* extract blue face from front() element of X_edges_Y_faces_candidates and store in candidate list for e */
-        e_Y_candidate_tris.push_back(X_edges_Y_faces_candidates.front().second);
-
-        /* pop_front() */
-        X_edges_Y_faces_candidates.pop_front();
+        e_Y_candidate_tris.push_back(X_edges_Y_faces_candidates[i].f);
+        ++i;
 
         /* as long as the red edge e = (u, v) is the current edge in the SORTED candidate pair list, keep moving the
          * corresponding blue faces from Y into e_candidate_tris */
-        while ( X_edges_Y_faces_candidates.front().first ==  e_ptr_pair) {
-            e_Y_candidate_tris.push_back( X_edges_Y_faces_candidates.front().second );
-            X_edges_Y_faces_candidates.pop_front();
+        while (i < sz && ((X_edges_Y_faces_candidates[i].vrt1->id() == u_it->id()
+               && X_edges_Y_faces_candidates[i].vrt2->id() == v_it->id())
+            || (X_edges_Y_faces_candidates[i].vrt1->id() == v_it->id()
+                && X_edges_Y_faces_candidates[i].vrt2->id() == u_it->id())))
+        {
+            e_Y_candidate_tris.push_back(X_edges_Y_faces_candidates[i].f);
+            ++i;
         }
 
 #ifdef __DEBUG__
@@ -2122,7 +2008,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
 
 
     /* NOTE: collapsing edges only deletes faces => no face id can be freed and retaken by another face. when collapsing
-     * an edge, two triangels get deleted => locate and delete them from the map. furthermore, the aspect ratios of all
+     * an edge, two triangles get deleted => locate and delete them from the map. furthermore, the aspect ratios of all
      * faces incident to the new vertex will change => update them. */
 
     debugl(1, "searching for \"poor\" triangles / computing average neighbourhood triangle areas. this may take some time..\n");
@@ -2360,7 +2246,7 @@ GEC_getAvgAreaOfPermissibleSurroundingTriangles(
     uint32_t    npermissible_triangles;
 
     /* get face-neighbourhood of depth "depth" for triangle tri_it */
-    std::list<typename Mesh<Tm, Tv, Tf, R>::Face *> surrounding_tris;
+    std::vector<typename Mesh<Tm, Tv, Tf, R>::Face *> surrounding_tris;
     tri_it->getFaceNeighbourhood(depth, surrounding_tris);
 
     /* get average area of all permissible triangles in the depth-neighbourhood of the face

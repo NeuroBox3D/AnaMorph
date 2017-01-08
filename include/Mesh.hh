@@ -686,6 +686,8 @@ class Mesh {
                 void                                getVertexStarIndices(std::list<uint32_t> &vstar) const;
                 void                                getVertexStarIterators(std::list<vertex_iterator> &vstar) const;
                 
+                // way more efficient:
+                const std::list<Face*>&             getFaceStar() const;
                 void                                getFaceStar(std::list<Face *> &fstar) const;
                 void                                getFaceStar(std::list<Face const *> &fstar) const;
                 void                                getFaceStarIndices(std::list<uint32_t> &fstar) const;
@@ -793,14 +795,17 @@ class Mesh {
                 Vec3<R>                             getNormal() const;
                 BoundingBox<R>                      getBoundingBox() const;
                 void                                getEdges(std::list<std::pair<vertex_iterator, vertex_iterator> > &edge_list) const;
-                void                                getFaceNeighbours(std::list<Face *> &nb_faces) const;
-                void                                getFaceNeighbourhood(uint32_t max_depth, std::list<Face *> &face_neighbourhood);
+                void                                getFaceNeighbours(std::vector<Face*>& nb_faces) const;
+                void                                getFaceNeighbourhood(uint32_t max_depth, std::vector<Face*> &face_neighbourhood);
                 void                                invertOrientation();
 
                 /* triangle-specific methods */
                 inline void                         checkTri(const char *fn) const
                                                     {
-                                                        this->checkTri( std::string(fn) );
+                                                        // we do not want to init a string every time we call this
+                                                        // only if we really need it
+                                                        if (!this->isTri())
+                                                            throw MeshEx(MESH_LOGIC_ERROR, std::string(fn) + "triangle-specific method called on non-triangle face.");
                                                     }
 
                 inline void                         checkTri(std::string fn) const
@@ -811,13 +816,22 @@ class Mesh {
                                                     }
                 inline void                         checkQuad(const char *fn) const
                                                     {
-                                                        this->checkQuad( std::string(fn) );
+                                                        if ( !this->isQuad() ) {
+                                                            throw MeshEx(MESH_LOGIC_ERROR, std::string(fn) + "quad-specific method called on non-quad face.");
+                                                        }
                                                     }
 
                 inline void                         checkQuad(std::string fn) const
                                                     {
                                                         if ( !this->isQuad() ) {
                                                             throw MeshEx(MESH_LOGIC_ERROR, fn + "quad-specific method called on non-quad face.");
+                                                        }
+                                                    }
+
+                inline void                         checkTriQuad(const char *fn) const
+                                                    {
+                                                        if ( !this->isQuad() && !this->isTri()) {
+                                                            throw MeshEx(MESH_LOGIC_ERROR, std::string(fn) + "supplied face is neither quad nor triangle. general case intentionally unsupported right now => internal logic error.");
                                                         }
                                                     }
 
@@ -1182,12 +1196,14 @@ class Mesh {
         void                                getFacesIncidentToEdge(
                                                 const vertex_const_iterator    &u_it,
                                                 const vertex_const_iterator    &v_it,
-                                                std::list<Face *>              &incident_faces) const;
+                                                Face**                         incident_faces,
+                                                size_t&                        sizeInOut) const;
 
         void                                getFacesIncidentToEdge(
                                                 uint32_t                u,
                                                 uint32_t                v,
-                                                std::list<Face *>      &incident_faces) const;
+                                                Face**                  incident_faces,
+                                                size_t&                 sizeInOut) const;
         /* version for manifold meshes, where each edge is incident to exactly two faces.
          * throws exception if this is violated */
         void                                getFacesIncidentToManifoldEdge(

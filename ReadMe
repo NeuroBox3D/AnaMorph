@@ -329,4 +329,8 @@ Command line switches:
 
                                 "<CELLNETWORK>_post_processed.obj".
 
+-debug-lvl <cmp> <lvl>          Enable debugging for component <cmp>
+                                and set debug level to <lvl>.
+                                Debug component 0 is global debugging.
+
  -h                             display this help message.

@@ -1269,34 +1269,37 @@ debugprintf_wlevel(uint32_t level, std::string filename, int line, std::string f
     /* regular debug code. we can't call debugprintf() due to va_args macro hacking .. */
     if (debug_component_enabled[debug_component] && level <= debug_max_level) {
         uint32_t    i;
-        int         ret = 0;
         va_list     ap;
 
         char foo[1024] = {0};
         strncpy(foo, filename.c_str(), 1024);
-
         char *bar = strrchr(foo, '/');
+
+        char buffer[1024];
+        int pos = 0;
+
         if (bar) {
             /* get rid of last / */
             ++bar;
 
-            printf("[ %20s | %5d ]: ", bar, line);
+            pos += sprintf(buffer, "[ %20s | %5d ]: ", bar, line);
             for (i = 0; i < debug_tab; i++) {
-                printf("\t");
+                pos += sprintf(&buffer[pos], "\t");
             }
         } 
         else {
-            printf("[ %20s | %5d ]: ", foo, line);
+            pos += sprintf(buffer, "[ %20s | %5d ]: ", foo, line);
             for (i = 0; i < debug_tab; i++) {
-                printf("\t");
+                pos += sprintf(&buffer[pos], "\t");
             }
         }
 
         va_start(ap, fmt);
-        ret = vprintf(fmt.c_str(), ap);
+        pos += vsprintf(&buffer[pos], fmt.c_str(), ap);
+        printf("%s", buffer);
         va_end(ap);
 
-        return ret;
+        return pos;
     }
     else {
         return 0;

@@ -61,9 +61,11 @@ Vec3<R>::Vec3(
 
 /* copy constructor / assignment operator */
 template <typename R>
-Vec3<R>::Vec3(Vec3 const &v) {
-    Vector<R>::operator=(v);
-}
+Vec3<R>::Vec3(Vec3 const &v)
+: Vector<R>(v) {}
+//{
+//   Vector<R>::operator=(v);
+//}
 
 template <typename R>
 Vec3<R> &
@@ -328,3 +330,5 @@ Vec3<R>::print_debugl(uint32_t level) const
     debugl(level, "(%f, %f, %f)\n", this->comps[0], this->comps[1], this->comps[2]);
     debugTabDec();
 }
+
+

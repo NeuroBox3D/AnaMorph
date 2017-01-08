@@ -43,59 +43,55 @@
 #include "common.hh"
 #include "Polynomial.hh"
 
+namespace PolyAlg {
+
 /* ----------------------------------------------------------------------------------------------------------------- *
  *
  *          polynomial basis conversion                                                                                                    
  *
  * ----------------------------------------------------------------------------------------------------------------- */
 
-template <typename R>
+template <uint32_t deg, typename R>
 void
-convertBasis(
-    BernsteinPolynomial<R, R>      &b,
-    PowerPolynomial<R, R> const    &p)
+convertBasis(BernsteinPolynomial<deg, R, R>& b, const PowerPolynomial<deg, R, R>& p)
 {
     using Aux::Numbers::bicof;
 
     uint32_t        i, j;
-    const uint32_t  n  = p.getDegree();
-    Vector<R>       b_coeff(n + 1, 0);
+    typename Polynomial<deg, R, R>::coeff_type b_coeff(0);
 
     //debugl("\n");
-    for (i = 0; i < n + 1; i++) {
+    for (i = 0; i < deg + 1; i++) {
         b_coeff[i] = 0;
         for (j = 0; j < i + 1; j++) {
             //debugl("bicof[i = %d][j = %d]: %f, bicof[degree = %d][j = %d]: %f\n", i, j, bicof[i][j], degree, j, bicof[degree][j]);
-            b_coeff[i] += (bicof<R>(i, j) * p[j]) / bicof<R>(n, j);
+            b_coeff[i] += (bicof<R>(i, j) * p[j]) / bicof<R>(deg, j);
         }
         //debugl("b[i] = b[%d] = %f\n\n", i, b[i]);
     }
 
-    b = BernsteinPolynomial<R, R>(b_coeff);
+    b = BernsteinPolynomial<deg, R, R>(b_coeff);
 }
 
-template <typename R>
+template <uint32_t deg, typename R>
 void
-convertBasis(
-    PowerPolynomial<R, R>              &p,
-    BernsteinPolynomial<R, R> const    &b)
+convertBasis(PowerPolynomial<deg, R, R>& p, const BernsteinPolynomial<deg, R, R>& b)
 {
     using Aux::Numbers::bicof;
 
     uint32_t        i, j;
-    uint32_t const  n = b.getDegree();
     R               sign;
-    Vector<R>       p_coeff(n + 1, 0);
+    typename Polynomial<deg, R, R>::coeff_type p_coeff(0);
 
-    for (i = 0; i < n + 1; i++) {
+    for (i = 0; i < deg + 1; i++) {
         p_coeff[i] = 0;
         for (j = 0; j < i + 1; j++) {
             sign        = (R)( ( (i - j) % 2 == 0) ? 1 : -1);
-            p_coeff[i] += sign * bicof<R>(n, i) * bicof<R>(i, j) * b[j];
+            p_coeff[i] += sign * bicof<R>(deg, i) * bicof<R>(i, j) * b[j];
         }
     }
 
-    p = PowerPolynomial<R, R>(p_coeff);
+    p = PowerPolynomial<deg, R, R>(p_coeff);
 }
 
 /* ----------------------------------------------------------------------------------------------------------------- *
@@ -104,66 +100,60 @@ convertBasis(
  *
  * ----------------------------------------------------------------------------------------------------------------- */
 
-template<
-    typename F,
-    typename R
->
-BiBernsteinPolynomial<F, R>
-BernsteinTensorMultiply(
-    BernsteinPolynomial<F, R> const    &p,
-    BernsteinPolynomial<F, R> const    &q)
+template <uint32_t deg1, uint32_t deg2, typename F, typename R>
+BiBernsteinPolynomial<deg1, deg2, F, R>
+BernsteinTensorMultiply
+(
+    const BernsteinPolynomial<deg1, F, R>& p,
+    const BernsteinPolynomial<deg2, F, R>& q
+)
 {
-    uint32_t i, j, m = p.getDegree(), n = q.getDegree();
+    BiBernsteinPolynomial<deg1, deg2, F, R> r;
 
-    //debugl("tensor multiply: p.degree = %d, q.degree = %d => (%d, %d)\n", m, n, m, n);
-    BiBernsteinPolynomial<F, R> r(m, n, 0);
-    for (i = 0; i < m + 1; i++) {
-        for (j = 0; j < n + 1; j++) {
+    uint32_t i, j;
+    for (i = 0; i < deg1 + 1; i++)
+        for (j = 0; j < deg2 + 1; j++)
             r(i, j) = p(i) * q(j);
-        }
-    }
+
     return r;
 }
 
-template <
-    typename F,
-    typename R
->
-BiBernsteinPolynomial<F, R>
-BernsteinConvertToBiPoly(
-    BernsteinPolynomial<F, R> const    &p,
-    uint32_t                            d,
-    bool                                as_x)
-{
-    uint32_t i, j, k = p.getDegree();
 
-    BiBernsteinPolynomial<F, R> r;
-    if (as_x) {
-        r = BiBernsteinPolynomial<F, R>(k, d, 0);
-        for (i = 0; i < k + 1; i++) {
-            for (j = 0; j < d + 1; j++) {
-                r(i, j) = p(i);
-            }
-        }
-    }
-    else {
-        r = BiBernsteinPolynomial<F, R>(d, k, 0);
-        for (i = 0; i < d + 1; i++) {
-            for (j = 0; j < k + 1; j++) {
-                r(i, j) = p(j);
-            }
-        }
-    }
+template <uint32_t deg1, uint32_t deg2, bool as_x, typename F, typename R>
+BiBernsteinPolynomial<deg1, deg2, F, R>
+BernsteinConvertToBiPoly<deg1, deg2, as_x, F, R>::get
+(const BernsteinPolynomial<deg1, F, R>& p)
+{
+    BiBernsteinPolynomial<deg1, deg2, F, R> r;
+
+    uint32_t i, j;
+    for (i = 0; i < deg1 + 1; ++i)
+        for (j = 0; j < deg2 + 1; ++j)
+            r(i, j) = p(i);
+
     return r;
 }
 
-template <typename F, typename R>
-BernsteinPolynomial<F, R>
-computeBernsteinBasisPoly(
-    uint32_t n,
-    uint32_t i)
+template <uint32_t deg1, uint32_t deg2, typename F, typename R>
+BiBernsteinPolynomial<deg2, deg1, F, R>
+BernsteinConvertToBiPoly<deg1, deg2, false, F, R>::get
+(const BernsteinPolynomial<deg1, F, R>& p)
 {
-    return BernsteinPolynomial<F, R>(Aux::VecMat::kronecker_vec<F>(n + 1, i));
+    BiBernsteinPolynomial<deg2, deg1, F, R> r;
+    uint32_t i, j;
+    for (i = 0; i < deg2 + 1; ++i)
+        for (j = 0; j < deg1 + 1; ++j)
+            r(i, j) = p(j);
+
+    return r;
+}
+
+
+template <uint32_t deg, typename F, typename R>
+BernsteinPolynomial<deg, F, R>
+computeBernsteinBasisPoly(uint32_t i)
+{
+    return BernsteinPolynomial<deg, F, R>(Aux::VecMat::kronecker_static_vec<deg+1, F>(i));
 }
 
 /* ----------------------------------------------------------------------------------------------------------------- *
@@ -171,10 +161,10 @@ computeBernsteinBasisPoly(
  *             root finding for univariate polynomials: bezier clipping and required auxiliary algorithms       
  *
  * ----------------------------------------------------------------------------------------------------------------- */
-template <typename R>
+template <uint32_t deg, typename R>
 void
 computeBezierControlPolyConvexHull(
-    BernsteinPolynomial<R, R> const    &p,
+    BernsteinPolynomial<deg, R, R> const    &p,
     std::vector<Vec2>                  &cvhull,
     R const                            &eps_slope)
 {
@@ -278,9 +268,9 @@ computeBezierControlPolyConvexHull(
  * worked off in BezClip_roots. the polynomial is in Bernstein basis with t in [0,1] (NOT [left, right],
  * linear transformation is applied by de-Casteljau splitting) and represents the input polynomial
  * for x in [left, right] with t in [0, 1] */
-template <typename R>
+template <uint32_t deg, typename R>
 struct BezClip_Triple {
-    BernsteinPolynomial<R, R>  *p;
+    BernsteinPolynomial<deg, R, R>  *p;
     R                           left, right;
 
     BezClip_Triple() {
@@ -290,7 +280,7 @@ struct BezClip_Triple {
     }
 
     BezClip_Triple(
-        BernsteinPolynomial<R, R>  *p,
+        BernsteinPolynomial<deg, R, R>  *p,
         R                          left,
         R                          right)
     {
@@ -441,14 +431,14 @@ BezClip_getNewInterval(
     }
 }
 
-template <typename R>
+template <uint32_t deg, typename R>
 void
 BezClip_roots(
-        BernsteinPolynomial<R, R> const    &pinput,
+        BernsteinPolynomial<deg, R, R> const    &pinput,
         R const                            &alpha,
         R const                            &beta,
         R const                            &tol,
-        std::vector<RealInterval<R>>       &roots,
+        std::vector<RealInterval<R> >       &roots,
         R const                            &eps,
         R const                            &eps_slope)
 {
@@ -465,10 +455,10 @@ BezClip_roots(
 
     debugl(1, "BezClip_roots(): welcome..\n");
 
-    BernsteinPolynomial<R, R> *proot = new BernsteinPolynomial<R, R>(pinput);
+    BernsteinPolynomial<deg, R, R> *proot = new BernsteinPolynomial<deg, R, R>(pinput);
 
     /* if not precisely [0.0, 1.0] has been specified, clip the interval to [0, 1] using
-     * BernsteinPolynomial<R, R>::split(). notice that p itself is given as an argument and is changed by
+     * BernsteinPolynomial<deg, R, R>::split(). notice that p itself is given as an argument and is changed by
      * its own split method */
     if (alpha != 0.0 || beta != 1.0) {
         debugl(1, "BezClip_roots(): alpha != 0.0 || beta != 1.0.. clipping interval to [0, 1]\n");
@@ -486,9 +476,9 @@ BezClip_roots(
     }
 
     /* queue to store triples(polynomial, intervall limits) */ 
-    std::list<BezClip_Triple<R>>    S;
-    BezClip_Triple<R>               T;
-    BernsteinPolynomial<R, R>      *p, *pleft, *pright;
+    std::list<BezClip_Triple<deg, R> >    S;
+    BezClip_Triple<deg, R>               T;
+    BernsteinPolynomial<deg, R, R>      *p, *pleft, *pright;
     R                               pmid, tol4 = tol / 4.0, tol4rel;
     R                               left, right, middle, isize, new_isize;
     R                               new_left = 0.0, new_right = 0.0;
@@ -496,7 +486,7 @@ BezClip_roots(
     std::vector<Vec2>               pcvhull;
 
     /* insert root triple onto stack S */
-    S.push_back( BezClip_Triple<R>(proot, alpha, beta) );
+    S.push_back( BezClip_Triple<deg, R>(proot, alpha, beta) );
 
     /* main loop, work off stack */
     while ( !S.empty() ) {
@@ -517,7 +507,7 @@ BezClip_roots(
         while(1) {
             debugl(1, "\n\n------------- interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
             /* get convex hull */
-            PolyAlg::computeBezierControlPolyConvexHull<R>(*p, pcvhull, 1E-10);
+            PolyAlg::computeBezierControlPolyConvexHull<deg, R>(*p, pcvhull, 1E-10);
 
             /* compute new interval */
             PolyAlg::BezClip_getNewInterval(
@@ -584,8 +574,8 @@ BezClip_roots(
          * seized shrinking exponentially with a factor > 2 */
         if (bisect) {
             /* alloc new polys */
-            pleft   = new BernsteinPolynomial<R, R>();
-            pright  = new BernsteinPolynomial<R, R>();
+            pleft   = new BernsteinPolynomial<deg, R, R>();
+            pright  = new BernsteinPolynomial<deg, R, R>();
 
             /* check if middle is a root */
             middle  = (left + right) / 2.0;
@@ -611,8 +601,8 @@ BezClip_roots(
                 p->split(0.5 + tol4rel, NULL, pright);
 
                 /* push two new intervals to consider onto the queue */
-                S.push_front( BezClip_Triple<R>(pleft , left         , middle - tol4) );
-                S.push_front( BezClip_Triple<R>(pright, middle + tol4, right        ) );
+                S.push_front( BezClip_Triple<deg, R>(pleft , left         , middle - tol4) );
+                S.push_front( BezClip_Triple<deg, R>(pright, middle + tol4, right        ) );
             }
             else {
                 debugl(1, "bisecting interval: [%+20.13E, %+20.13E] and [%+20.13E, %+20.13E]\n", left, middle, middle, right);
@@ -621,8 +611,8 @@ BezClip_roots(
                 p->split(0.5, pleft, pright);
 
                 /* push two new intervals to consider onto stack */
-                S.push_front( BezClip_Triple<R>(pright, middle, right ) );
-                S.push_front( BezClip_Triple<R>(pleft , left  , middle) );
+                S.push_front( BezClip_Triple<deg, R>(pright, middle, right ) );
+                S.push_front( BezClip_Triple<deg, R>(pleft , left  , middle) );
             }
         }
 
@@ -645,9 +635,9 @@ BezClip_roots(
 /* struct to store polynomials and rectanglular domain in [0,1]^2. this is the data strcture the mail loop
  * operates on, a queue of such structures is worked off (and in generalnew queue elements are generated along
  * the way) */
-template <typename R = double>
+template <uint32_t deg1, uint32_t deg2, typename R = double>
 struct BiLinClip_Tuple {
-    BiBernsteinPolynomial<R, R>    *p, *q;
+    BiBernsteinPolynomial<deg1, deg2, R, R>    *p, *q;
     R                               alpha0, alpha1, beta0, beta1;
     bool                            alpha_converged, beta_converged;
     uint32_t                        depth;
@@ -660,8 +650,8 @@ struct BiLinClip_Tuple {
     } 
 
     BiLinClip_Tuple(
-            BiBernsteinPolynomial<R, R>    *p,
-            BiBernsteinPolynomial<R, R>    *q,
+            BiBernsteinPolynomial<deg1, deg2, R, R>    *p,
+            BiBernsteinPolynomial<deg1, deg2, R, R>    *q,
             R                               alpha0, 
             R                               alpha1, 
             bool                            alpha_converged,
@@ -820,19 +810,17 @@ BiLinClip_linsolve(
  * q are always in Bernstein-Bezier form with respect to that interval, but rescaled to
  * the unit square, as usual. If the intersection is empty, the current rectangle is irrelevant,
  * because no root can lie inside the current domain. */
-template <typename R>
+template <uint32_t deg1, uint32_t deg2, typename R>
 void
 BiLinClip_getNewRectangle(
-        const BiBernsteinPolynomial<R, R>  &p,
-        const BiBernsteinPolynomial<R, R>  &q,
-        uint32_t                            m,
-        uint32_t                            n,
-        const Matrix<R>                    &BiLinClip_A00,
-        const Matrix<R>                    &BiLinClip_A01,
-        const Matrix<R>                    &BiLinClip_A10,
-        const BiBernsteinPolynomial<R, R>  &BiLinClip_L00,
-        const BiBernsteinPolynomial<R, R>  &BiLinClip_L01,
-        const BiBernsteinPolynomial<R, R>  &BiLinClip_L10,
+        const BiBernsteinPolynomial<deg1, deg2, R, R>  &p,
+        const BiBernsteinPolynomial<deg1, deg2, R, R>  &q,
+        const StaticMatrix<deg1+1, deg2+1, R>*         BiLinClip_A00,
+        const StaticMatrix<deg1+1, deg2+1, R>*         BiLinClip_A01,
+        const StaticMatrix<deg1+1, deg2+1, R>*         BiLinClip_A10,
+        const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L00,
+        const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L01,
+        const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L10,
         R const                            &alpha0,
         R const                            &alpha1,
         bool                                alpha_frozen,
@@ -892,17 +880,17 @@ BiLinClip_getNewRectangle(
     q_l10 = 0.0;
     q_l01 = 0.0;
 
-    for (i = 0; i < m + 1; i++) {
-        for (j = 0; j < n + 1; j++) {
+    for (i = 0; i < deg1 + 1; i++) {
+        for (j = 0; j < deg2 + 1; j++) {
             p_coeff         = p(i, j);
-            p_l00          += p_coeff * BiLinClip_A00(i, j);
-            p_l10          += p_coeff * BiLinClip_A10(i, j);
-            p_l01          += p_coeff * BiLinClip_A01(i, j);
+            p_l00          += p_coeff * BiLinClip_A00->operator()(i, j);
+            p_l10          += p_coeff * BiLinClip_A10->operator()(i, j);
+            p_l01          += p_coeff * BiLinClip_A01->operator()(i, j);
 
             q_coeff         = q(i, j);
-            q_l00          += q_coeff * BiLinClip_A00(i, j);
-            q_l10          += q_coeff * BiLinClip_A10(i, j);
-            q_l01          += q_coeff * BiLinClip_A01(i, j);
+            q_l00          += q_coeff * BiLinClip_A00->operator()(i, j);
+            q_l10          += q_coeff * BiLinClip_A10->operator()(i, j);
+            q_l01          += q_coeff * BiLinClip_A01->operator()(i, j);
         }
     }
 
@@ -917,22 +905,22 @@ BiLinClip_getNewRectangle(
     /* construct best linear approximant by orthogonal projection, but since legendre polynomials
      * are not orthonormal, their square norm <lij, lij> is taken into account above, which is just
      * 1/(2i+1)(2j+1), i.e. multiply with (2i+1)(2j+1) */
-    BiBernsteinPolynomial<R, R> p_linfit = 
-        BiLinClip_L00 * p_l00 +
-        BiLinClip_L10 * p_l10 +
-        BiLinClip_L01 * p_l01;
+    BiBernsteinPolynomial<deg1, deg2, R, R> p_linfit =
+        *BiLinClip_L00 * p_l00 +
+        *BiLinClip_L10 * p_l10 +
+        *BiLinClip_L01 * p_l01;
 
-    BiBernsteinPolynomial<R, R> q_linfit = 
-        BiLinClip_L00 * q_l00 +
-        BiLinClip_L10 * q_l10 +
-        BiLinClip_L01 * q_l01;
+    BiBernsteinPolynomial<deg1, deg2, R, R> q_linfit =
+        *BiLinClip_L00 * q_l00 +
+        *BiLinClip_L10 * q_l10 +
+        *BiLinClip_L01 * q_l01;
 
     /* compute the bound delta = max(i, j){|p(i, j) - linfit(i, j)|} */
     delta_p = 0.0;
     delta_q = 0.0;
 
-    for (i = 0; i < m + 1; i++) {
-        for (j = 0; j < n + 1; j++) {
+    for (i = 0; i < deg1 + 1; i++) {
+        for (j = 0; j < deg2 + 1; j++) {
             tmp = std::abs( p(i, j) - p_linfit(i, j) );
             if (tmp > delta_p) {
                 delta_p = tmp;
@@ -1382,196 +1370,161 @@ BiLinClip_getNewRectangle(
 
 #define BILCLIP_APPROXDATA_DEFAULT_SIZE 8
 
-template <typename R>
+template <uint32_t deg1, uint32_t deg2, typename R>
 void
 BiLinClip_getApproximationData(
-    uint32_t                                    m,
-    uint32_t                                    n,
-    bool                                        dynamic_recomputation_arg,
-    BiBernsteinPolynomial<R, R>                *BiLinClip_L00,
-    BiBernsteinPolynomial<R, R>                *BiLinClip_L10,
-    BiBernsteinPolynomial<R, R>                *BiLinClip_L01,
-    Matrix<R>                                  *BiLinClip_A00,
-    Matrix<R>                                  *BiLinClip_A10,
-    Matrix<R>                                  *BiLinClip_A01)
+    const BiBernsteinPolynomial<deg1, deg2, R, R>** BiLinClip_L00,
+    const BiBernsteinPolynomial<deg1, deg2, R, R>** BiLinClip_L10,
+    const BiBernsteinPolynomial<deg1, deg2, R, R>** BiLinClip_L01,
+    const StaticMatrix<deg1+1, deg2+1, R>** BiLinClip_A00,
+    const StaticMatrix<deg1+1, deg2+1, R>** BiLinClip_A10,
+    const StaticMatrix<deg1+1, deg2+1, R>** BiLinClip_A01)
 {
     using Aux::Numbers::bicof;
 
-    /* static variables to store precomputable legendre polynomials and approximation matrices. */
-    static uint32_t                                 m_max = 0, n_max = 0;
-    static bool                                     dynamic_recomputation = true;
+    // static variables to store precomputable legendre polynomials and approximation matrices.
+    static bool firstCall = true;
+    static BiBernsteinPolynomial<deg1, deg2, R, R> LegendreBiPolBB00;
+    static BiBernsteinPolynomial<deg1, deg2, R, R> LegendreBiPolBB01;
+    static BiBernsteinPolynomial<deg1, deg2, R, R> LegendreBiPolBB10;
+    static StaticMatrix<deg1+1, deg2+1, R> LegendreBiApproximantMatrix00;
+    static StaticMatrix<deg1+1, deg2+1, R> LegendreBiApproximantMatrix01;
+    static StaticMatrix<deg1+1, deg2+1, R> LegendreBiApproximantMatrix10;
 
-    static Tensor<2, BernsteinPolynomial<R, R>>     LegendrePolBB;
-    static Tensor<4, BiBernsteinPolynomial<R, R>>   LegendreBiPolBB;
-    static Tensor<6, R>                             LegendreBiApproximantMatrices;
+    // recompute if necessary and dynamic_recomputation == true
+    if (firstCall)
+    {
+        debugl(0, "BiLinClip_getApproximationData(): recomputing approximation data for pair (deg1, deg2) = (%d, %d).\n", deg1, deg2);
 
-    /* recompute if necessary and dynamic_recomputation == true */
-    if (m > m_max || n > n_max) {
-        /* recomputation necessary */
-        if (!dynamic_recomputation) {
-            throw("BiLinClip_getApproximationData(): recomputation necessary but dynamic_recomputation flag set to false.");
-        }
-
-        debugl(0, "BiLinClip_getApproximationData(): recomputing approximation data for pair (m, n) = (%d, %d).\n", m, n);
-
-        /* every degree is lower bounded by macro BILCLIP_APPROXDATA_DEFAULT_SIZE, get maximum of this lower bound and
-         * the values m, n and the current m_max, n_max, respectively. */
-        m_max = std::max(m_max, std::max(m, (uint32_t)BILCLIP_APPROXDATA_DEFAULT_SIZE));
-        n_max = std::max(n_max, std::max(n, (uint32_t)BILCLIP_APPROXDATA_DEFAULT_SIZE));
+        BernsteinPolynomial<deg1, R, R> legendrePolBB1_0;
+        BernsteinPolynomial<deg1, R, R> legendrePolBB1_1;
+        BernsteinPolynomial<deg2, R, R> legendrePolBB2_0;
+        BernsteinPolynomial<deg2, R, R> legendrePolBB2_1;
 
         debugl(1, "initLegendrePolynomialsBB(): initializing univariate and bivariate shifted Legendre polynomials in Bernstein-Bezier basis... \n");
         fflush(stdout);
 
-        /* resize 2d tensor for univariate legendre basis polynomials, size: (n_max + 1, n_max + 1) */
-        LegendrePolBB.resize({ std::max(m_max, n_max) + 1, std::max(m_max, n_max) + 1});
+        R sign;
 
-        Vector<R>   lnk_coeff;
-        R           sign;
-
-        /* init univariate legendre polynomials in BB(n) for all degrees n = 0..max(n_max, m_max) */
-        for (int n = 0; (uint32_t)n < std::max(m_max, n_max) + 1; n++) {
-            //debugl("----------\n");
-            lnk_coeff.assign(n + 1, 0.0);
-
-            /* for all polynomials L_k, k = 0..n */
-            for (int k = 0; k < n + 1; k++) {
-
-                /* for all components c_j of L_k in BB(n), j = 0..n */
-                for (int j = 0; j < n + 1; j++) {
-                    lnk_coeff[j] = 0.0;
-
-                    for (int i = std::max(0, j - n + k); i < std::min(j, k) + 1; i++) {
-                        sign            = ( (k + i) % 2 == 0) ? 1.0 : -1.0;
-                        lnk_coeff[j]   += sign * bicof<R>(k, i) * bicof<R>(k, i) * bicof<R>(n - k, j - i);
-                    }
-
-                    /* divide sum by 1 / (n choose j) */
-                    lnk_coeff[j] /= bicof<R>(n, j);
-                }
-
-                /* assign coefficients for polynomial L_k in BB(n) */
-                LegendrePolBB( {(uint32_t)n, (uint32_t)k} ).setCoeffs(lnk_coeff);
-
-                //debugl("BB(%d): coefficients of legendre polynomial L_(%d): ", n, k), LegendrePolBB[n][k].printCoeff();
-            }
-        }
-
-        /* now init bivariate legendre polynomials in BB(m, n), m = 0..m_max, n = 0..n_max using tensor product of the
-         * univariate ones. */
-
-        /* resize 4d tensor for bivariate legendre basis polynomials: size (m_max + 1, n_max + 1, m_max + 1, n_max + 1) */
-        LegendreBiPolBB.resize({m_max + 1, n_max + 1, m_max + 1, n_max + 1});
-
-        for (uint32_t m = 0; m < m_max + 1; m++) {
-            for (uint32_t n = 0; n < n_max + 1; n++) {
-                for (uint32_t i = 0; i < m + 1; i++) {
-                    for (uint32_t j = 0; j < n + 1; j++) {
-                        LegendreBiPolBB( {m, n, i, j} ) =
-                            PolyAlg::BernsteinTensorMultiply(
-                                LegendrePolBB( {m, i} ),
-                                LegendrePolBB( {n, j} )
-                            );
-                    }
-                }
-            }
-        }
-
-        /* now for the legendre approximation matrices */
-
-        /* resize to correct dimensions and zero */
-        LegendreBiApproximantMatrices.resize(
+        // loop over basis function components
+        {
+            typename BernsteinPolynomial<deg1, R, R>::coeff_type& lnk_coeff = legendrePolBB1_0.getCoeffs();
+            for (int j = 0; j < (int)deg1 + 1; ++j)
             {
-                m_max + 1,
-                n_max + 1,
-                3,
-                3,
-                m_max + 1,
-                n_max + 1
-            } );
-        LegendreBiApproximantMatrices.fill(0);
-
-        /* construct a univariate BernsteinPolynomial of degree max(max_m, max_n) to ensure that the Bernstein basis
-         * polynomial inner products are precomputed at least up to the maximum degree required here. */
-        //BernsteinPolynomial<R, R>       bb(std::max(m_max, n_max), 0);
-
-        /* bivairate legendre polynomial L(i, j) represented in BB(m, n). */
-        BiBernsteinPolynomial<R, R>     L_m_n_li_lj;
-
-        /* for m, n in ranges given by m_max, n_max .. */
-        for (uint32_t m = 0; m < m_max + 1; m++) {
-            for (uint32_t n = 0; n < n_max + 1; n++) {
-
-                /* compute the matrix that is needed to get the coefficient for legenrepolynomial L(l_i,
-                 * l_j) in BB(m, n). */
-                for (uint32_t l_i = 0; l_i < std::min(m + 1, 3u); l_i++) {
-                    for (uint32_t l_j = 0; l_j < std::min(n + 1, 3u); l_j++) {
-
-                        /* compute L(i, j) in BB(m, n) with tensor product */
-                        //L_m_n_li_lj = LegendrePolBB[m][l_i].tensorMultiply(LegendrePolBB[n][l_j]);
-
-                        L_m_n_li_lj = PolyAlg::BernsteinTensorMultiply(
-                                LegendrePolBB( {m, l_i} ),
-                                LegendrePolBB( {n, l_j} )
-                            );
-
-                        /* compute element (i, j) of approximation matix for L(l_i, l_j) in BB(m, n) */
-                        for (uint32_t i = 0; i < m + 1; i++) {
-                            for (uint32_t j = 0; j < n + 1; j++) {
-                                //debugl("computing element LegendreBiApproximantMatrices[%d][%d][%d][%d][%d][%d]\n", m, n, l_i, l_j, i, j);
-
-                                LegendreBiApproximantMatrices( {m, n, l_i, l_j, i, j} ) = 0.0;
-
-                                for (uint32_t k = 0; k < m + 1; k++) {
-                                    for (uint32_t l = 0; l < n + 1; l++) {
-                                        /*
-                                        LegendreBiApproximantMatrices[m][n][l_i][l_j][i][j] +=
-                                            L_m_n_li_lj(k, l) * BBInnerProducts[m][m][i][k] * BBInnerProducts[n][n][j][l];
-                                        */
-                                        LegendreBiApproximantMatrices( {m, n, l_i, l_j, i, j} ) +=
-                                            L_m_n_li_lj(k, l) *
-                                            BernsteinPolynomial<R, R>::getBernsteinBasisInnerProduct(m, m, i, k) *
-                                            BernsteinPolynomial<R, R>::getBernsteinBasisInnerProduct(n, n, j, l);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                lnk_coeff[j] = 0.0;
+                for (int i = std::max(0, j - (int)deg1); i < std::min(j, 0) + 1; ++i)
+                {
+                    sign = ( i % 2 == 0) ? 1.0 : -1.0;
+                    lnk_coeff[j] += sign * bicof<R>(0, i) * bicof<R>(0, i) * bicof<R>(deg1, j - i);
                 }
+
+                lnk_coeff[j] /= bicof<R>(deg1, j);
+            }
+        }
+        {
+            typename BernsteinPolynomial<deg1, R, R>::coeff_type& lnk_coeff = legendrePolBB1_1.getCoeffs();
+            for (int j = 0; j < (int)deg1 + 1; ++j)
+            {
+                lnk_coeff[j] = 0.0;
+                for (int i = std::max(0, j - (int)deg1 + 1); i < std::min(j, 1) + 1; ++i)
+                {
+                    sign = ( (1 + i) % 2 == 0) ? 1.0 : -1.0;
+                    lnk_coeff[j] += sign * bicof<R>(1, i) * bicof<R>(1, i) * bicof<R>(deg1 - 1, j - i);
+                }
+
+                lnk_coeff[j] /= bicof<R>(deg1, j);
+            }
+        }
+        {
+            typename BernsteinPolynomial<deg2, R, R>::coeff_type& lnk_coeff = legendrePolBB2_0.getCoeffs();
+            for (int j = 0; j < (int)deg2 + 1; ++j)
+            {
+                lnk_coeff[j] = 0.0;
+                for (int i = std::max(0, j - (int)deg2); i < std::min(j, 0) + 1; ++i)
+                {
+                    sign = ( i % 2 == 0) ? 1.0 : -1.0;
+                    lnk_coeff[j] += sign * bicof<R>(0, i) * bicof<R>(0, i) * bicof<R>(deg2, j - i);
+                }
+
+                lnk_coeff[j] /= bicof<R>(deg2, j);
+            }
+        }
+        {
+            typename BernsteinPolynomial<deg2, R, R>::coeff_type& lnk_coeff = legendrePolBB2_1.getCoeffs();
+            for (int j = 0; j < (int)deg2 + 1; ++j)
+            {
+                lnk_coeff[j] = 0.0;
+                for (int i = std::max(0, j - (int)deg2 + 1); i < std::min(j, 1) + 1; ++i)
+                {
+                    sign = ( (1 + i) % 2 == 0) ? 1.0 : -1.0;
+                    lnk_coeff[j] += sign * bicof<R>(1, i) * bicof<R>(1, i) * bicof<R>(deg2 - 1, j - i);
+                }
+
+                lnk_coeff[j] /= bicof<R>(deg2, j);
             }
         }
 
-        debugl(0, "BiLinClip_getApproximationData(): approximation data computed for pair (m, n) = (%d, %d).\n", m, n);
+        // now init bivariate legendre polynomials in BB(deg1, deg2), using tensor products of the univariate ones
+        LegendreBiPolBB00 = PolyAlg::BernsteinTensorMultiply(legendrePolBB1_0, legendrePolBB2_0);
+        LegendreBiPolBB01 = PolyAlg::BernsteinTensorMultiply(legendrePolBB1_0, legendrePolBB2_1);
+        LegendreBiPolBB10 = PolyAlg::BernsteinTensorMultiply(legendrePolBB1_1, legendrePolBB2_0);
+
+        // and finally the corresponding approximation matrices
+        // compute the matrix needed to get the coefficient for Legendre polynomial L(l_i, l_j) in BB(deg1, deg2)
+        // compute element (i, j) of approximation matrix for L(l_i, l_j) in BB(deg1, deg2)
+        for (uint32_t i = 0; i < deg1 + 1; ++i)
+        {
+            for (uint32_t j = 0; j < deg2 + 1; ++j)
+            {
+                LegendreBiApproximantMatrix00(i, j) = 0.0;
+                LegendreBiApproximantMatrix01(i, j) = 0.0;
+                LegendreBiApproximantMatrix10(i, j) = 0.0;
+
+                for (uint32_t k = 0; k < deg1 + 1; ++k)
+                {
+                    for (uint32_t l = 0; l < deg2 + 1; ++l)
+                    {
+                        LegendreBiApproximantMatrix00(i, j) +=
+                            LegendreBiPolBB00(k, l) *
+                            BernsteinPolynomial<deg1, R, R>::getBernsteinBasisInnerProduct(i, k) *
+                            BernsteinPolynomial<deg2, R, R>::getBernsteinBasisInnerProduct(j, l);
+
+                        LegendreBiApproximantMatrix01(i, j) +=
+                            LegendreBiPolBB01(k, l) *
+                            BernsteinPolynomial<deg1, R, R>::getBernsteinBasisInnerProduct(i, k) *
+                            BernsteinPolynomial<deg2, R, R>::getBernsteinBasisInnerProduct(j, l);
+
+                        LegendreBiApproximantMatrix10(i, j) +=
+                            LegendreBiPolBB10(k, l) *
+                            BernsteinPolynomial<deg1, R, R>::getBernsteinBasisInnerProduct(i, k) *
+                            BernsteinPolynomial<deg2, R, R>::getBernsteinBasisInnerProduct(j, l);
+                        debugl(1, "\tA10(%u,%u) += %f * %f * %f\n", i, j,
+                            LegendreBiPolBB10(k, l),
+                            BernsteinPolynomial<deg1, R, R>::getBernsteinBasisInnerProduct(i, k),
+                            BernsteinPolynomial<deg2, R, R>::getBernsteinBasisInnerProduct(j, l));
+                    }
+                }
+
+                debugl(1, "A10(%u,%u) = %f\n", i, j, LegendreBiApproximantMatrix10(i, j));
+            }
+        }
+
+        /* set dynamic recomputation flag after update */
+        firstCall = false;
+
+        debugl(0, "BiLinClip_getApproximationData(): approximation data computed for pair (m, n) = (%d, %d).\n", deg1, deg2);
     }
 
     /* if no exception has been thrown due to disabled dynamic recomputation, all approximation data has already been
      * available or recomputed if necessary.  write values desired by the caller. */
 
-    //BiLinClip_L00 = LegendreBiPolBB[m][n][0][0];
-    //BiLinClip_L10 = LegendreBiPolBB[m][n][1][0];
-    //BiLinClip_L01 = LegendreBiPolBB[m][n][0][1];
+    if (BiLinClip_L00) *BiLinClip_L00 = &LegendreBiPolBB00;
+    if (BiLinClip_L01) *BiLinClip_L01 = &LegendreBiPolBB01;
+    if (BiLinClip_L10) *BiLinClip_L10 = &LegendreBiPolBB10;
 
-    if (BiLinClip_L00) *BiLinClip_L00 = LegendreBiPolBB( {m, n, 0, 0} );
-    if (BiLinClip_L10) *BiLinClip_L10 = LegendreBiPolBB( {m, n, 1, 0} );
-    if (BiLinClip_L01) *BiLinClip_L01 = LegendreBiPolBB( {m, n, 0, 1} );
-
-    if (BiLinClip_A00) BiLinClip_A00->resize(m + 1, n + 1);
-    if (BiLinClip_A10) BiLinClip_A10->resize(m + 1, n + 1);
-    if (BiLinClip_A01) BiLinClip_A01->resize(m + 1, n + 1);
-
-    for (uint32_t i = 0; i < m + 1; i++) {
-        for (uint32_t j = 0; j < n + 1; j++) {
-            //BiLinClip_A00(i, j) = LegendreBiApproximantMatrices[m][n][0][0][i][j];
-            //BiLinClip_A10(i, j) = LegendreBiApproximantMatrices[m][n][1][0][i][j];
-            //BiLinClip_A01(i, j) = LegendreBiApproximantMatrices[m][n][0][1][i][j];
-
-            if (BiLinClip_A00) BiLinClip_A00->operator()(i, j) = LegendreBiApproximantMatrices( {m, n, 0, 0, i, j} );
-            if (BiLinClip_A10) BiLinClip_A10->operator()(i, j) = LegendreBiApproximantMatrices( {m, n, 1, 0, i, j} );
-            if (BiLinClip_A01) BiLinClip_A01->operator()(i, j) = LegendreBiApproximantMatrices( {m, n, 0, 1, i, j} );
-        }
-    }
-
-    /* set dynamic recomputation flag from parameters after update */
-    dynamic_recomputation = dynamic_recomputation_arg;
+    if (BiLinClip_A00) *BiLinClip_A00 = &LegendreBiApproximantMatrix00;
+    if (BiLinClip_A01) *BiLinClip_A01 = &LegendreBiApproximantMatrix01;
+    if (BiLinClip_A10) *BiLinClip_A10 = &LegendreBiApproximantMatrix10;
 
     debugl(1, "done.\n");
 }
@@ -1615,11 +1568,11 @@ BiLinClip_getApproximationData(
  * drop below the tolerance, they are frozen and never unfrozen, and only clipping in
  * the other variable is performed until either the rectangles become irrelevant or
  * converge with respect to the other axis as well.. */
-template <typename R>
+template <uint32_t deg1, uint32_t deg2, typename R>
 void
 BiLinClip_roots(
-    BiBernsteinPolynomial<R, R> const  &pinput,
-    BiBernsteinPolynomial<R, R> const  &qinput,
+    BiBernsteinPolynomial<deg1, deg2, R, R> const &pinput,
+    BiBernsteinPolynomial<deg1, deg2, R, R> const &qinput,
     R const                            &alpha0_input,
     R const                            &alpha1_input,
     R const                            &beta0_input,
@@ -1637,20 +1590,6 @@ BiLinClip_roots(
 
     setDebugComponent(DBG_POLYSOLVERS);
 
-    /* variables */
-    uint32_t            m, n, p_m, p_n, q_m, q_n;
-
-    pinput.getDegree(p_m, p_n);
-    qinput.getDegree(q_m, q_n);
-
-    if (p_m != q_m || p_n != q_n) {
-        throw("BiLiClip_roots(): input polynomials not represented in same basis BB(m, n).");
-    }
-    else {
-        m = p_m;
-        n = p_n;
-    }
-
     /* check for gargabe input rectangle */
     if (alpha0_input < 0.0 || alpha1_input > 1.0 ||
             alpha0_input > alpha1_input ||
@@ -1663,32 +1602,32 @@ BiLinClip_roots(
         throw("BiLinClip_roots(): input rectangle width and height below tolerance.\n");
     }
 
-    /* extract precomputed data for relevant bidegree (m, n) if it does not match last seen bidegree */
-    debugl(1, "BiLiClip_roots(): (m, n) = (%d, %d). fetching precomputed approximation data..\n", m, n);
+    /* extract precomputed data for relevant bidegree (deg1, deg2) if it does not match last seen bidegree */
+    debugl(1, "BiLiClip_roots(): (deg1, deg2) = (%d, %d). fetching precomputed approximation data..\n", deg1, deg2);
 
-    BiBernsteinPolynomial<R, R> BiLinClip_L00;
-    BiBernsteinPolynomial<R, R> BiLinClip_L10;
-    BiBernsteinPolynomial<R, R> BiLinClip_L01;
+    const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L00;
+    const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L10;
+    const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L01;
 
-    Matrix<R>                   BiLinClip_A00;
-    Matrix<R>                   BiLinClip_A10;
-    Matrix<R>                   BiLinClip_A01;
+    const StaticMatrix<deg1+1, deg2+1, R>* BiLinClip_A00;
+    const StaticMatrix<deg1+1, deg2+1, R>* BiLinClip_A10;
+    const StaticMatrix<deg1+1, deg2+1, R>* BiLinClip_A01;
 
-    BiLinClip_getApproximationData(
-            m, n,
-            approx_data_dynamic_recomputation,
-            &BiLinClip_L00,
-            &BiLinClip_L10,
-            &BiLinClip_L01,
-            &BiLinClip_A00,
-            &BiLinClip_A10,
-            &BiLinClip_A01);
+    BiLinClip_getApproximationData<deg1, deg2>
+    (
+        &BiLinClip_L00,
+        &BiLinClip_L10,
+        &BiLinClip_L01,
+        &BiLinClip_A00,
+        &BiLinClip_A10,
+        &BiLinClip_A01
+    );
 
     /* necessary approximation data initialized. proceed with the algorithm */
 
     /* copy input polynomials for root input tuple */
-    BiBernsteinPolynomial<R, R>    *proot = new BiBernsteinPolynomial<R, R>(pinput);
-    BiBernsteinPolynomial<R, R>    *qroot = new BiBernsteinPolynomial<R, R>(qinput);
+    BiBernsteinPolynomial<deg1, deg2, R, R>* proot = new BiBernsteinPolynomial<deg1, deg2, R, R>(pinput);
+    BiBernsteinPolynomial<deg1, deg2, R, R>* qroot = new BiBernsteinPolynomial<deg1, deg2, R, R>(qinput);
 
     /* check if input domain is PRECISELY [0,1]^2 (yes, bitwise), for generally this will be the
      * case and we don't need to cut around with deCasteljau to rescale to [0,1]^2 */
@@ -1701,13 +1640,13 @@ BiLinClip_roots(
         debugl(1, "BiLiClip_roots(): input domain [0,1]^2: fine..\n");
     }     
 
-    std::list<BiLinClip_Tuple<R>>   S;
-    BiLinClip_Tuple<R>              T;
-    BiBernsteinPolynomial<R, R>    *p, *q;
-    BiBernsteinPolynomial<R, R>    *pleft_down, *pright_down, *pright_up, *pleft_up;
-    BiBernsteinPolynomial<R, R>    *qleft_down, *qright_down, *qright_up, *qleft_up;
-    BiBernsteinPolynomial<R, R>    *pup, *pdown, *pleft, *pright;
-    BiBernsteinPolynomial<R, R>    *qup, *qdown, *qleft, *qright;
+    std::list<BiLinClip_Tuple<deg1, deg2, R> >   S;
+    BiLinClip_Tuple<deg1, deg2, R>              T;
+    BiBernsteinPolynomial<deg1, deg2, R, R>    *p, *q;
+    BiBernsteinPolynomial<deg1, deg2, R, R>    *pleft_down, *pright_down, *pright_up, *pleft_up;
+    BiBernsteinPolynomial<deg1, deg2, R, R>    *qleft_down, *qright_down, *qright_up, *qleft_up;
+    BiBernsteinPolynomial<deg1, deg2, R, R>    *pup, *pdown, *pleft, *pright;
+    BiBernsteinPolynomial<deg1, deg2, R, R>    *qup, *qdown, *qleft, *qright;
 
     RealRectangle<R>                current_rectangle;
     R                               alpha0, alpha1, beta0, beta1, dalpha, dbeta, alpha_middle, beta_middle;
@@ -1720,7 +1659,7 @@ BiLinClip_roots(
 
     /* push initial tuple with initial array and copies of input polynomials onto stack */
     S.push_front(
-            BiLinClip_Tuple<R>(
+            BiLinClip_Tuple<deg1, deg2, R>(
                 proot, qroot,
                 alpha0_input, alpha1_input, (alpha1_input - alpha0_input) < tol,
                 beta0_input,  beta1_input,  (beta1_input  - beta0_input)  < tol,
@@ -1751,6 +1690,15 @@ BiLinClip_roots(
         depth           = T.depth;
 
         S.pop_back();
+        debugTabDec();
+        debugTabDec();
+        debugTabDec();
+        debugTabDec();
+        debugl(1, "Popped another element from queue (%zd remaining).\n", S.size());
+        debugTabInc();
+        debugTabInc();
+        debugTabInc();
+        debugTabInc();
 
         /* reset flags */
         subdivide       = false;
@@ -1821,9 +1769,8 @@ BiLinClip_roots(
             }
 
             /* compute new interval */
-            BiLinClip_getNewRectangle(
+            BiLinClip_getNewRectangle<deg1, deg2>(
                    *p, *q,
-                    m, n,
                     BiLinClip_A00,
                     BiLinClip_A01,
                     BiLinClip_A10,
@@ -2065,15 +2012,15 @@ BiLinClip_roots(
                 //printf("neither alpha nor beta frozen: subdividing rectangle into four subrectangles.. \n");
 
                 /* alloc new polys */
-                pleft_down  = new BiBernsteinPolynomial<R, R>();
-                pright_down = new BiBernsteinPolynomial<R, R>();
-                pright_up   = new BiBernsteinPolynomial<R, R>();
-                pleft_up    = new BiBernsteinPolynomial<R, R>();
+                pleft_down  = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                pright_down = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                pright_up   = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                pleft_up    = new BiBernsteinPolynomial<deg1, deg2, R, R>();
 
-                qleft_down  = new BiBernsteinPolynomial<R, R>();
-                qright_down = new BiBernsteinPolynomial<R, R>();
-                qright_up   = new BiBernsteinPolynomial<R, R>();
-                qleft_up    = new BiBernsteinPolynomial<R, R>();
+                qleft_down  = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                qright_down = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                qright_up   = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                qleft_up    = new BiBernsteinPolynomial<deg1, deg2, R, R>();
 
                 /* check if midpoint (0.5, 0.5) is common root of p and q. if so..  it seems very unwise to cut into
                  * small slices of width / height 0.25*tol like in the univariate case, since those strips will have
@@ -2097,18 +2044,18 @@ BiLinClip_roots(
                 alpha_middle    = (alpha0 + alpha1) / 2.0;
                 beta_middle     = (beta0  + beta1)  / 2.0;
 
-                S.push_back( BiLinClip_Tuple<R>(pleft_down,     qleft_down,     alpha0,         alpha_middle,   alpha_converged,  beta0,          beta_middle,    beta_converged, depth + 1) );
-                S.push_back( BiLinClip_Tuple<R>(pright_down,    qright_down,    alpha_middle,   alpha1,         alpha_converged,  beta0,          beta_middle,    beta_converged, depth + 1) );
-                S.push_back( BiLinClip_Tuple<R>(pright_up,      qright_up,      alpha_middle,   alpha1,         alpha_converged,  beta_middle,    beta1,          beta_converged, depth + 1) );
-                S.push_back( BiLinClip_Tuple<R>(pleft_up,       qleft_up,       alpha0,         alpha_middle,   alpha_converged,  beta_middle,    beta1,          beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pleft_down,     qleft_down,     alpha0,         alpha_middle,   alpha_converged,  beta0,          beta_middle,    beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pright_down,    qright_down,    alpha_middle,   alpha1,         alpha_converged,  beta0,          beta_middle,    beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pright_up,      qright_up,      alpha_middle,   alpha1,         alpha_converged,  beta_middle,    beta1,          beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pleft_up,       qleft_up,       alpha0,         alpha_middle,   alpha_converged,  beta_middle,    beta1,          beta_converged, depth + 1) );
             }
             /* if alpha is frozen but not beta */
             else if (alpha_frozen && !beta_frozen) {
                 /* alloc new polys */
-                pup     = new BiBernsteinPolynomial<R, R>();
-                pdown   = new BiBernsteinPolynomial<R, R>();
-                qup     = new BiBernsteinPolynomial<R, R>();
-                qdown   = new BiBernsteinPolynomial<R, R>();
+                pup     = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                pdown   = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                qup     = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                qdown   = new BiBernsteinPolynomial<deg1, deg2, R, R>();
 
                 /* split p and q with respect to beta at 0.5 */
                 p->split_y(0.5, pdown, pup);
@@ -2117,16 +2064,16 @@ BiLinClip_roots(
                 /* push new rectangles and polys onto stack */
                 beta_middle = (beta0 + beta1) / 2.0;
 
-                S.push_back( BiLinClip_Tuple<R>(pdown,    qdown,  alpha0,     alpha1,   alpha_converged,  beta0,          beta_middle,    beta_converged, depth + 1) );
-                S.push_back( BiLinClip_Tuple<R>(pup,      qup,    alpha0,     alpha1,   alpha_converged,  beta_middle,    beta1,          beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pdown,    qdown,  alpha0,     alpha1,   alpha_converged,  beta0,          beta_middle,    beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pup,      qup,    alpha0,     alpha1,   alpha_converged,  beta_middle,    beta1,          beta_converged, depth + 1) );
             }
             /* if beta is frozen but not alpha */
             else if (!alpha_frozen && beta_frozen) {
                 /* alloc new polys */
-                pleft   = new BiBernsteinPolynomial<R, R>();
-                pright  = new BiBernsteinPolynomial<R, R>();
-                qleft   = new BiBernsteinPolynomial<R, R>();
-                qright  = new BiBernsteinPolynomial<R, R>();
+                pleft   = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                pright  = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                qleft   = new BiBernsteinPolynomial<deg1, deg2, R, R>();
+                qright  = new BiBernsteinPolynomial<deg1, deg2, R, R>();
 
                 /* split p and q with respect to alpha at 0.5 */
                 p->split_x(0.5, pleft, pright);
@@ -2135,8 +2082,8 @@ BiLinClip_roots(
                 /* push new rectangles and polys onto stack */
                 alpha_middle = (alpha0 + alpha1) / 2.0;
 
-                S.push_back( BiLinClip_Tuple<R>(pleft,    qleft,     alpha0,         alpha_middle,   alpha_converged,  beta0,    beta1,  beta_converged, depth + 1) );
-                S.push_back( BiLinClip_Tuple<R>(pright,   qright,    alpha_middle,   alpha1,         alpha_converged,  beta0,    beta1,  beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pleft,    qleft,     alpha0,         alpha_middle,   alpha_converged,  beta0,    beta1,  beta_converged, depth + 1) );
+                S.push_back( BiLinClip_Tuple<deg1, deg2, R>(pright,   qright,    alpha_middle,   alpha1,         alpha_converged,  beta0,    beta1,  beta_converged, depth + 1) );
             }
             /* this should never happen, since only one dimension is frozen when aspect ratio gets
              * too large and both are frozen in case of convergence (whence we should never reach
@@ -2154,3 +2101,5 @@ BiLinClip_roots(
 
     setDebugComponent(DBG_GLOBAL);
 }
+
+} // namespace PolyAlg

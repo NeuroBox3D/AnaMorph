@@ -43,141 +43,172 @@
 #ifndef BIVARIATE_POLYNOMIAL_H
 #define BIVARIATE_POLYNOMIAL_H
 
+#include "StaticMatrix.hh"
+
 /*! @brief abstract bivariate polynomial base class providing minimal interface */
-template<
-    typename F,
-    typename R
->
-class BivariatePolynomial {
+template <uint32_t deg1, uint32_t deg2, typename F, typename R>
+class BivariatePolynomial
+{
     protected:
-        uint32_t                            m, n;
-        Matrix<F>                           coeff;
+        StaticMatrix<deg1+1, deg2+1, F> coeff;
 
     public:
-                                            BivariatePolynomial();
-                                            BivariatePolynomial(uint32_t m, uint32_t n, F const &x);
-                                            BivariatePolynomial(BivariatePolynomial<F, R> const &q);
-        BivariatePolynomial<F, R>          &operator=(BivariatePolynomial const &q);
+        typedef BivariatePolynomial<deg1, deg2, F, R> this_type;
+        typedef StaticMatrix<deg1+1, deg2+1, F> coeff_type;
 
-        virtual                            ~BivariatePolynomial();
+        BivariatePolynomial();
+        BivariatePolynomial(const F& x);
+        BivariatePolynomial(const this_type& q);
 
-        void                                getDegree(uint32_t &m, uint32_t &n) const;
+        virtual ~BivariatePolynomial();
 
-        /* substitute for operator[], that unfortunately cannot be overloaded to have two arguments
-         * */
-        virtual F                          &operator()(uint32_t i, uint32_t j);
-        virtual F                           operator()(uint32_t i, uint32_t j) const;
+        this_type& operator=(const this_type& q);
 
-        Matrix<F>                           getCoeffs() const;
-        void                                setCoeffs(Matrix<F> const &coeff_arg);
-        F                                   getMaxAbsCoeff() const;
+        // substitute for operator[], that unfortunately cannot be overloaded to have two arguments
+        virtual F& operator()(uint32_t i, uint32_t j);
+        virtual F operator()(uint32_t i, uint32_t j) const;
 
-        void                                initConstant(F const &x);
-        void                                zero();
+        const coeff_type& getCoeffs() const;
+        coeff_type& getCoeffs();
+        void setCoeffs(const coeff_type& coeff);
+        F getMaxAbsCoeff() const;
 
-        virtual F                           eval(R const &x, R const &y) const  = 0;
+        void initConstant(const F& x);
+        void zero();
 
-        /* arithmetic: make this protected just as for Polynomial to prevent misuse with two upcast pointers /
-         * references from different derived classes */
+        virtual F eval(const R& x, const R& y) const = 0;
+
+        // arithmetic: make this protected just as for Polynomial to prevent misuse with two upcast pointers /
+        // references from different derived classes
     protected:
-        /* addition in vector space \Pi^{m, n} */
-        BivariatePolynomial<F, R>          &operator+=(BivariatePolynomial<F, R> const &q);
-        BivariatePolynomial<F, R>          &operator-=(BivariatePolynomial<F, R> const &q);
+        // addition in vector space \Pi^{m, n}
+        this_type& operator+=(const this_type& q);
+        this_type& operator-=(const this_type& q);
 
-        /* scalar multiplication in vector space \Pi^{m, n} */
-        BivariatePolynomial<F, R>          &operator*=(F const &x);
-        BivariatePolynomial<F, R>          &operator/=(F const &x);
+        // scalar multiplication in vector space \Pi^{m, n}
+        this_type& operator*=(const F& x);
+        this_type& operator/=(const F& x);
 
-        /* inner product with respect to L2 norm \int_0^1\int_0^1{p(x,y)q(x,y) dxdy} */
+        // inner product with respect to L2 norm \int_0^1\int_0^1{p(x,y)q(x,y) dxdy}
         //F                                   operator*(BivariatePolynomial<F, R> const &q) const;
 
     public:
-        /* print coefficient matrix */
-        void                                printCoeff() const;
+        // print coefficient matrix
+        void printCoeff() const;
 
-        /* write plotfile suitable for gnuplot */
-        void                                writePlotFile(uint32_t ticks, std::string filename) const;
+        // write plotfile suitable for gnuplot
+        void writePlotFile(uint32_t ticks, const std::string& filename) const;
+
+    protected:
+        template <typename TF, typename TR, typename dummy = void>
+        struct PrintCoeffImpl
+        {
+            PrintCoeffImpl(const BivariatePolynomial<deg1, deg2, F, R>& p);
+        };
+        template <typename dummy>
+        struct PrintCoeffImpl<float, float, dummy>
+        {
+            PrintCoeffImpl(const BivariatePolynomial<deg1, deg2, F, R>& p);
+        };
+        template <typename dummy>
+        struct PrintCoeffImpl<double, double, dummy>
+        {
+            PrintCoeffImpl(const BivariatePolynomial<deg1, deg2, F, R>& p);
+        };
+
+        template <typename TF, typename TR, typename dummy = void>
+        struct WritePlotFileImpl
+        {
+            WritePlotFileImpl(uint32_t ticks, const std::string& filename,
+                              const BivariatePolynomial<deg1, deg2, F, R>& p);
+        };
+        template <typename dummy>
+        struct WritePlotFileImpl<float, float, dummy>
+        {
+            WritePlotFileImpl(uint32_t ticks, const std::string& filename,
+                              const BivariatePolynomial<deg1, deg2, F, R>& p);
+        };
+        template <typename dummy>
+        struct WritePlotFileImpl<double, double, dummy>
+        {
+            WritePlotFileImpl(uint32_t ticks, const std::string& filename,
+                              const BivariatePolynomial<deg1, deg2, F, R>& p);
+        };
 };
 
 /*! @brief class for bivariate polynomials represented in Bernstein-Bezier basis */
-template<
-    typename F,
-    typename R
->
-class BiBernsteinPolynomial : public BivariatePolynomial<F, R> {
+template <uint32_t deg1, uint32_t deg2, typename F, typename R>
+class BiBernsteinPolynomial : public BivariatePolynomial<deg1, deg2, F, R>
+{
+    private:
+        using BivariatePolynomial<deg1, deg2, F, R>::coeff;
+
     public:
-                                            BiBernsteinPolynomial(); 
-                                            BiBernsteinPolynomial(uint32_t m, uint32_t n, F const &x);
-                                            BiBernsteinPolynomial(Matrix<F> const &coeff_arg);
+        typedef BiBernsteinPolynomial<deg1, deg2, F, R> this_type;
+        typedef StaticMatrix<deg1+1, deg2+1, F> coeff_type;
 
-                                            BiBernsteinPolynomial(BiBernsteinPolynomial<F, R> const &q);
-        BiBernsteinPolynomial<F, R>        &operator=(BiBernsteinPolynomial<F, R> const &q);
+        BiBernsteinPolynomial();
+        BiBernsteinPolynomial(const F& x);
+        BiBernsteinPolynomial(const coeff_type& coeff);
+        BiBernsteinPolynomial(const this_type& q);
 
-        virtual                            ~BiBernsteinPolynomial();
+        virtual ~BiBernsteinPolynomial();
 
-        /* implementation of BivariatePolynomial interface */
-        F                                   eval(
-                                                R const &x,
-                                                R const &y) const;
+        this_type& operator=(const this_type& q);
 
-        /* addition in vector space \Pi^{m, n} */
-        BiBernsteinPolynomial<F, R>         operator+(BiBernsteinPolynomial<F, R> const &q) const;
-        BiBernsteinPolynomial<F, R>        &operator+=(BiBernsteinPolynomial<F, R> const &q);
+        // implementation of BivariatePolynomial interface
+        F eval(const R& x, const R& y) const;
 
-        BiBernsteinPolynomial<F, R>         operator-(BiBernsteinPolynomial<F, R> const &q) const;
-        BiBernsteinPolynomial<F, R>        &operator-=(BiBernsteinPolynomial<F, R> const &q);
+        // addition in vector space \Pi^{m, n} */
+        this_type operator+(const this_type& q) const;
+        this_type& operator+=(const this_type& q);
 
-        /* scalar multiplication in vector space \Pi^{m, n} */
-        BiBernsteinPolynomial<F, R>         operator*(F const &x) const;
-        BiBernsteinPolynomial<F, R>        &operator*=(F const &x);
+        this_type operator-(const this_type& q) const;
+        this_type& operator-=(const this_type& q);
 
-        BiBernsteinPolynomial<F, R>         operator/(F const &x) const;
-        BiBernsteinPolynomial<F, R>        &operator/=(F const &x);
+        // scalar multiplication in vector space \Pi^{m, n} */
+        this_type operator*(const F& x) const;
+        this_type& operator*=(const F& x);
 
-        /* inner product with respect to L2 norm \int_0^1\int_0^1{p(x,y)q(x,y) dxdy} */
-        F                                   operator*(BiBernsteinPolynomial<F, R> const &q) const;
+        this_type operator/(const F& x) const;
+        this_type& operator/=(const F& x);
 
-        /* multiplication as polynomials over |R^2 or a suitably defined ring */
-        BiBernsteinPolynomial                multiply(BiBernsteinPolynomial const &q) const;
-        BiBernsteinPolynomial                square() const;
+        // inner product with respect to L2 norm \int_0^1\int_0^1{p(x,y)q(x,y) dxdy}
+        template <uint32_t d1, uint32_t d2>
+        F operator*(const BiBernsteinPolynomial<d1, d2, F, R>& q) const;
 
-        /* other methods */
-        void                                split_x(
-                                                R const                        &x,
-                                                BiBernsteinPolynomial<F, R>    *pleft,
-                                                BiBernsteinPolynomial          *pright) const;
+        // multiplication as polynomials over |R^2 or a suitably defined ring */
+        template <uint32_t d1, uint32_t d2>
+        BiBernsteinPolynomial<deg1+d1, deg2+d2, F, R> multiply(const BiBernsteinPolynomial<d1, d2, F, R>& q) const;
 
-        void                                split_y(
-                                                R const                        &y,
-                                                BiBernsteinPolynomial<F, R>    *pdown,
-                                                BiBernsteinPolynomial          *pup) const;
+        BiBernsteinPolynomial<2*deg1, 2*deg2, F, R> square() const;
 
-        void                                split_xy(
-                                                R const                        &x,
-                                                R const                        &y,
-                                                BiBernsteinPolynomial<F, R>    *pleft_down,
-                                                BiBernsteinPolynomial<F, R>    *pright_down,
-                                                BiBernsteinPolynomial<F, R>    *pright_up,
-                                                BiBernsteinPolynomial<F, R>    *pleft_up) const;
+        // other methods
+        void split_x(const R& x,this_type* pleft, this_type* pright) const;
+        void split_y(const R& y, this_type* pdown, this_type* pup) const;
+        void split_xy
+        (
+            const R& x,
+            const R& y,
+            this_type* pleft_down,
+            this_type* pright_down,
+            this_type* pright_up,
+            this_type* pleft_up
+        ) const;
 
-        void                                clipToInterval(
-                                                R const                        &x0, 
-                                                R const                        &x1,
-                                                R const                        &y0,
-                                                R const                        &y1,
-                                                BiBernsteinPolynomial<F, R>    *pclip) const;
-        /* elevate degree by (+r, +s) */
-        void                                elevateDegree(
-                                                uint32_t r_arg,
-                                                uint32_t s_arg);
+        void clipToInterval(const R& x0, const R& x1, const R& y0, const R& y1, this_type* pclip) const;
 
-        /* static methods to precompute / free data needed for Bernstein-Bezier basis arithmetic
-         * (binomial coefficients / inner products of basis polynomials). */
-        static void                         initBernsteinPolyData();
-        static void                         freeBernsteinPolyData();
+        // elevate degree by (+d1, +d2)
+        template <uint32_t d1, uint32_t d2>
+        BiBernsteinPolynomial<deg1+d1, deg2+d2, F, R> elevateDegree();
 
-        /* FIXME: add to PolyAlg::convertBasis set of polymorph conversion functions */
-        void                                convertFromPowerBasis(Matrix<F> const &coeff_pow);
+        // static methods to precompute / free data needed for Bernstein-Bezier basis arithmetic
+        // (binomial coefficients / inner products of basis polynomials).
+        //static void initBernsteinPolyData();
+        //static void freeBernsteinPolyData();
+
+        // FIXME: add to PolyAlg::convertBasis set of polymorph conversion functions
+        void convertFromPowerBasis(const coeff_type& coeff_pow);
 };
 
 #include "../tsrc/BivariatePolynomial.impl.hh"

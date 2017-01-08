@@ -1926,6 +1926,7 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
     u_it->out_edges.sort(Edge::ptr_less);
 
     debugl(0, "neighbours of collapsed vertex: \n");
+    debugTabInc();
     u_it->getInEdges(nbs);
     u_it->getOutEdges(tmp);
     nbs.insert(nbs.end(), tmp.begin(), tmp.end());

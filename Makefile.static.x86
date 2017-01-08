@@ -22,11 +22,13 @@ OBJECTS_AMCELLGEN=src/aux.x86.o					\
 		src/PolyTemplateSpecializations.x86.o	\
 		src/CLApplication.x86.o					\
 		src/AnaMorph_cellgen.x86.o				\
-		src/am_cellgen.x86.o
+		src/am_cellgen.x86.o                    \
+		src/Vec3.x86.o
 
 OBJECTS_AMMESHSTAT=src/aux.x86.o				\
 		src/IdQueue.x86.o						\
-		src/am_meshstat.x86.o
+		src/am_meshstat.x86.o                    \
+		src/Vec3.x86.o
 
 am_cellgen:			CXXLINE=$(CXX) $(CXXFLAGS_NODEBUG) $(INC)
 am_cellgen:			CCLINE =$(CC) $(CFLAGS_NODEBUG) $(INC)

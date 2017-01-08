@@ -392,105 +392,88 @@ class PipeSurface : public CanalSurface<C2F, ConstantRadiusFunctor, R>
 #include "BivariatePolynomial.hh"
 
 template <
+    uint32_t degree,
     typename RadF,
     typename R = double
 >
-class BezierCanalSurface : public CanalSurface<BernsteinPolynomial<R, R>, RadF, R> {
+class BezierCanalSurface : public CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R> {
     protected:
         /* override spine curve to be BezierCurve, which is more specific than 
-         * SpaceCurveReal<BernsteinPolynomial<R, R>, R> */
-        BezierCurve<R>              spine_curve;
-
-        uint32_t                    degree;
+         * SpaceCurveReal<BernsteinPolynomial<degree, R, R>, R> */
+        BezierCurve<degree, R>      spine_curve;
 
         bool                        bb_set;
         BoundingBox<R>              bb;
 
     public:
-                                    BezierCanalSurface();
+        typedef BezierCanalSurface<degree, RadF, R> this_type;
+        static const uint32_t derivDeg = degree>0 ? degree-1 : 0;
+        static const uint32_t deriv2Deg = degree>1 ? degree-2 : 0;
 
-                                    BezierCanalSurface(
-                                            BezierCurve<R> const   &spine_curve,
-                                            RadF const             &radius_functor);
+        BezierCanalSurface();
 
-                                    BezierCanalSurface(
-                                            std::array<
-                                                    BernsteinPolynomial<R, R>,
-                                                    3
-                                                > const                        &component_functors,
-                                            RadF const                         &radius_functor);
+        BezierCanalSurface(const BezierCurve<degree, R>& spine_curve, const RadF& radius_functor);
+        BezierCanalSurface
+        (
+            const std::array<BernsteinPolynomial<degree, R, R>, 3>& component_functors,
+            const RadF& radius_functor
+        );
+        BezierCanalSurface(const std::vector<Vec3<R> >& control_points, const RadF& radius_functor);
+        BezierCanalSurface(const BezierCanalSurface<degree, RadF, R>& delta);
 
-                                    BezierCanalSurface(
-                                            std::vector<Vec3<R>> const &control_points,
-                                            RadF const                 &radius_functor);
+        virtual ~BezierCanalSurface();
 
-                                    BezierCanalSurface(const BezierCanalSurface<RadF, R> &delta);
-        BezierCanalSurface         &operator=(const BezierCanalSurface<RadF, R> &delta);
+        this_type &operator=(const this_type& delta);
 
-        virtual                    ~BezierCanalSurface();
-
-        BezierCurve<R>              getSpineCurve() const;
-        //void                        setSpineCurve(BezierCurve<R> const &gamma);
-
-        /* info methods */
-        uint32_t                    getDegree() const;
+        BezierCurve<degree, R> getSpineCurve() const;
 
         /* clip to interval */
-        void                        clipToInterval(
-                                        R const    &t0,
-                                        R const    &t1);
+        void clipToInterval(const R& t0, const R& t1);
 
         /* bounding box */
-        void                        updateBoundingBox(uint32_t spine_curve_subdivision_depth = 8);
+        void updateBoundingBox(uint32_t spine_curve_subdivision_depth = 8);
 
-        BoundingBox<R>              getBoundingBox() const;
+        BoundingBox<R> getBoundingBox() const;
 
         /* check render vector */
-        R                           checkRenderVector(Vec3<R> const &r) const;
+        R checkRenderVector(const Vec3<R>& r) const;
 };
 
-template<typename R>
-class BLRCanalSurface : public BezierCanalSurface<LinearRadiusInterpolatorArcLen<BernsteinPolynomial<R, R>, R>, R>
+template <uint32_t degree, typename R>
+class BLRCanalSurface : public BezierCanalSurface<degree, LinearRadiusInterpolatorArcLen<BernsteinPolynomial<degree, R, R>, R>, R>
 {
     private:
-        /* precomputed data for construction of global self-intersection polynomial */
-        static bool                                     gsi_data_mutable;
-        static uint32_t                                 gsi_max_n;
-        static Tensor<2, BiBernsteinPolynomial<R, R>>   F;
-        static Tensor<3, BiBernsteinPolynomial<R, R>>   G;
+        // precomputed data for construction of global self-intersection polynomial
+        // bi-variate base functions (?) of (degree, degree)
+        static StaticMatrix<degree+1, degree+1, BiBernsteinPolynomial<2*degree-1, 2*degree-1, R, R> > G;
 
     public:
-                                    BLRCanalSurface();
-                                    BLRCanalSurface(
-                                            BezierCurve<R> const   &spine_curve,
-                                            R const                &r0,
-                                            R const                &r1);  
+        typedef BLRCanalSurface<degree, R> this_type;
+        typedef BezierCanalSurface<degree, LinearRadiusInterpolatorArcLen<BernsteinPolynomial<degree, R, R>, R>, R> base_type;
+        static const uint32_t derivDeg = degree>0 ? degree-1 : 0;
+        static const uint32_t deriv2Deg = degree>1 ? degree-2 : 0;
 
-                                    BLRCanalSurface(
-                                            std::array<
-                                                    BernsteinPolynomial<R, R>,
-                                                    3
-                                                > const                        &component_functors,
-                                            R const                            &r0,
-                                            R const                            &r1);
+        BLRCanalSurface();
+        BLRCanalSurface(const BezierCurve<degree, R>& spine_curve, const R& r0, const R& r1);
+
+        BLRCanalSurface
+        (
+            const std::array<BernsteinPolynomial<degree, R, R>, 3>& component_functors,
+            const R& r0,
+            const R& r1
+        );
+
+        BLRCanalSurface(const std::vector<Vec3<R> >& control_points, const R& r0, const R& r1);
+
+        BLRCanalSurface(const this_type& delta);
+
+        ~BLRCanalSurface();
+
+        this_type         &operator=(const this_type& delta);
 
 
-                                    BLRCanalSurface(
-                                            std::vector<Vec3<R>> const &control_points,
-                                            R const                    &r0,
-                                            R const                    &r1);
-
-                                    BLRCanalSurface(const BLRCanalSurface &delta);
-        BLRCanalSurface<R>         &operator=(const BLRCanalSurface &delta);
-
-
-        /*! \brief static method initializing precomputable global self-intersection data for
-         * BLRCanalSurface objects. */
-        static void                 initGlobalSelfIntersectionData(uint32_t max_n);
-        static void                 setGlobalSelfIntersectionDataMutable();
-        static void                 setGlobalSelfIntersectionDataImmutable();
-
-                                   ~BLRCanalSurface();                                
+        /*! \brief initialize precomputable global self-intersection data for BLRCanalSurface objects. */
+        void initGlobalSelfIntersectionData();
         
         /* get radii, min and max radius */
         std::pair<R, R>             getRadii() const;
@@ -498,40 +481,39 @@ class BLRCanalSurface : public BezierCanalSurface<LinearRadiusInterpolatorArcLen
         R                           getMaxRadius() const;
 
         /* spine curve regularity polynomial */
-        void                        spineCurveComputeRegularityPolynomial(BernsteinPolynomial<R, R> &p_reg) const;
+        void                        spineCurveComputeRegularityPolynomial(BernsteinPolynomial<2*derivDeg, R, R> &p_reg) const;
 
         /* spine curve stationary point distance polynomial */
         void                        spineCurveComputeStationaryPointDistPoly(
                                         Vec3<R> const              &x,
-                                        BernsteinPolynomial<R, R>  &p) const;
+                                        BernsteinPolynomial<degree+derivDeg, R, R>& p) const;
 
         /* spine curve local self-intersection polynomial */
-        void                        computeLocalSelfIntersectionPolynomial(BernsteinPolynomial<R, R> &p_lsi) const;
+        void                        computeLocalSelfIntersectionPolynomial(BernsteinPolynomial<6*derivDeg, R, R> &p_lsi) const;
 
         /* global self-intersection system */
         void                        computeGlobalSelfIntersectionSystem(
-                                        BiBernsteinPolynomial<R, R>    &p,
-                                        BiBernsteinPolynomial<R, R>    &q,
-                                        BernsteinPolynomial<R, R>      &p_edge_t0,
-                                        BernsteinPolynomial<R, R>      &p_edge_t1) const;
+                                        BiBernsteinPolynomial<2*degree-1+derivDeg, 2*degree-1, R, R>    &p,
+                                        BiBernsteinPolynomial<2*degree-1, 2*degree-1+derivDeg, R, R>    &q,
+                                        BernsteinPolynomial<degree+derivDeg, R, R>              &p_edge_t0,
+                                        BernsteinPolynomial<degree+derivDeg, R, R>              &p_edge_t1) const;
 
         /* intersection system with other BLRCanalSurface */
         void                        computeIntersectionSystem(
-                                        const BLRCanalSurface<R>      &delta,
-                                        BiBernsteinPolynomial<R, R>    &p,
-                                        BiBernsteinPolynomial<R, R>    &q,
-                                        BernsteinPolynomial<R, R>      &p_edge_x0,
-                                        BernsteinPolynomial<R, R>      &p_edge_x1,
-                                        BernsteinPolynomial<R, R>      &p_edge_y0,
-                                        BernsteinPolynomial<R, R>      &p_edge_y1) const;
+                                        const this_type& Delta,
+                                        BiBernsteinPolynomial<degree+derivDeg, degree, R, R>    &p,
+                                        BiBernsteinPolynomial<degree, degree+derivDeg, R, R>    &q,
+                                        BernsteinPolynomial<degree+derivDeg, R, R>              &p_edge_x0,
+                                        BernsteinPolynomial<degree+derivDeg, R, R>              &p_edge_x1,
+                                        BernsteinPolynomial<degree+derivDeg, R, R>              &p_edge_y0,
+                                        BernsteinPolynomial<degree+derivDeg, R, R>              &p_edge_y1) const;
 
 };
 
-/* initialize static members */
-template <typename R> bool                                      BLRCanalSurface<R>::gsi_data_mutable    = true;
-template <typename R> uint32_t                                  BLRCanalSurface<R>::gsi_max_n           = 0;
-template <typename R> Tensor<2, BiBernsteinPolynomial<R, R>>    BLRCanalSurface<R>::F({ 1, 1 });
-template <typename R> Tensor<3, BiBernsteinPolynomial<R, R>>    BLRCanalSurface<R>::G({ 1, 1, 1 });
+// define static symbols
+template <uint32_t degree, typename R>
+StaticMatrix<degree+1, degree+1, BiBernsteinPolynomial<2*degree-1, 2*degree-1, R, R> >
+BLRCanalSurface<degree, R>::G;
 
 #include "../tsrc/CanalSurface.impl.hh"
 

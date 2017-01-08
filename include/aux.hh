@@ -58,6 +58,10 @@
 #include "Vec2.hh"
 #include "Vec3.hh"
 #include "Matrix.hh"
+#include "StaticVector.hh"
+#include "StaticMatrix.hh"
+
+#include <boost/math/special_functions/binomial.hpp>
 
 /* forward declaration of BoundingBox to break cyclical dependency. */
 template <typename R> class BoundingBox;
@@ -93,7 +97,8 @@ namespace Aux {
         R
         bicof(uint32_t n, uint32_t k)
         {
-            static Matrix<R>    bicof(BICOF_DEFAULT_SIZE + 1, BICOF_DEFAULT_SIZE + 1);
+#if 0
+            static StaticMatrix<R> bicof(BICOF_DEFAULT_SIZE + 1, BICOF_DEFAULT_SIZE + 1);
             static uint32_t     bicof_max_n     = BICOF_DEFAULT_SIZE;
             static uint32_t     bicof_recompute = true;
 
@@ -125,6 +130,8 @@ namespace Aux {
                 bicof_recompute = false;
             }
             return bicof(n, k);
+#endif
+            return boost::math::binomial_coefficient<R>(n, k);
         }
     }
 
@@ -455,6 +462,16 @@ namespace Aux {
             return r;
         }
 
+
+        template <uint32_t N, typename T>
+        inline StaticVector<N, T>
+        kronecker_static_vec(uint32_t i)
+        {
+            StaticVector<N, T> r(0);
+            r[i] = 1;
+            return r;
+        }
+
         template <typename T>
         inline Matrix<T>
         kronecker_mat(uint32_t m, uint32_t n, uint32_t i, uint32_t j)
@@ -463,6 +480,16 @@ namespace Aux {
             M.fill(0);
             M(i,j) = 1;
             return M;
+        }
+
+        template <uint32_t M, uint32_t N, typename T>
+        inline StaticMatrix<M, N, T>
+        kronecker_static_mat(uint32_t i, uint32_t j)
+        {
+            StaticMatrix<M, N, T> mat;
+            mat.fill(0);
+            mat(i,j) = 1;
+            return mat;
         }
 
         template <typename R>
@@ -1168,13 +1195,16 @@ namespace Aux {
         void
         computeSpatialIntersectionCandidatePairs(
             BoundingBox<R> const                       &bbox,
-            std::list<std::pair<TA, BoundingBox<R>>>   &A_list,
-            std::list<std::pair<TB, BoundingBox<R>>>   &B_list,
+            std::vector<std::pair<TA, BoundingBox<R>>> &A_list,
+            std::vector<std::pair<TB, BoundingBox<R>>> &B_list,
             uint32_t                                    rec_depth,
             uint32_t                                    max_elements,
             uint32_t                                    max_rec_depth,
-            std::list<std::pair<TA, TB>>               &candidate_pairs)
+            std::vector<std::pair<TA, TB>>             &candidate_pairs)
         {
+            typedef std::vector<std::pair<TA, BoundingBox<R>>> APairListType;
+            typedef std::vector<std::pair<TB, BoundingBox<R>>> BPairListType;
+
             using namespace Aux::Geometry::IntersectionTestResults;
 
             debugl(2, "partition_intersect(): depth %4d. A_list.size(): %6ld, B_list.size(): %6ld\n", rec_depth, A_list.size(), B_list.size());
@@ -1210,23 +1240,14 @@ namespace Aux {
                 Vec3<R>                                     face_bb_min, face_bb_max;
                 Vec3<R>                                     xdisp, ydisp, zdisp;
 
-                std::array<BoundingBox<R>, 8>               sub_boxes;
-                std::array<
-                    std::list<
-                            std::pair<
-                                TA,
-                                BoundingBox<R>
-                            >
-                        >,
-                    8>                                      A_sub_lists, B_sub_lists;
-                std::array<bool, 8>                         A_sub_box_relevant, B_sub_box_relevant;
+                std::array<BoundingBox<R>, 8> sub_boxes;
+                std::array<std::vector<std::pair<TA, BoundingBox<R> > >, 8> A_sub_lists, B_sub_lists;
+                std::array<bool, 8> A_sub_box_relevant, B_sub_box_relevant;
 
                 /* allocate all sub-box lists and default sub-boxes to irrelevant for both A and B */
                 for (i = 0; i < 8; i++) {
                     A_sub_box_relevant[i]   = false;
                     B_sub_box_relevant[i]   = false;
-                    A_sub_lists[i]          = {};
-                    B_sub_lists[i]          = {};
                 }
 
                 /* compute sub-boxes */
@@ -1319,9 +1340,9 @@ namespace Aux {
                     }
                 }
 
-                /* clear facelists from current call, they are not needed anymore */
-                A_list.clear();
-                B_list.clear();
+                /* clear facelists from current call, and free the memory */
+                APairListType().swap(A_list);
+                BPairListType().swap(B_list);
 
                 /* recursive calls for sub-boxes relevant to the intersection. */
                 for (i = 0; i < 8; i++) {
@@ -1333,10 +1354,6 @@ namespace Aux {
                                 rec_depth + 1, max_elements, max_rec_depth,
                                 candidate_pairs);
                     }
-
-                    /* clear allocated face sub-lists */
-                    A_sub_lists[i].clear();
-                    B_sub_lists[i].clear();
                 }
             }
             debugTabDec();
@@ -1616,11 +1633,11 @@ namespace Aux {
             return nerased;
         }
 
-        template<typename T>
+        template<template <typename, typename> class ListType, typename T, typename TAlloc>
         bool
-        removeFirstOccurrenceFromList(std::list<T> &l, const T &x)
+        removeFirstOccurrenceFromList(ListType<T, TAlloc> &l, const T &x)
         {
-            typename std::list<T>::iterator lit;
+            typename ListType<T, TAlloc>::iterator lit;
 
             for (lit = l.begin(); lit != l.end(); ++lit) {
                 if (x == *lit) {
