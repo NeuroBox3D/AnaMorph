@@ -54,7 +54,7 @@ class IdQueue {
 
     public:
                     IdQueue();
-                    IdQueue(uint32_t first_id);
+        explicit    IdQueue(uint32_t first_id);
         void        clear(uint32_t smallest_id = 0);
         uint32_t    getId();
         void        freeId(uint32_t id);

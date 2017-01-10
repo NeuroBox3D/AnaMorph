@@ -287,9 +287,9 @@ namespace Aux {
             */
 
             /* quantities used in the moment representation of the spline segment functions */
-            std::vector<R> a(n), b(n), alpha(n), beta(n), gamma(n), delta(n);
+            std::vector<R> a(n), alpha(n), beta(n), gamma(n), delta(n);
             for (j = 0; j < n; j++) {
-                b[j]        = x[j] - ( M[j] * h[j+1] * h[j+1]) / 6.0;
+                //b[j]        = x[j] - ( M[j] * h[j+1] * h[j+1]) / 6.0;
                 a[j]        = (x[j+1] - x[j]) / h[j+1] - h[j+1]/6.0*(M[j+1] - M[j]);
                 alpha[j]    = x[j];
                 gamma[j]    = M[j] / 2.0;
@@ -777,7 +777,7 @@ namespace Aux {
             Vec2        pos;
 
             Vertex2d() ;
-            Vertex2d(uint32_t id, Vec2 pos);
+            Vertex2d(uint32_t id, const Vec2& pos);
         };
 
 
@@ -808,11 +808,11 @@ namespace Aux {
         template <typename R>
         uint32_t
         rayTriangle(
-            Vec3<R>     p0,
-            Vec3<R>     p1,
-            Vec3<R>     v0,
-            Vec3<R>     v1,
-            Vec3<R>     v2,
+            const Vec3<R>&     p0,
+            const Vec3<R>&     p1,
+            const Vec3<R>&     v0,
+            const Vec3<R>&     v1,
+            const Vec3<R>&     v2,
             Vec3<R>    &x,
             R          &x_s,
             R          &x_t,
@@ -939,10 +939,10 @@ namespace Aux {
         template <typename R>
         void
         computeBaryCoordsOfProjectedPoint(
-            Vec3<R>     p,
-            Vec3<R>     v0,
-            Vec3<R>     v1,
-            Vec3<R>     v2,
+            const Vec3<R>&     p,
+            const Vec3<R>&     v0,
+            const Vec3<R>&     v1,
+            const Vec3<R>&     v2,
             R          &s,
             R          &t)
         {
@@ -972,20 +972,20 @@ namespace Aux {
 
 
         uint32_t    lineSegmentLineSegment2d(
-                        Vec2        p0,
-                        Vec2        p1,
-                        Vec2        q0,
-                        Vec2        q1,
+                        const Vec2&        p0,
+                        const Vec2&        p1,
+                        const Vec2&        q0,
+                        const Vec2&        q1,
                         Vec2       &x,
                         double     &x_lambda,
                         double     &x_mu,
                         double      eps = 1E-15);
 
         uint32_t    rayLineSegment2d(
-                        Vec2        p,
-                        Vec2        dir,
-                        Vec2        q0,
-                        Vec2        q1,
+                        const Vec2&        p,
+                        const Vec2&        dir,
+                        const Vec2&        q0,
+                        const Vec2&        q1,
                         Vec2       &x,
                         double     &x_lambda,
                         double     &x_mu,
@@ -995,10 +995,10 @@ namespace Aux {
         template <typename R>
         bool
         triTriSharingEdge(
-            Vec3<R> x,
-            Vec3<R> u,
-            Vec3<R> v,
-            Vec3<R> y,
+            const Vec3<R>& x,
+            const Vec3<R>& u,
+            const Vec3<R>& v,
+            const Vec3<R>& y,
             R       eps = 1E-15)
         {
             using namespace Aux::Geometry::IntersectionTestResults;
@@ -1164,7 +1164,7 @@ namespace Aux {
          * clockwise orientation */
         uint32_t    pointInSimplePolygon(
                         std::vector<Vertex2d>   vertices,
-                        Vec2                    p,
+                        const Vec2&                    p,
                         double                  eps = 1E-15);
 
         /* triangulate a given simple planar polygon without holes, given as a vector (by value) of 2d vertices in
@@ -1559,7 +1559,6 @@ namespace Aux {
         bool
         vectorContains(const std::vector<T> &vec, const T &x)
         {
-            typename std::vector<T>::const_iterator vit;
             return ( std::find(vec.begin(), vec.end(), x) != vec.end() );
         }
 
@@ -1622,8 +1621,8 @@ namespace Aux {
             lit = l.begin();
             while (lit != l.end()) {
                 if (x == *lit) {
-                    l.erase(lit);
-                    nerased++;
+                    lit = l.erase(lit);
+                    ++nerased;
                 }
                 else ++lit;
             }
@@ -1649,7 +1648,6 @@ namespace Aux {
         uint32_t
         listIntersection(std::list<T> l1, std::list<T> l2, std::list<T> &isec)
         {
-            typename std::list<T> result;
             l1.sort();
             l1.unique();
             l2.sort();
@@ -1680,10 +1678,10 @@ namespace Aux {
         bool
         binarySearchVector(std::vector<T> v, T x, uint32_t &x_idx)
         {
-            uint32_t left = 0, right = v.size() - 1, middle;
+            uint32_t left = 0, right = v.size() - 1;
 
             while (left <= right) {
-                middle = (left + right) / 2;
+                uint32_t middle = (left + right) / 2;
                 if (v[middle] == x) {
                     x_idx = middle;
                     return true;

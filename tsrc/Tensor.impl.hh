@@ -43,7 +43,7 @@
 template <uint32_t K, typename T>
 void
 Tensor<K, T>::checkDims(
-    std::string         fn,
+    const std::string&         fn,
     Tensor<K, T> const &x) const
 {
     if (this->dims != x.dims) {
@@ -110,11 +110,8 @@ Tensor<K, T>::Tensor(std::array<uint32_t, K> const  &dims)
 
 template <uint32_t K, typename T>
 Tensor<K, T>::Tensor(Tensor<K, T> const &x)
-{
-    this->comps     = x.comps;
-    this->dims      = x.dims;
-    this->offsets   = x.offsets;
-}
+: comps(x.comps), dims(x.dims), offsets(x.offsets)
+{}
 
 template <uint32_t K, typename T>
 Tensor<K, T> &

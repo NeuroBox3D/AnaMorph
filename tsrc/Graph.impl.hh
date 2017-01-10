@@ -296,7 +296,6 @@ template <typename Tg, typename Tv, typename Te>
 void
 Graph<Tg, Tv, Te>::Vertex::replaceAdjacentVertices(const std::map<Vertex *, Vertex*> &replace_map)
 {
-    typename std::list<Vertex *>::iterator                   nbit;
     typename std::map<Vertex *, Vertex *>::const_iterator    mit;
 
     /* replace pointers in all out-going and in-coming edges */
@@ -605,13 +604,8 @@ Graph<Tg, Tv, Te>::Edge::operator<(const Edge &b) const
         >                                   e_ptr(this->v_src, this->v_dst),
                                             b_ptr(b.v_src, b.v_dst);
 
-    return (
-        Vertex::ptr_less(e_ptr.first, b_ptr.first) ||
-            ( 
-               !(Vertex::ptr_less(e_ptr.first, b_ptr.first)) &&
-                Vertex::ptr_less(e_ptr.second, b_ptr.second)
-            )
-        );
+    return Vertex::ptr_less(e_ptr.first, b_ptr.first) ||
+            (!Vertex::ptr_less(b_ptr.first, e_ptr.first) && Vertex::ptr_less(e_ptr.second, b_ptr.second));
 }
 
 template <typename Tg, typename Tv, typename Te>
@@ -864,7 +858,6 @@ Graph<Tg, Tv, Te>::operator=(const Graph<Tg, Tv, Te>&X)
 
     /* now the edges of X are added using the integer _id_ based version (neither copy ctor nor
      * iterator based version). */
-    std::list<uint32_t> xv_out_nbs;
     edge_iterator       eit;
     bool                e_inserted;
     for (auto &xe : X.edges) {
@@ -1351,7 +1344,7 @@ Graph<Tg, Tv, Te>::getConnectedComponentBreadthFirst(
 template <typename Tg, typename Tv, typename Te>
 void
 Graph<Tg, Tv, Te>::checkEdge(
-    std::string                     fn,
+    const std::string&              fn,
     const vertex_const_iterator    &u_it,
     const vertex_const_iterator    &v_it) const
 {
@@ -1462,14 +1455,7 @@ Graph<Tg, Tv, Te>::VertexAccessor::insert(Tv const &data)
     debugl(2, "Graph::VertexAccessor::insert().\n");
     debugTabInc();
 
-    std::pair<
-            typename std::map<uint32_t, VertexPointerType >::iterator,
-            bool
-        >                                                               pair;
-    std::pair<
-            typename Graph<Tg, Tv, Te>::vertex_iterator,
-            bool
-        >                                                               ret;
+    std::pair<typename std::map<uint32_t, VertexPointerType >::iterator, bool> pair;
 
     /* get fresh id for new vertex, allocate new vertex, insert pair (id, vertex) into map */
     uint32_t v_id   = this->graph.V_idq.getId();
@@ -1871,7 +1857,7 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
     u_it->getOutEdges(tmp);
     nbs.insert(nbs.end(), tmp.begin(), tmp.end());
 
-#ifdef __DEBUg__
+#ifdef __DEBUG__
     for (auto &nb : nbs) {
         debugl(0, "%d = (%d, %d)\n", nb->id(), nb->getSourceVertex()->id(), nb->getDestinationVertex()->id());
     }

@@ -50,14 +50,14 @@ template <typename R>
 class Vec3 : public Vector<R> {
     public:
                                             Vec3();
-                                            Vec3(const R& v);
+        explicit                            Vec3(const R& v);
                                             Vec3(
 	                                            R const &x,
                                                 R const &y,
                                                 R const &z);
         /* compatibility size-based constructor and resize() that accepts size 3 only. useful if Vec3 is used as a
          * template argument that requires this type of constructor */
-                                            Vec3(uint32_t n);
+        explicit                            Vec3(uint32_t n);
 
                                             Vec3(Vec3 const &v);
         Vec3                               &operator=(Vec3 const &v);

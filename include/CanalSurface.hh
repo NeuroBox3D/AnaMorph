@@ -186,6 +186,7 @@ class LinearRadiusInterpolatorArcLen {
                 }
 };
 
+#if 0
 template<
     typename C2F,
     typename R
@@ -262,6 +263,7 @@ class LinearRadiusInterpolatorDomain {
                     return (this->r0 + (this->r1 - this->r0)*ratio);
                 }
 };
+#endif
 
 /*! @brief Canal Surface Class
  *

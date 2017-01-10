@@ -53,7 +53,7 @@ class Vec2
 
         // constructors
         Vec2();
-        Vec2(double v);
+        explicit Vec2(double v);
         Vec2(double x, double y);
         Vec2(const Vec2& v);
 

@@ -90,11 +90,8 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
                                         uint32_t        compartment_id,
                                         Vec3<R> const   &pos,
                                         R const        &radius)
-                                    {
-                                        this->_compartment_id   = compartment_id;
-                                        this->_pos              = pos;
-                                        this->_radius           = radius;
-                                    }
+                                    : _compartment_id(compartment_id), _pos(pos), _radius(radius)
+                                    {}
             /* NOTE: implicit copy constructor and assignment operator suffice here, as there are no non-trivial
              * members.*/
                 uint32_t           &compartment_id()
@@ -3425,16 +3422,13 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
             std::list<uint32_t>     child_ids;
 
             SWCNode(
-                    uint32_t                        compartment_id,
-                    uint32_t                        compartment_type,
-                    int32_t                         parent_id,
-                    std::list<CellSection> const   &sections)
-            {
-                this->compartment_id    = compartment_id;
-                this->compartment_type  = compartment_type;
-                this->parent_id         = parent_id;
-                this->sections          = sections;
-            }
+                    uint32_t                        _compartment_id,
+                    uint32_t                        _compartment_type,
+                    int32_t                         _parent_id,
+                    std::list<CellSection> const&   _sections)
+            : compartment_id(_compartment_id), compartment_type(_compartment_type),
+              parent_id(_parent_id), sections(_sections)
+            {}
         };
 
         /* enum for compartment types */
@@ -3570,7 +3564,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
 
     /* public method interface */
     public:
-                                                    CellNetwork(std::string network_name = "");
+                                                    CellNetwork(const std::string& network_name = std::string(""));
         /* FIXME: implement copy ctor, assignment operator using "deep-copy" clone()-ing and topology update, similar to
          * Graph and Mesh. */
                                                     CellNetwork(CellNetwork const &X) = delete;
@@ -3631,7 +3625,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
                                                         std::function<bool(EdgeType const &e)> const       &edge_termination_pred,
                                                         int32_t                                             tid_arg = -1);// =    [] (VertexType const &v)   -> bool { return true; });
 #if 0
-                                                        old function pointer type signature: statless => can't use capturing lambdas or functors of all sorts..
+                                                        old function pointer type signature: statless => cannot use capturing lambdas or functors of all sorts..
 
                                                         bool                                          (&vertex_pred)(NeuronVertex const &v),// =           [] (NeuronVertex const &v) -> bool { return true; },
                                                         bool                                          (&edge_pred)(NeuronEdge const &e),// =               [] (NeuronEdge const &e)   -> bool { return true; },
@@ -3647,8 +3641,8 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
 
         /* get directed path and path lengths from vertex u to v */
         void                                        getDirectedPath(
-                                                        neuron_iterator             u_it,
-                                                        neuron_iterator             v_it,
+                                                        const neuron_iterator&      u_it,
+                                                        const neuron_iterator&      v_it,
                                                         std::list<NeuronVertex *>  &path,
                                                         R                          &pathlen);
 

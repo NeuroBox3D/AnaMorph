@@ -46,14 +46,12 @@
 CLApplication::CLApplication(
     int                                                     argc,
     char                                                   *argv[],
-    std::list<std::pair<std::string, uint32_t>> const      &cl_settings_info,
-    std::list<std::pair<std::string, std::string>> const   &cl_mutex_switch_list,
-    std::string const                                      &usage_text)
+    const std::list<std::pair<std::string, uint32_t> >&    _cl_settings_info,
+    const std::list<std::pair<std::string, std::string> >& _cl_mutex_switch_list,
+    const std::string&                                     _usage_text)
+: cl_settings_info(_cl_settings_info), cl_mutex_switch_list(_cl_mutex_switch_list),
+  usage_text(_usage_text)
 {
-    this->cl_settings_info      = cl_settings_info;
-    this->cl_mutex_switch_list  = cl_mutex_switch_list;
-    this->usage_text            = usage_text;
-
     /* parse commandline arguments. arity of switches is given in (this->) cl_settings_info */
     /* parse string pairs (var, value) into list cl_settings */
     std::string                 s;
@@ -63,12 +61,13 @@ CLApplication::CLApplication(
     i = 1;
     while (i < argc) {
         s       = std::string(argv[i]);
-        bool s_valid = false;
 
         //printf("i = %d, new switch: \"%s\".\n", i, s.c_str());
 
         /* s must start with a leading "-" */
         if (s[0] == '-') {
+            bool s_valid = false;
+
             /* remove leading "-" */
             s.erase(s.begin());
 

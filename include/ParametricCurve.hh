@@ -187,8 +187,8 @@ class BezierCurve : public SpaceCurveReal< BernsteinPolynomial<degree, R, R>, R 
     private:
         typedef BezierCurve<degree, R> this_type;
         typedef BezierCurve<(degree>0) ? degree-1 : 0, R> this_deriv_type;
-        static const uint32_t derivDeg = degree>0 ? degree-1 : 0;
-        static const uint32_t deriv2Deg = degree>1 ? degree-2 : 0;
+        static const uint32_t derivDeg = degree>0 ? (degree-1) : 0;
+        static const uint32_t deriv2Deg = degree>1 ? (degree-2) : 0;
         typedef BernsteinPolynomial<degree, R, R> pol_type;
         typedef BernsteinPolynomial<derivDeg, R, R>  pol_deriv_type;
         typedef BernsteinPolynomial<deriv2Deg, R, R>  pol_deriv2_type;

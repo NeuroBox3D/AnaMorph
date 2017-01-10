@@ -92,27 +92,20 @@ struct RedBlue_EdgeIsecInfo {
     std::vector<TR>         edge_lambdas;
 
     RedBlue_EdgeIsecInfo(
-        bool                            red,
-        uint32_t                        u_id,
-        uint32_t                        v_id,
-        std::vector<uint32_t> const    &isec_face_ids,
-        std::vector<TR> const          &edge_lambdas)
+        bool                            _red,
+        uint32_t                        _u_id,
+        uint32_t                        _v_id,
+        std::vector<uint32_t> const    &_isec_face_ids,
+        std::vector<TR> const          &_edge_lambdas)
+    : red(_red), u_id(_u_id), v_id(_v_id), isec_face_ids(_isec_face_ids), edge_lambdas(_edge_lambdas)
     {
-        this->red           = red;
-        this->u_id          = u_id;
-        this->v_id          = v_id;
-        this->isec_face_ids = isec_face_ids;
-        if (!edge_lambdas.empty()) {
-            this->edge_lambdas  = edge_lambdas;
-        }
-        else {
+        if (edge_lambdas.empty())
             throw("RedBlue_Ex_ComplexEdges(): no lambda values supplied for complex edge. internal logic error.");
-        }
     }
 };
 
 struct RedBlue_Ex_InternalLogic : public RedBlue_Ex {
-    RedBlue_Ex_InternalLogic(std::string msg)
+    RedBlue_Ex_InternalLogic(const std::string& msg)
         /* default to setting R and B to not-intact. internal logic errors are fatal anyway. */
         : RedBlue_Ex(RedBlue_ExCodes::RB_INTERNAL_LOGIC_ERROR, msg, false, false)
     {
@@ -120,7 +113,7 @@ struct RedBlue_Ex_InternalLogic : public RedBlue_Ex {
 };
 
 struct RedBlue_Ex_Disjoint : public RedBlue_Ex {
-    RedBlue_Ex_Disjoint(std::string msg)
+    RedBlue_Ex_Disjoint(const std::string& msg)
         : RedBlue_Ex(RedBlue_ExCodes::RB_DISJOINT, msg, true, true)
     {
     }
@@ -131,12 +124,11 @@ struct RedBlue_Ex_ComplexEdges : public RedBlue_Ex {
     std::list<RedBlue_EdgeIsecInfo<TR>> edge_isec_info;
 
     RedBlue_Ex_ComplexEdges(
-            std::string                                 msg,
+            const std::string&                          msg,
             std::list<RedBlue_EdgeIsecInfo<TR>> const  &einfo_vec)
-                : RedBlue_Ex(RedBlue_ExCodes::RB_COMPLEX_EDGES, msg, true, true)
-    {
-        this->edge_isec_info = einfo_vec;
-    }
+    : RedBlue_Ex(RedBlue_ExCodes::RB_COMPLEX_EDGES, msg, true, true),
+    edge_isec_info(einfo_vec)
+    {}
 };
 
 struct RedBlue_Ex_NumericalEdgeCase : public RedBlue_Ex {
@@ -161,7 +153,7 @@ struct RedBlue_Ex_Triangulation : public RedBlue_Ex {
 };
 
 struct RedBlue_Ex_NumIsecPoly : public RedBlue_Ex {
-    RedBlue_Ex_NumIsecPoly(std::string msg)
+    RedBlue_Ex_NumIsecPoly(const std::string& msg)
         : RedBlue_Ex(RedBlue_ExCodes::RB_ISECPOLY_NUM, msg, true, true)
     {
     }
@@ -172,7 +164,7 @@ struct RedBlue_Ex_AffectedCircleTrivial : public RedBlue_Ex {
     uint32_t    face_id;
 
     RedBlue_Ex_AffectedCircleTrivial(
-        std::string msg,
+        const std::string& msg,
         bool        red,
         uint32_t    face_id)
             : RedBlue_Ex(RedBlue_ExCodes::RB_AFFECTED_CIRCLE_TRIVIAL, msg, true, true), red(red), face_id(face_id)
@@ -202,8 +194,8 @@ namespace MeshAlg {
     void
     appendHalfSphereToCanalSurfaceMesh(
         Mesh<Tm, Tv, Tf, R>                            &M,
-        Vec3<R>                                         render_vector,
-        Vec3<R>                                         start,
+        const Vec3<R>&                                  render_vector,
+        const Vec3<R>&                                  start,
         R const                                        &radius,
         Vec3<R>                                         direction,
         uint32_t                                        nphisegments,
@@ -384,12 +376,13 @@ namespace MeshAlg {
                 >                                                   last_boundary_vertices;
             uint32_t                                                last_flush_vertex_id;
 
-            MeshObjFlushInfo() {
-                this->obj_file  = NULL;
-            }
+            MeshObjFlushInfo()
+            : obj_file(NULL), last_flush_vertex_id(0)
+            {}
 
-            MeshObjFlushInfo(std::string const &filename) {
-                this->filename                  = filename;
+            MeshObjFlushInfo(const std::string& _filename)
+            : filename(_filename)
+            {
                 this->obj_file  = fopen( (this->filename + ".obj").c_str(), "w");
                 if (!this->obj_file) {
                     throw("MeshAlg::MeshObjFlushInfo::MeshObjFlushInfo(std:: string filemame): couldn't open given obj file for writing..\n");

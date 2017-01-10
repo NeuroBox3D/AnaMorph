@@ -56,7 +56,7 @@ template <
 class Tensor {
     private:
         void                            checkDims(
-                                            std::string         fn,
+                                            const std::string&         fn,
                                             Tensor<K, T> const &x) const; 
     protected:
         std::vector<T>                  comps;
@@ -65,9 +65,9 @@ class Tensor {
 
     public:
                                         Tensor();
-                                        Tensor(std::array<uint32_t, K> const  &dims);
+        explicit                        Tensor(std::array<uint32_t, K> const  &dims);
 
-                                        Tensor(Tensor<K, T> const &x);
+        explicit                        Tensor(Tensor<K, T> const &x);
         Tensor<K, T>                   &operator=(Tensor<K, T> const &x);
 
         /* virtual dtor for polymorphism */

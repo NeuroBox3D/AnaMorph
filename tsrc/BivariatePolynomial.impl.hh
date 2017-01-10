@@ -241,14 +241,13 @@ BivariatePolynomial<deg1, deg2, F, R>::WritePlotFileImpl<float, float, dummy>::W
     }
 
     uint32_t i, j;
-    float x, y;
 
     for (i = 0; i <= ticks; ++i)
     {
-        x = (float)i / (float)ticks;
+        float x = (float)i / (float)ticks;
         for (j = 0; j <= ticks; ++j)
         {
-            y = (float)j / (float)ticks;
+            float y = (float)j / (float)ticks;
             fprintf(fout, "%12.5E %12.5E %12.5E\n", x, y, p.eval(x, y));
         }
         fprintf(fout, "\n");
@@ -408,6 +407,7 @@ BiBernsteinPolynomial<deg1, deg2, F, R>::operator/=(const F& x)
 }
 
 // FIXME: broken right now.
+#if 0
 template <uint32_t deg1, uint32_t deg2, typename F, typename R>
 template <uint32_t d1, uint32_t d2>
 F
@@ -431,7 +431,7 @@ BiBernsteinPolynomial<deg1, deg2, F, R>::operator*(const BiBernsteinPolynomial<d
     }
     return product;
 }
-
+#endif
 
 template <uint32_t deg1, uint32_t deg2, typename F, typename R>
 template <uint32_t d1, uint32_t d2>

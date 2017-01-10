@@ -96,24 +96,18 @@ class Mesh {
                 MeshIterator(
                     Mesh<Tm, Tv, Tf, R>                *m,
                     typename InternalType::iterator     it)
-                {
-                    this->mesh      = m;
-                    this->int_it    = it;
-                    //this->val       = ValueType::getPtr(it);
-                }
+                : mesh(m), int_it(it)
+                {}
 
 
             public:
                 MeshIterator()
-                {
-                }
+                : mesh(NULL)
+                {}
 
                 MeshIterator(const MeshIterator &x)
-                {
-                    this->mesh      = x.mesh;
-                    this->int_it    = x.int_it;
-                    //this->val       = x.val;
-                }
+                : mesh(x.mesh), int_it(x.int_it)
+                {}
 
                ~MeshIterator()
                 {
@@ -808,7 +802,7 @@ class Mesh {
                                                             throw MeshEx(MESH_LOGIC_ERROR, std::string(fn) + "triangle-specific method called on non-triangle face.");
                                                     }
 
-                inline void                         checkTri(std::string fn) const
+                inline void                         checkTri(const std::string& fn) const
                                                     {
                                                         if ( !this->isTri() ) {
                                                             throw MeshEx(MESH_LOGIC_ERROR, fn + "triangle-specific method called on non-triangle face.");
@@ -821,7 +815,7 @@ class Mesh {
                                                         }
                                                     }
 
-                inline void                         checkQuad(std::string fn) const
+                inline void                         checkQuad(const std::string& fn) const
                                                     {
                                                         if ( !this->isQuad() ) {
                                                             throw MeshEx(MESH_LOGIC_ERROR, fn + "quad-specific method called on non-quad face.");
@@ -835,7 +829,7 @@ class Mesh {
                                                         }
                                                     }
 
-                inline void                         checkTriQuad(std::string fn) const
+                inline void                         checkTriQuad(const std::string& fn) const
                                                     {
                                                         if ( !this->isQuad() && !this->isTri()) {
                                                             throw MeshEx(MESH_LOGIC_ERROR, fn + "supplied face is neither quad nor triangle. general case intentionally unsupported right now => internal logic error.");
@@ -1184,7 +1178,7 @@ class Mesh {
         /* ----------- EDGE related methods, which don't have their own Iterator / Accessor scheme
          * (yet) ------- */
         void                                checkEdge(
-                                                std::string                     fn,
+                                                const std::string&              fn,
                                                 const vertex_const_iterator    &u_it,
                                                 const vertex_const_iterator    &v_it) const;
 

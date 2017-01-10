@@ -720,9 +720,10 @@ class NLM_CellNetwork
                 neurite_segment_iterator const &ns_first_it,
                 neurite_segment_iterator const &ns_second_it,
                 std::vector<NLM::p3<R>> const  &isec_stat_points,
-                bool                            adjacent            = false,
-                bool                            fst_end_snd_start   = false)
-                    : NSNS_IsecInfo(network, ns_first_it, ns_second_it, isec_stat_points)
+                bool                            _adjacent            = false,
+                bool                            _fst_end_snd_start   = false)
+            : NSNS_IsecInfo(network, ns_first_it, ns_second_it, isec_stat_points),
+              adjacent(_adjacent), fst_end_snd_start(_fst_end_snd_start), critical(false)
             {
                 /* calculate inTRA-neurite path information */
             }

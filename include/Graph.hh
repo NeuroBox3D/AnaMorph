@@ -996,7 +996,7 @@ class Graph {
         /* ----------- EDGE related methods, which don't have their own Iterator / Accessor scheme
          * (yet) ------- */
         void                                checkEdge(
-                                                std::string                     fn,
+                                                const std::string&              fn,
                                                 const vertex_const_iterator    &u_it,
                                                 const vertex_const_iterator    &v_it) const;
 

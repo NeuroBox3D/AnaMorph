@@ -56,7 +56,7 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 Mesh<Tm, Tv, Tf, R>::Vertex::Vertex()
 {
     this->mesh                  = NULL;
-    this->position              = Aux::VecMat::nullvec;
+    this->position              = Aux::VecMat::nullvec<R>;
     this->current_traversal_id  = 0;
     this->traversal_state       = TRAV_UNSEEN;
 }
@@ -997,7 +997,7 @@ Mesh<Tm, Tv, Tf, R>::Face::getFaceNeighbourhood(
     // this leads to a maximum of 3*2^n-2 triangles in the neighborhood
     // be careful if depth parameter is chosen ridiculously high
     face_neighbourhood.clear();
-    face_neighbourhood.reserve(3*pow(2,std::min(f_depth,7u))-2);
+    face_neighbourhood.reserve(3*pow(2,std::min(max_depth,7u))-2);
 
     /* initialize Q: we start at (this) face in depth 0 */
     Q.push({this, 0});
@@ -3209,7 +3209,7 @@ Mesh<Tm, Tv, Tf, R>::invertFaceSelection(std::list<Face *> &flist) const
 template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::checkEdge(
-    std::string                     fn,
+    const std::string&              fn,
     const vertex_const_iterator    &u_it,
     const vertex_const_iterator    &v_it) const
 {
@@ -4414,7 +4414,7 @@ Mesh<Tm, Tv, Tf, R>::checkGeometry(
     /* check for self-intersections on all faces. */
     for (auto &T : this->faces) {
         if (nchecks % tenperc == 0) {
-            printf("\t %3d%% done.\n", (uint32_t)(round( 100.0 * (R)nchecks/(R)F )) );
+            printf("\t %3u%% done.\n", (uint32_t)(round( 100.0 * (R)nchecks/(R)F )) );
         }
 
 
@@ -4624,7 +4624,7 @@ Mesh<Tm, Tv, Tf, R>::readFromObjFile(const char *filename)
         else if ( sscanf(line, "f %u %u %u %u", &v0, &v1, &v2, &v3) == 4) {
             //printf("simple quad.");
             throw("Mesh::readFromObjFile(): QUAD!\n");
-            faces.push_back( obj_face(true, false, v0, v1, v2, v3) );
+            //faces.push_back( obj_face(true, false, v0, v1, v2, v3) );
         }
         else if ( sscanf(line, "f %u//%u %u//%u %u//%u", &v0, &n0, &v1, &n1, &v2, &n2) == 6) {
             //printf("triangle with normals.");
@@ -4633,7 +4633,7 @@ Mesh<Tm, Tv, Tf, R>::readFromObjFile(const char *filename)
         else if ( sscanf(line, "f %u//%u %u//%u %u//%u %u//%u", &v0, &n0, &v1, &n1, &v2, &n2, &v3, &n3) == 8) {
             //printf("quad with normals.");
             throw("Mesh::readFromObjFile(): QUAD!\n");
-            faces.push_back( obj_face(true, true, v0, v1, v2, v3, n0, n1, n2, n3) );
+            //faces.push_back( obj_face(true, true, v0, v1, v2, v3, n0, n1, n2, n3) );
         }
         else {
             printf("Mesh::readFromObjFile(): unrecognized line: \"%s\".\n", line);
@@ -4755,7 +4755,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
     for (auto &f: this->faces) {
         if (f.isQuad()) {
             f.getQuadIndices(v0_id, v1_id, v2_id, v3_id);
-            fprintf(outfile, "f %d//%d %d//%d %d//%d %d//%d\n",
+            fprintf(outfile, "f %u//%u %u//%u %u//%u %u//%u\n",
                     v0_id + 1, 
                     v0_id + 1, 
                     v1_id + 1,
@@ -4765,7 +4765,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
                     v3_id + 1,
                     v3_id + 1);
 
-            debugl(4, "quad  %d/%d/%d/%d\n",
+            debugl(4, "quad  %u/%u/%u/%u\n",
                     v0_id, 
                     v1_id,
                     v2_id,
@@ -4773,7 +4773,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
         }
         else if (f.isTri()) {
             f.getTriIndices(v0_id, v1_id, v2_id);
-            fprintf(outfile, "f %d//%d %d//%d %d//%d\n",
+            fprintf(outfile, "f %u//%u %u//%u %u//%u\n",
                     v0_id + 1, 
                     v0_id + 1, 
                     v1_id + 1,
@@ -4781,12 +4781,13 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
                     v2_id + 1,
                     v2_id + 1);
 
-            debugl(4, "tri  %d/%d/%d/\n",
+            debugl(4, "tri  %u/%u/%u/\n",
                     v0_id, 
                     v1_id,
                     v2_id);
         }
         else {
+            fclose(outfile);
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::writeObjFile(): discovered face that is neither triangle nor quad. internal logic error.");
         }
     }

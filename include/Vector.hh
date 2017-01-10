@@ -55,7 +55,7 @@ class Vector : public Tensor<1, T> {
                                             Vector(
                                                 uint32_t    n,
                                                 T const     &x = T());
-                                            Vector(Vector<T> const &v);
+        explicit                            Vector(Vector<T> const &v);
         Vector<T>                          &operator=(Vector<T> const &v);
         virtual                             ~Vector();
 

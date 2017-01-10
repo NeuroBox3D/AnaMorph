@@ -2444,7 +2444,7 @@ NeuriteSegment::getAngle() const
             else if (std::is_same<R, float>::value) {
                 angle = acosf(scalprod);
             }
-            else if (std::is_same<R, float>::value) {
+            else if (std::is_same<R, long double>::value) {
                 angle = acosl(scalprod);
             }
             else {
@@ -3461,7 +3461,7 @@ NeuronVertexAccessor::erase(neuron_iterator it)
     }
     catch (GraphEx& ex) {
         /* FIXME: exception handling, wrap into CellNetwork exception class */
-        throw ex;
+        throw;
     }
     /* convert back "down" by wrapping internal iterator in a  neuron_iterator. */
     return neuron_iterator(&(this->C), Graph<Tn, Tv, Te>::getInternalIterator(vit));
@@ -3564,8 +3564,6 @@ SomaAccessor::insert(
     Tv const                                               &vertex_data,
     Tso const                                              &soma_data)
 {
-    std::pair<CellNetwork::soma_iterator, bool> ret_pair;
-
     SomaVertex *s   = new SomaVertex(&(this->C), section_graph, vertex_data, soma_data);
     auto rpair      = this->C.protectedVertexInsert(s);
 
@@ -3640,8 +3638,6 @@ AxonAccessor::insert(
     Tnv const              &neurite_vertex_data,
     Tv const               &vertex_data)
 {
-    std::pair<CellNetwork::axon_iterator, bool> ret_pair;
-
     AxonVertex *a   = new AxonVertex(&(this->C), section, axon_data, neurite_vertex_data, vertex_data);
     auto rpair      = this->C.protectedVertexInsert(a);
 
@@ -3717,8 +3713,6 @@ DendriteAccessor::insert(
     Tnv const              &neurite_vertex_data,
     Tv const               &vertex_data)
 {
-    std::pair<CellNetwork::dendrite_iterator, bool> ret_pair;
-
     DendriteVertex *d   = new DendriteVertex(&(this->C), section, apical_dendrite, dendrite_data, neurite_vertex_data, vertex_data);
     auto rpair          = this->C.protectedVertexInsert(d);
 
@@ -3799,7 +3793,7 @@ NeuronEdgeAccessor::erase(neuron_edge_iterator it)
     }
     catch (GraphEx& ex) {
         /* FIXME: exception handling, wrap into CellNetwork exception class */
-        throw ex;
+        throw;
     }
     /* convert back "down" by wrapping internal iterator in a neuron_edge_iterator. */
     return neuron_edge_iterator(&(this->C), Graph<Tn, Tv, Te>::getInternalIterator(eit));
@@ -4570,6 +4564,8 @@ DendriteSegmentAccessor::insert(
  *
  * ----------------------------------------------------------------------------------------------------------------- */
 
+// obviously unused as w.iterator in the return statement cannot be resolved
+#if 0
 /* two selection predicate generation template methods from namespace CellNetwork */
 template <
     typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
@@ -4587,6 +4583,7 @@ genVertexSelectionPred(VertexType const &v)
             }
         );
 }
+#endif
 
 template <
     typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
@@ -4775,18 +4772,15 @@ template <
     typename Tns, typename Tas, typename Tds, typename Tnr, typename Tar, typename Tdr, typename R
 >
 CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
-CellNetwork(std::string network_name)
-    : Graph<Tn, Tv, Te>(),
-        neuron_vertices(*this), soma_vertices(*this),
-        neurite_vertices(*this), axon_vertices(*this), dendrite_vertices(*this),
-        neuron_edges(*this), neurite_root_edges(*this), axon_root_edges(*this), dendrite_root_edges(*this),
-        neurite_segments(*this), axon_segments(*this), dendrite_segments(*this)
-{
-    this->network_name                      = network_name;
-    this->network_info_initialized          = false;
-    this->global_coordinate_displacement    = Aux::VecMat::nullvec<R>();
-    this->global_coordinate_scaling_factor  = 1.0;
-}
+CellNetwork(const std::string& _network_name)
+: Graph<Tn, Tv, Te>(),
+network_name(_network_name), network_info_initialized(false),
+global_coordinate_displacement(Aux::VecMat::nullvec<R>()), global_coordinate_scaling_factor(1.0),
+neuron_vertices(*this), soma_vertices(*this),
+neurite_vertices(*this), axon_vertices(*this), dendrite_vertices(*this),
+neuron_edges(*this), neurite_root_edges(*this), axon_root_edges(*this), dendrite_root_edges(*this),
+neurite_segments(*this), axon_segments(*this), dendrite_segments(*this)
+{}
 
 template <
     typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
@@ -5101,8 +5095,8 @@ template <
 void
 CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
 getDirectedPath(
-    neuron_iterator             u_it,
-    neuron_iterator             v_it,
+    const neuron_iterator&             u_it,
+    const neuron_iterator&             v_it,
     std::list<NeuronVertex *>  &path,
     R                          &pathlen)
 {
@@ -6160,7 +6154,7 @@ readFromNeuroMorphoSWCFile(
                         debugl(2, "c has unsupported section type. skipping n and its sub-tree.\n");
                         /* unsupported compartment type. skip node with continue, i.e. don't examine out-going edges */
                         printf("CellNetwork::readFromNeuroMorphoSWCFile(): WARNING: SWC node with unsupported compartment"\
-                               " type %2d: skipping node's sub-tree.\n", c.compartment_type);
+                               " type %2u: skipping node's sub-tree.\n", c.compartment_type);
                         continue;
                 }
                 debugTabDec();

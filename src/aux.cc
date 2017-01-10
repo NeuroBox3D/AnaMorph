@@ -194,19 +194,17 @@ namespace Aux {
             this->pos[1]    = Aux::Numbers::inf<double>();
         }
 
-        Vertex2d::Vertex2d(uint32_t id, Vec2 pos)
-        {
-            this->id    = id;
-            this->pos   = pos;
-        }
+        Vertex2d::Vertex2d(uint32_t _id, const Vec2& _pos)
+        : id(_id), pos(_pos)
+        {}
 
 
         uint32_t
         lineSegmentLineSegment2d(
-            Vec2        p0,
-            Vec2        p1,
-            Vec2        q0,
-            Vec2        q1,
+            const Vec2&        p0,
+            const Vec2&        p1,
+            const Vec2&        q0,
+            const Vec2&        q1,
             Vec2       &x,
             double     &x_lambda,
             double     &x_mu,
@@ -215,7 +213,6 @@ namespace Aux {
             /* get direction vectors: u = p1 - p0, v = q1 - q0 */
             Vec2    u, v, w;
             double  denom;
-            double  lambda_isec, mu_isec;
 
             u       = p1 - p0;
             v       = q1 - q0;
@@ -229,8 +226,8 @@ namespace Aux {
             else {
                 debugTabInc();
 
-                lambda_isec = (v[0]*w[1] - v[1]*w[0]) / denom;
-                mu_isec     = (u[0]*w[1] - u[1]*w[0]) / denom;
+                double lambda_isec = (v[0]*w[1] - v[1]*w[0]) / denom;
+                double mu_isec     = (u[0]*w[1] - u[1]*w[0]) / denom;
 
                 x           = p0 + u*lambda_isec;
                 x_lambda    = lambda_isec;
@@ -251,10 +248,10 @@ namespace Aux {
 
         uint32_t
         rayLineSegment2d(
-            Vec2        p,
-            Vec2        dir,
-            Vec2        q0,
-            Vec2        q1,
+            const Vec2&        p,
+            const Vec2&        dir,
+            const Vec2&        q0,
+            const Vec2&        q1,
             Vec2       &x,
             double     &x_lambda,
             double     &x_mu,
@@ -303,7 +300,7 @@ namespace Aux {
         uint32_t
         pointInSimplePolygon(
             std::vector<Vertex2d>   vertices,
-            Vec2                    p,
+            const Vec2&                    p,
             double                  eps)
         {
             Vec2                    d;
@@ -496,7 +493,7 @@ namespace Aux {
 
                             uint32_t iter = 0;
                             debugTabInc();
-                            while (iter < maxiter) {
+                            while (++iter < maxiter) {
                                 debugl(0, "checking whether principal vertex is mouth or ear..\n");
                                 u_v_edgepoint       = u + (v - u) * Aux::Numbers::frand(0.1, 0.9);
                                 pointcheck_result   = pointInSimplePolygon(vertices_copy, u_v_edgepoint);

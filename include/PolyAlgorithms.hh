@@ -190,8 +190,8 @@ namespace PolyAlg {
         int     d;
 
         ComplexInterval()
-        {
-        }
+        : d(0)
+        {}
 
         ComplexInterval(
             R x0,

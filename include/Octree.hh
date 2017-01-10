@@ -119,8 +119,8 @@ struct OctreeNode {
 
 
     OctreeNode()
-    {
-    }
+    : flags(0), first_child(NULL)
+    {}
 
     OctreeNode(T data, uint8_t child_type, bool leaf = false)
     {
@@ -237,12 +237,11 @@ class Octree {
         Vec3<R>             root_vertex;
         R                   root_l;
 
-        Octree(tT data, nT root_data, Vec3<R> root_vertex, R l) {
+        Octree(tT _data, nT root_data, Vec3<R> _root_vertex, R l)
+        : data(_data), root_vertex(_root_vertex), root_l(l)
+        {
             /* init octree. root_vertex is the lower left front corner, (x,y,z) an orthonormal base
              * to use, and roo_tl the cube edge length */
-            this->data                  = data;
-            this->root_vertex           = root_vertex;
-            this->root_l                = l;
 
             /* init root node */
             this->root.data             = root_data;
@@ -571,7 +570,7 @@ class Octree {
          * we can go up if the current cube is the left fron down child of its parent, i.e. if its
          * child type is 0 */
         OtId
-        getUniqueVertexId(const OtId cube_id, uint8_t vtype) const {
+        getUniqueVertexId(const OtId& cube_id, uint8_t vtype) const {
             using namespace CubeCommon;
 
             OtId uid;
@@ -921,7 +920,7 @@ template <typename tT, typename nT, typename R>
 void
 Octree<tT, nT, R>::octree_generate_leaf_list_recursive(OctreeNode<nT> *n, std::list<OctreeNode<nT> *> &l)
 {
-    if (this->isLeaf(n)) {
+    if (n->isLeaf()) {
         l.push_back(n);
     }
     else {

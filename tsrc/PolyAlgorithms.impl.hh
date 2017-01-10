@@ -504,10 +504,7 @@ BezClip_roots(
     std::queue<BezClip_Triple<deg, R> >  S;
     BezClip_Triple<deg, R>               T;
     BernsteinPolynomial<deg, R, R>      *p, *pleft, *pright;
-    R                               pmid, tol4 = tol / 4.0, tol4rel;
-    R                               left, right, middle, isize, new_isize;
-    R                               new_left = 0.0, new_right = 0.0;
-    bool                            interval_relevant, pcvhull_subset_eps_strip, bisect;
+    R tol4 = tol;
     std::vector<Vec2>               pcvhull;
 
     /* insert root triple onto stack S */
@@ -519,8 +516,8 @@ BezClip_roots(
         /* get top element of S, set variables and pop() */
         T       = S.front();
         p       = T.p;
-        left    = T.left;
-        right   = T.right;
+        R left    = T.left;
+        R right   = T.right;
 
         S.pop();
 
@@ -529,13 +526,15 @@ BezClip_roots(
         /* while interval is relevant and keeps shrinking exponentially with a rate > 2 when new convex hull is 
          * intersected with the t-axis, keep going.. should that seize without convergence, break the loop and bisect
          * the interval */
-        bisect  = false;
+        bool bisect  = false;
         while(1) {
             debugl(1, "\n\n------------- interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
             /* get convex hull */
             PolyAlg::BezierControlPolyConvexHull<deg, R>::compute(*p, pcvhull, 1E-10);
 
             /* compute new interval */
+            R new_left = 0.0, new_right = 0.0;
+            bool interval_relevant, pcvhull_subset_eps_strip;
             PolyAlg::BezClip_getNewInterval(
                     pcvhull,
                     left, right,
@@ -546,8 +545,8 @@ BezClip_roots(
 
             /* if interval is relevant, process further */
             if (interval_relevant) {
-                isize       = std::abs(right - left);
-                new_isize   = std::abs(new_right - new_left);
+                R isize       = std::abs(right - left);
+                R new_isize   = std::abs(new_right - new_left);
 
                 debugl(1, "\n\n interval [%+20.13E, %+20.13E] relevant. new interval: [%+20.13E, %+20.13E], new_isize: %+20.13E\n\n", left, right, new_left, new_right, new_isize);
 
@@ -604,8 +603,8 @@ BezClip_roots(
             pright  = new BernsteinPolynomial<deg, R, R>();
 
             /* check if middle is a root */
-            middle  = (left + right) / 2.0;
-            pmid    = p->eval(0.5);
+            R middle  = (left + right) / 2.0;
+            R pmid    = p->eval(0.5);
             if ( std::abs(pmid) < eps) {
                 /* mid point is root. since we don't want to converge twice against the same root,
                  * the following approach is taken:
@@ -619,7 +618,7 @@ BezClip_roots(
                 roots.push_back( RealInterval<R>(middle - tol4, middle + tol4) );
 
                 /* we need to know where to cut in [0, 1] */
-                tol4rel = tol / (4.0 * (right - left));
+                R tol4rel = tol / (4.0 * (right - left));
                 debugl(1, "tol4rel: %+20.13E\n", tol4rel);
 
                 /* split p twice, once at 0.5 - tol4rel, once at 0.5 + tol4rel */
@@ -669,11 +668,10 @@ struct BiLinClip_Tuple {
     uint32_t                        depth;
 
     BiLinClip_Tuple()
-    {
-        p       = q = NULL;
-        depth   = 0;
-        alpha0  = alpha1 = beta0 = beta1 = 0.0;
-    } 
+    : p(NULL), q(NULL),
+      alpha0(0.0), alpha1(0.0), beta0(0.0), beta1(0.0),
+      alpha_converged(false), beta_converged(false), depth(0)
+    {}
 
     BiLinClip_Tuple(
             BiBernsteinPolynomial<deg1, deg2, R, R>    *p,

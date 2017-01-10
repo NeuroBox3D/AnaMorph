@@ -257,8 +257,8 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 void
 MeshAlg::appendHalfSphereToCanalSurfaceMesh(
     Mesh<Tm, Tv, Tf, R>                            &M,
-    Vec3<R>                                         render_vector,
-    Vec3<R>                                         start,
+    const Vec3<R>&                                  render_vector,
+    const Vec3<R>&                                  start,
     R const                                        &radius,
     Vec3<R>                                         direction,
     uint32_t                                        nphisegments,
@@ -533,28 +533,20 @@ struct RB_Tuple {
     typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator  R_new_it, B_new_it;
 
     RB_Tuple(
-        bool                                            red,
-        Vec3<TR> const                                 &x,
-        TR const                                       &edge_x_lambda,
-        TR const                                       &face_x_s,
-        TR const                                       &face_x_t,
-        typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator  edge_out_it,
-        typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator  edge_in_it,
-        typename Mesh<Tm, Tv, Tf, TR>::face_iterator    face_it,
-        typename Mesh<Tm, Tv, Tf, TR>::face_iterator    backward_tri_it,
-        typename Mesh<Tm, Tv, Tf, TR>::face_iterator    forward_tri_it)
-    {
-        this->red                   = red;
-        this->x                     = x;
-        this->edge_x_lambda         = edge_x_lambda;
-        this->face_x_s              = face_x_s;
-        this->face_x_t              = face_x_t;
-        this->edge_out_it           = edge_out_it,
-        this->edge_in_it            = edge_in_it;
-        this->face_it               = face_it;
-        this->backward_tri_it       = backward_tri_it;
-        this->forward_tri_it        = forward_tri_it;
-    }
+        bool                                            _red,
+        Vec3<TR> const                                 &_x,
+        TR const                                       &_edge_x_lambda,
+        TR const                                       &_face_x_s,
+        TR const                                       &_face_x_t,
+        typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator  _edge_out_it,
+        typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator  _edge_in_it,
+        typename Mesh<Tm, Tv, Tf, TR>::face_iterator    _face_it,
+        typename Mesh<Tm, Tv, Tf, TR>::face_iterator    _backward_tri_it,
+        typename Mesh<Tm, Tv, Tf, TR>::face_iterator    _forward_tri_it)
+    : red(_red), x(_x), edge_x_lambda(_edge_x_lambda), face_x_s(_face_x_s), face_x_t(_face_x_t),
+      edge_out_it(_edge_out_it), edge_in_it(_edge_in_it), face_it(_face_it),
+      backward_tri_it(_backward_tri_it), forward_tri_it(_forward_tri_it)
+    {}
 
 
     /* use lexicographic ordering provided by std::tuple by creating temporary tuples from the
@@ -2469,12 +2461,10 @@ MeshAlg::partialFlushToObjFile(
         std::vector<uint32_t>   v_ids;
 
         IdFace(
-            bool                            quad,
-            std::vector<uint32_t> const    &v_ids)
+            bool                            _quad,
+            const std::vector<uint32_t>&    _v_ids)
+        : quad(_quad), v_ids(_v_ids)
         {
-            this->quad  = quad;
-            this->v_ids = v_ids;
-
             if (    (this->quad && v_ids.size() != 4) ||
                     (!this->quad && v_ids.size() != 3) )
             {

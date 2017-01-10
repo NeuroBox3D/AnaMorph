@@ -55,7 +55,7 @@ class StaticVector
         typedef StaticVector<N, T> this_type;
 
         StaticVector();
-        StaticVector(const T& x);
+        explicit StaticVector(const T& x);
         StaticVector(const this_type& v);
 
         ~StaticVector();

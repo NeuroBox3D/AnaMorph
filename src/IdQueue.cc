@@ -43,21 +43,13 @@
 #include "common.hh"
 #include "IdQueue.hh"
 
-IdQueue::IdQueue(uint32_t smallest_id)
-{
-    this->smallest_id   = smallest_id;
-    this->next_id       = smallest_id;
-    this->last_id       = smallest_id;
-    this->refill_count  = 1024;
-}
+IdQueue::IdQueue(uint32_t _smallest_id)
+: refill_count(1024), smallest_id(_smallest_id), next_id(_smallest_id), last_id(_smallest_id)
+{}
 
 IdQueue::IdQueue()
-{
-    this->smallest_id   = 0;
-    this->next_id       = 0;
-    this->last_id       = 0;
-    this->refill_count  = 1024;
-}
+: refill_count(1024), smallest_id(0), next_id(0), last_id(0)
+{}
 
 void
 IdQueue::clear(uint32_t smallest_id) {

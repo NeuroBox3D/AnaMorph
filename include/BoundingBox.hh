@@ -53,13 +53,8 @@ class BoundingBox {
 
     public:
         BoundingBox()
-        {
-            using Aux::Numbers::inf;
-            using Aux::VecMat::onesVec3;
-
-            this->coord_min = onesVec3<R>() * inf<R>();
-            this->coord_max = onesVec3<R>() * (-inf<R>());
-        }
+        : coord_min(Aux::Numbers::inf<R>()), coord_max(-Aux::Numbers::inf<R>())
+        {}
 
         BoundingBox(const Vec3<R>& v1, const Vec3<R>& v2)
         {
@@ -71,10 +66,8 @@ class BoundingBox {
         }
 
         BoundingBox(BoundingBox const &x)
-        {
-            this->coord_min = x.coord_min;
-            this->coord_max = x.coord_max;
-        }
+        : coord_min(x.coord_min), coord_max(x.coord_max)
+        {}
     
         BoundingBox &
         operator=(BoundingBox const &x)

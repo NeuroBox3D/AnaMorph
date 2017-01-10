@@ -1528,6 +1528,7 @@ Polynomial<degree, F, R>::operator/=(F const &x)
 
 // TODO: This method clearly cannot work, since the pure virtual getBasisInnerProduct
 //       it calls has never been declared, let alone defined.
+#if 0
 template <uint32_t degree, typename F, typename R>
 F
 Polynomial<degree, F, R>::operator*(const this_type& q) const
@@ -1548,7 +1549,7 @@ Polynomial<degree, F, R>::operator*(const this_type& q) const
     }
     return res;
 }
-
+#endif
 
 template <uint32_t degree, typename F, typename R>
 void
@@ -1614,11 +1615,8 @@ Polynomial<degree, F, R>::WritePlotFileImpl<float, float, dummy>::WritePlotFileI
         return;;
     }
 
-    uint32_t    i;
-    float       t;
-
-    for (i = 0; i <= ticks; i++) {
-        t = t0 + ((float)i / (float)ticks)*(t1 - t0);
+    for (uint32_t i = 0; i <= ticks; i++) {
+        float t = t0 + ((float)i / (float)ticks)*(t1 - t0);
         fprintf(fout, "%12.5E %12.5E\n", t, p.eval(t));
     }
     fclose(fout);

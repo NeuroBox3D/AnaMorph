@@ -549,7 +549,7 @@ namespace NLM {
             /* check all candidates, pick alpha-permissible if possible, otherwise pick the best one if max_min is not
              * -inf */
 			debugl(2, "NeuritePath()::findPermissibleRenderVector(): current candidate: ");
-			#ifdef __DEBUG___
+			#ifdef __DEBUG__
 			candidate.print();
 			#endif
 
@@ -1051,7 +1051,7 @@ template<typename R>
 void
 NLM_CellNetwork<R>::updateNLMNetworkInfo()
 {
-    if (!this->nlm_network_info_updated | !this->network_info_initialized) {
+    if (!this->nlm_network_info_updated || !this->network_info_initialized) {
         debugl(0, "NLM_CellNetwork::updateNLMNetworkInfo().\n");
         debugTabInc();
 
@@ -1580,7 +1580,7 @@ NLM_CellNetwork<R>::partitionCell(
                     "than one neurite path. internal logic error.");
             }
 
-#ifdef __DEBUG
+#ifdef __DEBUG__
             debugTabInc();
             for (auto &nv_npt_info : nv_info.npt_info) {
                 debugl(1, "neurite: %d, path %d, vertex %d.\n",
@@ -2230,7 +2230,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
      *  */
     if (fst_end_snd_start) {
         return false;
-        pq_blacklist.push_back(PolyAlg::RealRectangle<R>( (1.0 - offset), 1.0, 0.0, offset) );
+        //pq_blacklist.push_back(PolyAlg::RealRectangle<R>( (1.0 - offset), 1.0, 0.0, offset) );
     }
     else {
         pq_blacklist.push_back(PolyAlg::RealRectangle<R>( 0.0, offset, 0.0, offset) );
@@ -3412,10 +3412,10 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     break_inner_meshing_loop = true;
                 }
                 catch (RedBlue_Ex_InternalLogic& logic_ex) {
-                    throw logic_ex;
+                    throw;
                 }
                 catch (RedBlue_Ex_Disjoint& disjoint_ex) {
-                    throw disjoint_ex;
+                    throw;
                 }
                 catch (RedBlue_Ex_ComplexEdges<R>& complex_ex) {
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: %d complexly intersecting edges.. splitting.\n", complex_ex.edge_isec_info.size()); 
@@ -3534,7 +3534,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     restore_M_cell      = !isecpoly_ex.R_intact;
                 }
                 catch (RedBlue_Ex_AffectedCircleTrivial& trivcircle_ex) {
-                    throw trivcircle_ex;
+                    throw;
                 }
                 debugl(0, "inner meshing loop time: %5.4f\n\n", Aux::Timing::tack(14));
             }
