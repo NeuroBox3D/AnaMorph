@@ -61,7 +61,9 @@
 #include "StaticVector.hh"
 #include "StaticMatrix.hh"
 
-#include <boost/math/special_functions/binomial.hpp>
+#ifdef WITH_BOOST
+	#include <boost/math/special_functions/binomial.hpp>
+#endif
 
 /* forward declaration of BoundingBox to break cyclical dependency. */
 template <typename R> class BoundingBox;
@@ -97,8 +99,10 @@ namespace Aux {
         R
         bicof(uint32_t n, uint32_t k)
         {
-#if 0
-            static StaticMatrix<R> bicof(BICOF_DEFAULT_SIZE + 1, BICOF_DEFAULT_SIZE + 1);
+#ifdef WITH_BOOST
+            return boost::math::binomial_coefficient<R>(n, k);
+#else
+            static Matrix<R> bicof(BICOF_DEFAULT_SIZE + 1, BICOF_DEFAULT_SIZE + 1);
             static uint32_t     bicof_max_n     = BICOF_DEFAULT_SIZE;
             static uint32_t     bicof_recompute = true;
 
@@ -131,7 +135,6 @@ namespace Aux {
             }
             return bicof(n, k);
 #endif
-            return boost::math::binomial_coefficient<R>(n, k);
         }
     }
 
@@ -373,27 +376,21 @@ namespace Aux {
         }
 
         template <typename R>
-        inline Vec3<R>
-        minVec3(Vec3<R> const &a, Vec3<R> const &b)
+        inline void
+        minVec3(Vec3<R>& out, const Vec3<R>& a, const Vec3<R>& b)
         {
-            Vec3<R> res;
-            res[0] = std::min(a[0], b[0]);
-            res[1] = std::min(a[1], b[1]);
-            res[2] = std::min(a[2], b[2]);
-
-            return res;
+            out[0] = std::min(a[0], b[0]);
+            out[1] = std::min(a[1], b[1]);
+            out[2] = std::min(a[2], b[2]);
         }
 
         template <typename R>
-        inline Vec3<R>
-        maxVec3(Vec3<R> const &a, Vec3<R> const &b)
+        inline void
+        maxVec3(Vec3<R>& out, const Vec3<R>& a, const Vec3<R>& b)
         {
-            Vec3<R> res;
-            res[0] = std::max(a[0], b[0]);
-            res[1] = std::max(a[1], b[1]);
-            res[2] = std::max(a[2], b[2]);
-
-            return res;
+            out[0] = std::max(a[0], b[0]);
+            out[1] = std::max(a[1], b[1]);
+            out[2] = std::max(a[2], b[2]);
         }
 
         template <typename R>
@@ -1264,50 +1261,50 @@ namespace Aux {
                 sub_boxes[0].first      = nc_min;
                 sub_boxes[0].second     = nc_m;
                 */
-                sub_boxes[0]            = BoundingBox<R>({ nc_min, nc_m });
+                sub_boxes[0]            = BoundingBox<R>(nc_min, nc_m);
 
                 /*
                 sub_boxes[1].first      = nc_min + xdisp;
                 sub_boxes[1].second     = nc_m + xdisp;
                 */
-                sub_boxes[1]            = BoundingBox<R>({ nc_min + xdisp, nc_m + xdisp });
+                sub_boxes[1]            = BoundingBox<R>(nc_min + xdisp, nc_m + xdisp);
 
                 /*
                 sub_boxes[2].first      = nc_min + xdisp + ydisp;
                 sub_boxes[2].second     = nc_m + xdisp + ydisp;
                 */
-                sub_boxes[2]            = BoundingBox<R>({ nc_min + xdisp + ydisp, nc_m + xdisp + ydisp });
+                sub_boxes[2]            = BoundingBox<R>(nc_min + xdisp + ydisp, nc_m + xdisp + ydisp);
 
                 /*
                 sub_boxes[3].first      = nc_min + ydisp;
                 sub_boxes[3].second     = nc_m + ydisp;
                 */
-                sub_boxes[3]            = BoundingBox<R>({ nc_min + ydisp, nc_m + ydisp });
+                sub_boxes[3]            = BoundingBox<R>(nc_min + ydisp, nc_m + ydisp);
 
                 /*
                 sub_boxes[4].first      = nc_min + zdisp;
                 sub_boxes[4].second     = nc_m + zdisp;
                 */
-                sub_boxes[4]            = BoundingBox<R>({ nc_min + zdisp, nc_m + zdisp });
+                sub_boxes[4]            = BoundingBox<R>(nc_min + zdisp, nc_m + zdisp);
 
                 /*
                 sub_boxes[5].first      = nc_min + xdisp + zdisp;
                 sub_boxes[5].second     = nc_m + xdisp + zdisp;
                 */
-                sub_boxes[5]            = BoundingBox<R>({ nc_min + xdisp + zdisp, nc_m + xdisp + zdisp });
+                sub_boxes[5]            = BoundingBox<R>(nc_min + xdisp + zdisp, nc_m + xdisp + zdisp);
 
                 /* specesial case: child 6 has min corner m and max corner nc_max */
                 /*
                 sub_boxes[6].first      = nc_m;
                 sub_boxes[6].second     = nc_max;
                 */
-                sub_boxes[6]            = BoundingBox<R>({ nc_m, nc_max });
+                sub_boxes[6]            = BoundingBox<R>(nc_m, nc_max);
 
                 /*
                 sub_boxes[7].first      = nc_min + ydisp + zdisp;
                 sub_boxes[7].second     = nc_m + ydisp + zdisp;
                 */
-                sub_boxes[7]            = BoundingBox<R>({ nc_min + ydisp + zdisp, nc_m + ydisp + zdisp });
+                sub_boxes[7]            = BoundingBox<R>(nc_min + ydisp + zdisp, nc_m + ydisp + zdisp);
 
 
                 /* iterate over all faces in A_list and partition them into the sub-box lists.  if child i gets a face of
@@ -1449,50 +1446,50 @@ namespace Aux {
                 sub_boxes[0].first      = nc_min;
                 sub_boxes[0].second     = nc_m;
                 */
-                sub_boxes[0]            = BoundingBox<R>({ nc_min, nc_m });
+                sub_boxes[0]            = BoundingBox<R>(nc_min, nc_m);
 
                 /*
                 sub_boxes[1].first      = nc_min + xdisp;
                 sub_boxes[1].second     = nc_m + xdisp;
                 */
-                sub_boxes[1]            = BoundingBox<R>({ nc_min + xdisp, nc_m + xdisp });
+                sub_boxes[1]            = BoundingBox<R>(nc_min + xdisp, nc_m + xdisp);
 
                 /*
                 sub_boxes[2].first      = nc_min + xdisp + ydisp;
                 sub_boxes[2].second     = nc_m + xdisp + ydisp;
                 */
-                sub_boxes[2]            = BoundingBox<R>({ nc_min + xdisp + ydisp, nc_m + xdisp + ydisp });
+                sub_boxes[2]            = BoundingBox<R>(nc_min + xdisp + ydisp, nc_m + xdisp + ydisp);
 
                 /*
                 sub_boxes[3].first      = nc_min + ydisp;
                 sub_boxes[3].second     = nc_m + ydisp;
                 */
-                sub_boxes[3]            = BoundingBox<R>({ nc_min + ydisp, nc_m + ydisp });
+                sub_boxes[3]            = BoundingBox<R>(nc_min + ydisp, nc_m + ydisp);
 
                 /*
                 sub_boxes[4].first      = nc_min + zdisp;
                 sub_boxes[4].second     = nc_m + zdisp;
                 */
-                sub_boxes[4]            = BoundingBox<R>({ nc_min + zdisp, nc_m + zdisp });
+                sub_boxes[4]            = BoundingBox<R>(nc_min + zdisp, nc_m + zdisp);
 
                 /*
                 sub_boxes[5].first      = nc_min + xdisp + zdisp;
                 sub_boxes[5].second     = nc_m + xdisp + zdisp;
                 */
-                sub_boxes[5]            = BoundingBox<R>({ nc_min + xdisp + zdisp, nc_m + xdisp + zdisp });
+                sub_boxes[5]            = BoundingBox<R>(nc_min + xdisp + zdisp, nc_m + xdisp + zdisp);
 
                 /* specesial case: child 6 has min corner m and max corner nc_max */
                 /*
                 sub_boxes[6].first      = nc_m;
                 sub_boxes[6].second     = nc_max;
                 */
-                sub_boxes[6]            = BoundingBox<R>({ nc_m, nc_max });
+                sub_boxes[6]            = BoundingBox<R>(nc_m, nc_max);
 
                 /*
                 sub_boxes[7].first      = nc_min + ydisp + zdisp;
                 sub_boxes[7].second     = nc_m + ydisp + zdisp;
                 */
-                sub_boxes[7]            = BoundingBox<R>({ nc_min + ydisp + zdisp, nc_m + ydisp + zdisp });
+                sub_boxes[7]            = BoundingBox<R>(nc_min + ydisp + zdisp, nc_m + ydisp + zdisp);
 
 
                 /* iterate over all faces in A_list and partition them into the sub-box lists.  if child i gets a face of

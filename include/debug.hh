@@ -43,6 +43,8 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include "common.hh"
+
 /* --------- debug functionality ---------- */
 enum DEBUG_COMPONENT {
     DBG_GLOBAL          = 0,

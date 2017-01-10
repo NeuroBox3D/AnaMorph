@@ -76,7 +76,7 @@ IdQueue::clear(uint32_t smallest_id) {
 uint32_t
 IdQueue::getId()
 {
-    uint32_t    id, i;
+    uint32_t    id;
 
     debugl(4, "IdQueue::getID()\n");
 
@@ -86,6 +86,7 @@ IdQueue::getId()
         debugl(5, "q.size(): %10d, refilling id queue.. last_id: %10d, refill count: %10d \n", this->q.size(), this->last_id, this->refill_count);
 
         debugTabInc();
+        uint32_t i;
         for (i = this->last_id + 1; i < (this->last_id + this->refill_count + 1) && i < UINT32_MAX; i++) {
             debugl(6, "pushing id %5d\n", i);
             this->q.push(i);

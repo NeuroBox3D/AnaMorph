@@ -46,7 +46,12 @@ template <typename R>
 Vec3<R>::Vec3() : Vector<R>(3)
 {
     this->fill(0.0);
-} 
+}
+
+template <typename R>
+Vec3<R>::Vec3(const R& v)
+: Vector<R>(3, v)
+{}
 
 template <typename R>
 Vec3<R>::Vec3(

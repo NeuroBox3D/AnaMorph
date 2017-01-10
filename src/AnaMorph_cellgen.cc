@@ -574,7 +574,7 @@ AnaMorph_cellgen::processCommandLineArguments()
                 this->pc_beta   = std::stod(s_args[1]);
                 this->pc_gamma  = std::stod(s_args[2]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: at least one argument to switch \"cellnet-pc\" out of range.\n");
                 return false;
             }
@@ -598,7 +598,7 @@ AnaMorph_cellgen::processCommandLineArguments()
                 filter_angle        = (std::stod(s_args[1]) / 180.0) * M_PI;
                 max_radius_ratio    = std::stod(s_args[2]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: filter angle or maximum radius ratio argument to switch \"cellnet-partition-strategy\" out of range.\n");
                 return false;
             }
@@ -648,7 +648,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->ana_nthreads = stou(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"ana-nthreads\" out of range.\n");
                 return false;
             }
@@ -667,7 +667,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->ana_univar_solver_eps = std::stod(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"ana-univar-eps\" out of range.\n");
                 return false;
             }
@@ -686,7 +686,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->ana_bivar_solver_eps = std::stod(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"ana-bivar-eps\" out of range.\n");
                 return false;
             }
@@ -711,7 +711,7 @@ AnaMorph_cellgen::processCommandLineArguments()
                 this->pp_gec_mu     = std::stod(s_args[2]); 
                 this->pp_gec_d      = stou(s_args[3]); 
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: at least one argument to switch \"mesh-pp-gec\" out of range.\n");
                 return false;
             }
@@ -746,7 +746,7 @@ AnaMorph_cellgen::processCommandLineArguments()
                 this->pp_hc_beta    = std::stod(s_args[1]); 
                 this->pp_hc_maxiter = stou(s_args[2]); 
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: at least one argument to switch \"mesh-pp-hc\" out of range.\n");
                 return false;
             }
@@ -777,7 +777,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->meshing_canal_segment_n_phi_segments = stou(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"meshing-cansurf-angularsegments\" out of range.\n");
                 return false;
             }
@@ -796,7 +796,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->meshing_outer_loop_maxiter = stou(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"meshing-outerloop-maxiter\" out of range.\n");
                 return false;
             }
@@ -815,7 +815,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->meshing_inner_loop_maxiter = stou(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"meshing-innerloop-maxiter\" out of range.\n");
                 return false;
             }
@@ -837,7 +837,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->meshing_cansurf_triangle_height_factor = std::stod(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"cansurf-triangle-height\" out of range.\n");
                 return false;
             }
@@ -856,7 +856,7 @@ AnaMorph_cellgen::processCommandLineArguments()
                 this->meshing_flush             = true;
                 this->meshing_flush_face_limit  = stou(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: at least one argument to switch \"meshing-flush\" out of range.\n");
                 return false;
             }
@@ -878,7 +878,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->meshing_radius_factor_initial_value = std::stod(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"meshing-merging-initial-radiusfactor\" out of range.\n");
                 return false;
             }
@@ -897,7 +897,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->meshing_radius_factor_decrement = std::stod(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"meshing-merging-radiusfactor-decrement\" out of range.\n");
                 return false;
             }
@@ -916,7 +916,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             try {
                 this->meshing_complex_edge_max_growth_factor = std::stod(s_args[0]);
             }
-            catch (std::out_of_range ex) {
+            catch (std::out_of_range& ex) {
                 printf("ERROR: argument to switch \"meshing-complexedge-max-growthfactor\" out of range.\n");
                 return false;
             }
@@ -1133,11 +1133,11 @@ AnaMorph_cellgen::run()
 
                 M_cell.writeObjFile( (this->network_name + "_post_processed").c_str() );
             }
-            catch (MeshEx e) {
+            catch (MeshEx& e) {
                 if (e.error_type == MESH_IO_ERROR) {
                     printf("\t ERROR: could not open mesh obj file for post-processing. skipping..\n");
                 }
-                else throw e;
+                else throw;
             }
             printf("done.\n\n");
         }
@@ -1148,19 +1148,19 @@ AnaMorph_cellgen::run()
         printf("ERROR: Caught string exception at top level. message: \"%s\"\n", x);
         return  EXIT_FAILURE;
     }
-    catch (std::string x) {
+    catch (std::string& x) {
         printf("ERROR: Caught string exception at top level. message: \"%s\"\n", x.c_str());
         return  EXIT_FAILURE;
     }
-    catch (GraphEx e) {
+    catch (GraphEx& e) {
         printf("ERROR: Caught GraphEx exception at top level. message: \"%s\".\n", e.error_msg.c_str());
         return  EXIT_FAILURE;
     }
-    catch (MeshEx e) {
+    catch (MeshEx& e) {
         printf("ERROR: Caught MeshEx exception at top level. message: \"%s\".\n", e.error_msg.c_str());
         return  EXIT_FAILURE;
     }
-    catch (std::runtime_error e) {
+    catch (std::runtime_error& e) {
         printf("ERROR: Caught std::runtime_error exception at top level. message: \"%s\".\n", e.what());
         return  EXIT_FAILURE;
     }

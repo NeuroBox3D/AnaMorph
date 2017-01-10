@@ -70,7 +70,7 @@ BivariatePolynomial<deg1, deg2, F, R>::~BivariatePolynomial()
 
 
 template <uint32_t deg1, uint32_t deg2, typename F, typename R>
-BivariatePolynomial<deg1, deg2, F, R> &
+BivariatePolynomial<deg1, deg2, F, R>&
 BivariatePolynomial<deg1, deg2, F, R>::operator=(const this_type& q)
 {
     coeff = q.coeff;

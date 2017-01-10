@@ -788,7 +788,7 @@ class Mesh {
 
                 void                                getIterators(std::list<vertex_iterator> &l) const;
                 void                                getVertices(std::list<Vertex *> &l) const;
-                void                                getIndices(std::list<uint32_t>  &l) const;
+                void                                getIndices(uint32_t& i1, uint32_t& i2, uint32_t& i3, uint32_t& i4) const;
                 std::vector<uint32_t>               getIndices() const;
                 void                                getPositions(std::list<Vec3<R>> &l) const;
 
@@ -1132,7 +1132,7 @@ class Mesh {
         void                                copyAppend(const Mesh<Tm, Tv, Tf, R> &B);
 
         /* move version: append mesh B to (this) mesh by moving B's contents. B is empty afterwards.
-         * since pointers are used internaly, this does not require significant additional memory
+         * since pointers are used internally, this does not require significant additional memory
          * and can be done "in-place".  the parameter update_vits is a pointer to a list containing
          * vertex iterators referring to B, which will be updated in-place with iterators referring
          * to the respective vertices of (this) mesh after the append. */

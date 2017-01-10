@@ -534,7 +534,8 @@ CanalSurface<C2F, RadF, R>::generateMesh(
  * ------------------------------------------------------------------------------------------------------------------ */
 template <uint32_t degree, typename RadF, typename R>
 BezierCanalSurface<degree, RadF, R>::BezierCanalSurface()
-    : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>()
+: CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(),
+  bb_set(false)
 {
     /* domain is always [0,1] for BezierCurves and hence also for BezierCanalSurface */
     this->t0 = 0;
@@ -542,48 +543,50 @@ BezierCanalSurface<degree, RadF, R>::BezierCanalSurface()
 }
 
 template <uint32_t degree, typename RadF, typename R>
-BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(
-    BezierCurve<degree, R> const   &spine_curve,
-    RadF const             &radius_functor)
-        : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(spine_curve, radius_functor)
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface
+(
+	const BezierCurve<degree, R>& spine_curve,
+    const RadF& radius_functor
+)
+: CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(spine_curve, radius_functor), bb_set(false)
 {
     /* CanalSurface constructor sets [t0, t1] = [0,1] through domain of BezierCurve parameter spine_curve */
     this->spine_curve = spine_curve;
 }
 
 template <uint32_t degree, typename RadF, typename R>
-BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(
-    std::array<
-            BernsteinPolynomial<degree, R, R>,
-            3
-        > const                        &component_functors,
-    RadF const                         &radius_functor)
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface
+(
+    const std::array<BernsteinPolynomial<degree, R, R>, 3>& component_functors,
+    const RadF& radius_functor
+)
     /* in-line constructed BezierCurve from component_functors arrays is passed to base class CanalSurface ctor. */
-        : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(
-                BezierCurve<degree, R>(component_functors),
-                radius_functor
-            )
+: CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>
+  (BezierCurve<degree, R>(component_functors), radius_functor),
+  bb_set(false)
 {
     this->spine_curve = BezierCurve<degree, R>(component_functors);
 }
 
 /* same as previous constructor above for control-point based construction of BezierCurves */
 template <uint32_t degree, typename RadF, typename R>
-BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(
-    std::vector<Vec3<R>> const &control_points,
-    RadF const                 &radius_functor)
+BezierCanalSurface<degree, RadF, R>::BezierCanalSurface
+(
+	const std::vector<Vec3<R> >& control_points,
+    const RadF& radius_functor
+)
     /* in-line constructed BezierCurve from component_functors arrays is passed to base class CanalSurface ctor. */
-        : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(
-                BezierCurve<degree, R>(control_points),
-                radius_functor
-            )
+: CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>
+  (BezierCurve<degree, R>(control_points), radius_functor),
+  bb_set(false)
 {
     this->spine_curve = BezierCurve<degree, R>(control_points);
 }
 
 template <uint32_t degree, typename RadF, typename R>
 BezierCanalSurface<degree, RadF, R>::BezierCanalSurface(BezierCanalSurface const &delta)
-    : CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(delta)
+: CanalSurface<BernsteinPolynomial<degree, R, R>, RadF, R>(delta),
+  bb_set(false)
 {
     this->spine_curve   = delta.spine_curve;
     this->bb_set        = delta.bb_set;

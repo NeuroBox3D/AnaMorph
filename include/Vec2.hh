@@ -39,195 +39,71 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * -------------------------------------------------------------------------------- */
-
 #ifndef VEC2_H
 #define VEC2_H
 
-class Vec2 {
-    private:
-        double comps[2];
 
+#include "StaticVector.hh"
+
+class Vec2
+: public StaticVector<2, double>
+{
     public:
+        typedef StaticVector<2, double> base_type;
 
-        Vec2() {
-            this->comps[0] = 0.0;
-            this->comps[1] = 0.0;
-        } 
+        // constructors
+        Vec2();
+        Vec2(double v);
+        Vec2(double x, double y);
+        Vec2(const Vec2& v);
 
-        Vec2(double x, double y) {
-            this->comps[0] = x;
-            this->comps[1] = y;
-        }
+        // destructor
+        ~Vec2();
 
-        /* copy constructor */
-        Vec2(const Vec2 &x) {
-            this->comps[0]  = x.comps[0];
-            this->comps[1]  = x.comps[1];
-        }
+        // assignment operator
+        Vec2& operator=(const Vec2& v);
 
-        ~Vec2() {}
+        // resizing (only for compatibility)
+        void resize(uint32_t size);
 
-        Vec2
-        operator+(const Vec2 &v) const 
-        {
-            Vec2 s;
-            s.comps[0] = this->comps[0] + v.comps[0];
-            s.comps[1] = this->comps[1] + v.comps[1];
-            return s;
-        }
+        // arithmetic
+        Vec2 operator+(const Vec2& v) const;
+        Vec2& operator+=(const Vec2& v);
+        Vec2 operator-(const Vec2& v) const;
+        Vec2& operator-=(const Vec2& v);
 
-        Vec2
-        operator-(const Vec2 &v) const 
-        {
-            Vec2 s;
-            s.comps[0] = this->comps[0] - v.comps[0];
-            s.comps[1] = this->comps[1] - v.comps[1];
-            return s;
-        }
+        Vec2 operator*(double x) const;
+        Vec2& operator*=(double x);
+        Vec2 operator/(double x) const;
+        Vec2& operator/=(double x);
 
-        Vec2 &
-        operator=(const Vec2 &a) {
-            this->comps[0] = a.comps[0];
-            this->comps[1] = a.comps[1];
-            return (*this);
-        }
+        // scalar product, cross product
+        double operator*(const Vec2& v) const;
+        double cross(const Vec2& v) const;
 
-        Vec2 &
-        operator*=(const double &x)
-        {
-            this->comps[0] *= x;
-            this->comps[1] *= x;
+        // relational operators
+        bool operator==(const Vec2& v) const;
+        bool operator!=(const Vec2& v);
 
-            return (*this);
-        }
+        // tuple-like comparison operators
+        bool operator<(const Vec2& v) const;
+        bool operator>(const Vec2& v) const;
+        bool operator>=(const Vec2& v) const;
+        bool operator<=(const Vec2& v) const;
 
-        Vec2 &
-        operator/=(const double &x)
-        {
-            this->comps[0] /= x;
-            this->comps[1] /= x;
+        // norm
+        double len2(void) const;
+        double len2squared(void) const;
 
-            return (*this);
-        }
+        Vec2 &normalize();
 
-        Vec2 &
-        operator+=(const Vec2 &a)
-        {
-            this->comps[0] += a.comps[0];
-            this->comps[1] += a.comps[1];
+        // output
+        void print() const;
+        void print_debugl(uint32_t level) const;
 
-            return (*this);
-        }
-
-        Vec2 &
-        operator-=(const Vec2 &a)
-        {
-            this->comps[0] -= a.comps[0];
-            this->comps[1] -= a.comps[1];
-
-            return (*this);
-        }
-
-        bool
-        operator==(const Vec2 &a) 
-        {
-            /* CAUTION: we use '==' for double precision floating point numbers here, in most cases, this is MOST
-             * UNWISE, since there's no well defined equality for those numbers. usually, we'd have to use (a - b) <
-             * machine_eps. here, we use that to compare with null vector or custom set unit vectors... */
-            return (this->comps[0] == a.comps[0] &&
-                    this->comps[1] == a.comps[1]);
-        }
-
-        bool
-        operator!=(const Vec2 &a)
-        {
-            return (this->comps[0] != a.comps[0] ||
-                    this->comps[1] != a.comps[1]);
-        }
-
-        double &
-        operator[](const uint32_t i)
-        {
-            if (i >= 2) {
-                throw ("Vec2::operator[]: can't access member with index >= 3 in Vec2.\n");
-            }
-            return this->comps[i];
-        }
-
-
-        /* length for p2-norm (eucl) */
-        double
-        len2(void) const 
-        {
-            return sqrt(comps[0]*comps[0] + comps[1]*comps[1]);
-        }
-
-        /* len squares */
-        double
-        len2squared(void) const 
-        {
-            return (comps[0]*comps[0] + comps[1]*comps[1]);
-        }
-
-        void
-        normalize(void) 
-        {
-            double len = this->len2();
-            this->comps[0] /= len;
-            this->comps[1] /= len;
-        }
-
-        void
-        scale(double alpha) 
-        {
-            this->comps[0] *= alpha;
-            this->comps[1] *= alpha;
-        }
-
-        /* scalar product, inner product */
-        double
-        operator*(const Vec2 &b) const
-        {
-            double scalprod = 0.0;
-
-            for (unsigned i = 0; i < 2; i++) {
-                scalprod += this->comps[i] * b.comps[i];
-            }
-            return scalprod;
-        }
-
-        /* multiply with c e |R */
-        Vec2
-        operator*(const double &c) const 
-        {
-            Vec2 result;
-
-            for (unsigned i = 0; i < 2; i++) {
-                result.comps[i] = c * this->comps[i];
-            }
-            return result;
-        }
-
-        /* "cross product" for 2d vectors */
-        double
-        cross(const Vec2 &b) const
-        {
-            return (comps[0]*b.comps[1] - comps[1]*b.comps[0]);
-        }
-
-        void
-        set(double x, double y)
-        {
-            this->comps[0] = x;
-            this->comps[1] = y;
-        }
-
-        void
-        print()
-        {
-            printf("(%f, %f)\n", this->comps[0], this->comps[1]);
-        }
-
+    private:
+        using StaticVector<2, double>::v;
 };
+
 
 #endif

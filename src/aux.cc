@@ -263,7 +263,6 @@ namespace Aux {
             /* get direction vectors: u = dir, v = q1 - q0 */
             Vec2    u, v, w;
             double  denom;
-            double  lambda_isec, mu_isec;
 
             u       = dir;
             v       = q1 - q0;
@@ -275,6 +274,8 @@ namespace Aux {
             }
             else {
                 debugTabInc();
+
+                double  lambda_isec, mu_isec;
 
                 lambda_isec = (v[0]*w[1] - v[1]*w[0]) / denom;
                 mu_isec     = (u[0]*w[1] - u[1]*w[0]) / denom;
@@ -318,12 +319,11 @@ namespace Aux {
             debugl(0, "pointInSimplePolygon().\n");
 
             attempts    = 0;
-            bool retry  = false;
 
             debugTabInc();
             while (attempts <= 1024) {
                 debugl(0, "another attempt..");
-                retry = false;
+                bool retry = false;
 
                 /* fresh attempt */
                 attempts++;
@@ -725,7 +725,6 @@ namespace Aux {
             bool        neighbours;
             uint32_t    fst_shared_vertex, snd_shared_vertex;
             uint32_t    A_rem_vertex, B_rem_vertex;
-            bool        A_shared_edge_orientation;
 
             neighbours = getTwoTrianglesSharedEdgeAndRemainingVertices(
                     A.v0_id, A.v1_id, A.v2_id,
@@ -748,7 +747,7 @@ namespace Aux {
                     /* get orientation of shared edge in A, this, together with the indices of the remaining
                      * vertices, uniquely defined the two "new" triangles and their orientation in case of a
                      * successful delaunay flip */
-                    A_shared_edge_orientation = getTriEdgeOrientationIndices(
+                    bool A_shared_edge_orientation = getTriEdgeOrientationIndices(
                             A.v0_id, A.v1_id, A.v2_id,
                             fst_shared_vertex, snd_shared_vertex);
 
@@ -1119,7 +1118,7 @@ namespace Aux {
               b=fabs(D[1]);
               c=fabs(D[2]);
               if(b>max) max=b,index=1;
-              if(c>max) max=c,index=2;
+              if(c>max) index=2;
 
                     /* this is the simplified projection onto L*/
                     vp0=V0[index];
@@ -1195,7 +1194,7 @@ setMaxDebugLevel(uint32_t max_level)
 void
 enableComponentDebug(uint32_t comp)
 {
-    if (comp <= 128) {
+    if (comp < 128) {
         debug_component_enabled[comp] = true;
     }
 }
@@ -1203,7 +1202,7 @@ enableComponentDebug(uint32_t comp)
 void
 disableComponentDebug(uint32_t comp)
 {
-    if (comp <= 128) {
+    if (comp < 128) {
         debug_component_enabled[comp] = false;
     }
 }

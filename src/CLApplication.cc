@@ -59,12 +59,11 @@ CLApplication::CLApplication(
     std::string                 s;
     std::vector<std::string>    s_args;
     int                         s_arity, i;
-    bool                        s_valid;
 
     i = 1;
     while (i < argc) {
         s       = std::string(argv[i]);
-        s_valid = false;
+        bool s_valid = false;
 
         //printf("i = %d, new switch: \"%s\".\n", i, s.c_str());
 

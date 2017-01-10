@@ -61,20 +61,13 @@ class BoundingBox {
             this->coord_max = onesVec3<R>() * (-inf<R>());
         }
 
-        BoundingBox(std::list<Vec3<R>> const &l)
+        BoundingBox(const Vec3<R>& v1, const Vec3<R>& v2)
         {
-            using Aux::Numbers::inf;
-            using Aux::VecMat::onesVec3;
             using Aux::VecMat::minVec3;
             using Aux::VecMat::maxVec3;
 
-            this->coord_min = onesVec3<R>() * inf<R>();
-            this->coord_max = onesVec3<R>() * (-inf<R>());
-
-            for (auto &v : l)  {
-                this->coord_min = minVec3<R>(this->coord_min, v);
-                this->coord_max = maxVec3<R>(this->coord_max, v);
-            }
+            minVec3<R>(coord_min, v1, v2);
+            maxVec3<R>(coord_max, v1, v2);
         }
 
         BoundingBox(BoundingBox const &x)
@@ -149,10 +142,8 @@ class BoundingBox {
             using Aux::VecMat::maxVec3;
             using Aux::VecMat::fabsVec3;
 
-            Vec3<R> offset      = maxVec3<R>(
-                                    offset_lb,
-                                    fabsVec3<R>(this->coord_max - this->coord_min) * percentage
-                                );
+            Vec3<R> offset;
+            maxVec3<R>(offset, offset_lb, fabsVec3<R>(this->coord_max - this->coord_min) * percentage);
 
             this->coord_min    -= offset;
             this->coord_max    += offset;
@@ -164,8 +155,8 @@ class BoundingBox {
         update(std::list<Vec3<R>> const &l)
         {
             for (auto &v : l) {
-                this->coord_min = Aux::VecMat::minVec3<R>(this->coord_min, v);
-                this->coord_max = Aux::VecMat::maxVec3<R>(this->coord_max, v);
+                Aux::VecMat::minVec3<R>(coord_min, coord_min, v);
+                Aux::VecMat::maxVec3<R>(coord_max, coord_max, v);
             }
 
             return (*this);
@@ -174,8 +165,8 @@ class BoundingBox {
         BoundingBox &
         update(BoundingBox const &x) 
         {
-            this->coord_min = Aux::VecMat::minVec3<R>(this->coord_min, x.min());
-            this->coord_max = Aux::VecMat::maxVec3<R>(this->coord_max, x.max());
+            Aux::VecMat::minVec3<R>(coord_min, coord_min, x.min());
+            Aux::VecMat::maxVec3<R>(coord_max, coord_max, x.max());
             return (*this);
         }
 

@@ -119,7 +119,6 @@ namespace NLM {
             BoundingBox<R>
             getBoundingBox() const
             {
-                using Aux::VecMat::minVec3;
                 using Aux::VecMat::maxVec3;
                 using Aux::VecMat::onesVec3;
                 using Aux::VecMat::fabsVec3;
@@ -127,14 +126,12 @@ namespace NLM {
                 Vec3<R> rdisp   = Aux::VecMat::onesVec3<R>() * this->radius();
                 Vec3<R> bb_min  = this->centre() - rdisp;
                 Vec3<R> bb_max  = this->centre() + rdisp;
-                Vec3<R> offset  = maxVec3<R>(
-                                        Vec3<R>(1E-3, 1E-3, 1E-3),
-                                        fabsVec3<R>(bb_max - bb_min)*0.025
-                                    );
+                Vec3<R> offset;
+                maxVec3<R>(offset, Vec3<R>(1E-3, 1E-3, 1E-3), fabsVec3<R>(bb_max - bb_min)*0.025);
                 bb_min         -= offset;
                 bb_max         += offset;
 
-                return BoundingBox<R>({ bb_min, bb_max });
+                return BoundingBox<R>(bb_min, bb_max);
             }
 
             bool
@@ -144,12 +141,9 @@ namespace NLM {
             }
 
             template <typename Tm, typename Tv, typename Tf>
-            Mesh<Tm, Tv, Tf, R>
-            generateMesh(uint32_t tessellation_depth = 2) const
+            void generateMesh(Mesh<Tm, Tv, Tf, R>& meshOut, uint32_t tessellation_depth = 2) const
             {
-                Mesh<Tm, Tv, Tf, R> M_S;
-                MeshAlg::generateIcoSphere(_centre, _radius, tessellation_depth, M_S);
-                return M_S;
+                MeshAlg::generateIcoSphere(_centre, _radius, tessellation_depth, meshOut);
             }
     }; 
 

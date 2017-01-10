@@ -50,10 +50,11 @@ int
 main(int argc, char *argv[])
 {
     try {
+    	srand(0);	// set seed for random number generator to get reproducible outputs
         AnaMorph_cellgen am_cellgen(argc, argv);
         return am_cellgen.run();
     }
-    catch (CLAEx ex) {
+    catch (CLAEx& ex) {
         printf("%s", ex.error_msg.c_str()); 
         return EXIT_FAILURE;
     }

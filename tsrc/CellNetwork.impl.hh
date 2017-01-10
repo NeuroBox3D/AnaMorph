@@ -200,7 +200,8 @@ template <
 >
 CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
 NeuronVertex::NeuronVertex(NeuronVertex const &v)
-    : Graph<Tn, Tv, Te>::Vertex(v)
+: Graph<Tn, Tv, Te>::Vertex(v), network(NULL)
+
 {
     this->sections      = v.sections;
 }
@@ -329,8 +330,8 @@ NeuronVertex::getBoundingBox(
     for (auto &s : this->sections) {
         max_r   = std::max(max_r, s.radius());
         sp      = s.position();
-        bb_min  = minVec3<R>(bb_min, sp);
-        bb_max  = maxVec3<R>(bb_max, sp);
+        minVec3<R>(bb_min, bb_min, sp);
+        maxVec3<R>(bb_max, bb_max, sp);
     }
 
     /* extend bounding box by onesVec3() * max_r */
@@ -338,7 +339,8 @@ NeuronVertex::getBoundingBox(
     bb_max     += onesVec3<R>() * max_r;
 
     /* extend bounding box by 2.5%, but no less than 1E-3, on each side. */
-    Vec3<R> offset  = maxVec3<R>( Vec3<R>(1E-3, 1E-3, 1E-3), fabsVec3<R>(bb_max - bb_min)*0.025);
+    Vec3<R> offset;
+    maxVec3<R>(offset, Vec3<R>(1E-3, 1E-3, 1E-3), fabsVec3<R>(bb_max - bb_min)*0.025);
     bb_max         += offset;
     bb_min         -= offset;
 }
@@ -3457,7 +3459,7 @@ NeuronVertexAccessor::erase(neuron_iterator it)
     try {
         vit = this->C.vertices.erase(vit);
     }
-    catch (GraphEx ex) {
+    catch (GraphEx& ex) {
         /* FIXME: exception handling, wrap into CellNetwork exception class */
         throw ex;
     }
@@ -3795,7 +3797,7 @@ NeuronEdgeAccessor::erase(neuron_edge_iterator it)
     try {
         eit = this->C.edges.erase(eit);
     }
-    catch (GraphEx ex) {
+    catch (GraphEx& ex) {
         /* FIXME: exception handling, wrap into CellNetwork exception class */
         throw ex;
     }

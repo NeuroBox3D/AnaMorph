@@ -108,6 +108,7 @@ class Graph {
 
             public:
                 GraphIterator()
+            	: graph(NULL)
                 {
                 }
 

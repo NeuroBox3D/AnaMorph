@@ -112,12 +112,11 @@ int main(int argc, char *argv[])
         printf("%s", usage_text.c_str());
         return EXIT_FAILURE;
     }
-
-    double      area, volume, ar_avg, ar_sigma, ar_max;
-    uint32_t    nobtuse_tris;
-    int         nvertices, nfaces, nedges, chi;
-
     try {
+        double      area, volume, ar_avg, ar_sigma, ar_max;
+        uint32_t    nobtuse_tris;
+        int         nvertices, nfaces, nedges, chi;
+
         Mesh<bool, bool, bool, double> M;
         M.readFromObjFile(meshname.c_str());
 
@@ -151,10 +150,10 @@ int main(int argc, char *argv[])
     catch (const char *err) {
         printf("caught string err: \"%s\". shutting down..\n", err);
     }
-    catch (std::string err) {
+    catch (std::string& err) {
         printf("caught string err: \"%s\". shutting down..\n", err.c_str());
     }
-    catch (MeshEx ex) {
+    catch (MeshEx& ex) {
         printf("caught MeshEx. error msg: \"%s\". shutting down..\n", ex.error_msg.c_str());
     }
     catch (...) {

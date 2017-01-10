@@ -100,11 +100,22 @@ namespace PolyAlg {
      * where the polynomial may be interpreted as as a two-dimensional bezier-curve as described in
      * the thesis. */
     template <uint32_t deg, typename R>
-    void
-    computeBezierControlPolyConvexHull(
-        BernsteinPolynomial<deg, R, R> const    &p,
-        std::vector<Vec2>                  &cvhull,
-        R const                            &eps_slope);
+    struct BezierControlPolyConvexHull
+	{
+    	static void compute(const BernsteinPolynomial<deg, R, R>& p, std::vector<Vec2>& cvhull, const R& eps_slope);
+	};
+
+    template <typename R>
+    struct BezierControlPolyConvexHull<0u, R>
+    {
+    	static void compute(const BernsteinPolynomial<0u, R, R>& p, std::vector<Vec2>& cvhull, const R& eps_slope);
+    };
+
+    template <typename R>
+    struct BezierControlPolyConvexHull<1u, R>
+    {
+    	static void compute(const BernsteinPolynomial<1u, R, R>& p, std::vector<Vec2>& cvhull, const R& eps_slope);
+    };
 
     /* classes to store roots */
     template <typename R>

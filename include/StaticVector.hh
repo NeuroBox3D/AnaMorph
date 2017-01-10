@@ -46,6 +46,8 @@
 #ifndef STATIC_VECTOR_HH
 #define STATIC_VECTOR_HH
 
+#include <cstdint>	// uint32_t
+
 template<uint32_t N, typename T = double>
 class StaticVector
 {

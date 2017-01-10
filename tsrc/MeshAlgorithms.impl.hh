@@ -2307,7 +2307,7 @@ MeshAlg::simpleLaplacianSmoothing(
             /* get xi, reset dxi to nullvec */
             i   = vi.id();
             xi  = vi.pos();
-            dxi = Aux::VecMat::nullvec;
+            dxi = Aux::VecMat::nullvec<R>;
 
             /* get vi's vertex star and their size */
             vi.getVertexStar(vi_nbs);
@@ -2324,7 +2324,7 @@ MeshAlg::simpleLaplacianSmoothing(
                 /* store offset into map */
                 offsets[i] = dxi;
             }
-            else offsets[i] = Aux::VecMat::nullvec;
+            else offsets[i] = Aux::VecMat::nullvec<R>;
         }
 
         /* displace all vertices with corresponding offsets */

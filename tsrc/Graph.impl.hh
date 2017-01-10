@@ -508,31 +508,26 @@ Graph<Tg, Tv, Te>::Vertex::setTraversalState(
 
 /* ctors */
 template <typename Tg, typename Tv, typename Te>
-Graph<Tg, Tv, Te>::Edge::Edge() : edge_data()
-{
-    this->graph                 = NULL;
-    this->blocked               = false;
-    this->current_traversal_id  = 0;
-    this->traversal_state       = TRAV_UNSEEN;
-}
+Graph<Tg, Tv, Te>::Edge::Edge()
+: graph(NULL), v_src(NULL), v_dst(NULL), blocked(false), current_traversal_id(0),
+  traversal_state(TRAV_UNSEEN), edge_data()
+{}
 
 /* NOTE: private ctor only to be used by the internal implementation, which default constructs the
  * internal iterator Graph::g_eit. the (internal) caller must set the iterator (once it is known) to
  * bring the Edge into a consistent state. */
 template <typename Tg, typename Tv, typename Te>
-Graph<Tg, Tv, Te>::Edge::Edge(
-    Graph<Tg, Tv, Te>  *graph,
-    Vertex             *v_src,
-    Vertex             *v_dst,
-    Te const           &data,
-    bool const          blocked) : edge_data()
-{
-    this->graph                 = graph;
-    this->v_src                 = v_src;
-    this->v_dst                 = v_dst;
-    this->current_traversal_id  = 0;
-    this->traversal_state       = TRAV_UNSEEN;
-}
+Graph<Tg, Tv, Te>::Edge::Edge
+(
+    Graph<Tg, Tv, Te>* _graph,
+    Vertex*            _v_src,
+    Vertex*            _v_dst,
+    const Te&          data,
+    const bool         _blocked
+)
+: graph(_graph), v_src(_v_src), v_dst(_v_dst), blocked(_blocked), current_traversal_id(0),
+  traversal_state(TRAV_UNSEEN), edge_data()
+{}
 
 /* private copy ctor */
 /* NOTE: this constructor is private (i.e. not publicly accessible) and is only used internally for

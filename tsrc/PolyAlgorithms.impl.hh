@@ -162,15 +162,16 @@ computeBernsteinBasisPoly(uint32_t i)
  *
  * ----------------------------------------------------------------------------------------------------------------- */
 template <uint32_t deg, typename R>
-void
-computeBezierControlPolyConvexHull(
-    BernsteinPolynomial<deg, R, R> const    &p,
-    std::vector<Vec2>                  &cvhull,
-    R const                            &eps_slope)
+void BezierControlPolyConvexHull<deg, R>::compute
+(
+    const BernsteinPolynomial<deg, R, R>& p,
+    std::vector<Vec2>& cvhull,
+    const R& eps_slope
+)
 {
     using Aux::Numbers::inf;
 
-    int         i, j, n = p.getDegree();
+    int         i, j;
 
     uint32_t    max_slope_idx;
     R           tmp, max_slope;
@@ -179,26 +180,30 @@ computeBezierControlPolyConvexHull(
      * convex hull. similarly, the point p[n] is also always in the convex hull, since it has
      * maximum x coordinate x = 1.0 */
     cvhull.clear();
+    cvhull.reserve(2*(size_t)deg+3);
 
+#ifdef __DEBUG__
     debugl(1, "\n\n Computing convex hull of control polygon.. control points are:\n");
-    for (i = 1; i < n + 1; i++) {
+    for (i = 0; i < deg + 1; i++) {
         debugl(0, "%2d: %+20.13E %+20.13E\n", i, (R)i / (R)n, p[i]);
     }
+#endif
 
     debugl(1, "\n\n---------------------- Computing upper convex hull by scanning to the right from i = 0 to n\n");
-    cvhull.push_back( Vec2(0.0, p[0]) );
+    cvhull.push_back(Vec2(0.0, p[0]));
     i = 0;
-    while (i < n) {
+    while (i < (int)deg)
+    {
         debugl(1, "scanning from i = %d to the right..\n", i);
         max_slope       = -inf<R>();
         max_slope_idx   = i;
 
         /* find point with biggest "slope" with respect to current point (i/n, p[i]) by
         * computing (delta(y)) / (delta x) */
-        for (j = i+1; j < n + 1; j++) {
-            tmp = ( (R)n * (p[j] - p[i])) / (R)(j - i);
+        for (j = i+1; j < (int)deg + 1; j++) {
+            tmp = ( (R)deg * (p[j] - p[i])) / (R)(j - i);
             debugl(1, "slope between (%d, %d) = %f\n", i, j, tmp);
-            if (std::abs(tmp - max_slope) < eps_slope) {
+            if (fabs(tmp - max_slope) < eps_slope) {
                 debugl(1, "two candidates pairs with same slope: (%d, %d) and (%d, %d). choosing current index %d, which is farther away..\n", i, max_slope_idx, i, j, j);
                 max_slope       = tmp;
                 max_slope_idx   = j;
@@ -213,18 +218,18 @@ computeBezierControlPolyConvexHull(
         /* next point on convex hull is ( (max_slope_idx / n), p[max_slope_idx]) */
         debugl(1, "\nscan finished. next i: %d\n", max_slope_idx);
         i = max_slope_idx;
-        cvhull.push_back( Vec2( (R)i / (R)n, p[i]) );
+        cvhull.push_back( Vec2( (R)i / (R)deg, p[i]) );
     }
 
     /* i == degree == n here, last point was inserted. perform backwards scan for "lower" convex hull */
-    if (i != n) {
+    if (i != (int)deg) {
         throw("PolyAlgorithms::computeBezierControlPolyConvexHull(): internal logic error.");
     }
 
     debugl(1, "\n\n---------------------- Upper convex hull done. Computing lower convex hull by scanning back from i = n to 0\n");
 
     /* construct "lower" convex hull, symmetric to above construction of the "upper" convex hull */
-    i = n;
+    i = deg;
     while (i > 0) {
         debugl(1, "scanning from i = %d to the left..\n", i);
         max_slope           = -inf<R>();
@@ -232,8 +237,8 @@ computeBezierControlPolyConvexHull(
 
         /* find point with biggest slope left from i, symmetric to the case above */
         for (j = i - 1; j >= 0; j--) {
-            tmp = ( (R)n * (p[i] - p[j])) / (R)(i - j);
-            if (std::abs(tmp - max_slope) < eps_slope) {
+            tmp = ( (R)deg * (p[i] - p[j])) / (R)(i - j);
+            if (fabs(tmp - max_slope) < eps_slope) {
                 debugl(1, "two candidate pairs with numerically equal slope (vectors from last point to both colinear): (%d, %d) and (%d, %d). choosing current index %d, which is farther away..\n", i, max_slope_idx, i, j, j);
                 max_slope       = tmp;
                 max_slope_idx   = j;
@@ -247,7 +252,7 @@ computeBezierControlPolyConvexHull(
 
         /* next point has index max_slope_idx => ( (max_slope_idx / n), p[max_slope_idx] ) */
         i = max_slope_idx;
-        cvhull.push_back( Vec2( (R)i / (R)n, p[i]) );
+        cvhull.push_back( Vec2( (R)i / (R)deg, p[i]) );
     }
 
     debugl(1, "\n");
@@ -255,6 +260,26 @@ computeBezierControlPolyConvexHull(
     /* i == 0 here, and the first point (0.0, p[0]) has been inserted twice. pop it */
     cvhull.pop_back();
 }
+template <typename R>
+void BezierControlPolyConvexHull<0u, R>::compute
+(
+	const BernsteinPolynomial<0u, R, R>& p,
+    std::vector<Vec2>& cvhull,
+    const R& eps_slope
+)
+{}
+
+template <typename R>
+void BezierControlPolyConvexHull<1u, R>::compute
+(
+	const BernsteinPolynomial<1u, R, R>& p,
+    std::vector<Vec2>& cvhull,
+    const R& eps_slope
+)
+{
+	cvhull.push_back(Vec2(0, p[0]));
+}
+
 
 
 /* bezier clipping. scale input polynomial to [0, 1], represent with Bernstein basis
@@ -475,8 +500,8 @@ BezClip_roots(
         }
     }
 
-    /* queue to store triples(polynomial, intervall limits) */ 
-    std::list<BezClip_Triple<deg, R> >    S;
+    /* queue to store triples(polynomial, interval limits) */
+    std::queue<BezClip_Triple<deg, R> >  S;
     BezClip_Triple<deg, R>               T;
     BernsteinPolynomial<deg, R, R>      *p, *pleft, *pright;
     R                               pmid, tol4 = tol / 4.0, tol4rel;
@@ -486,17 +511,18 @@ BezClip_roots(
     std::vector<Vec2>               pcvhull;
 
     /* insert root triple onto stack S */
-    S.push_back( BezClip_Triple<deg, R>(proot, alpha, beta) );
+    S.push( BezClip_Triple<deg, R>(proot, alpha, beta) );
 
     /* main loop, work off stack */
-    while ( !S.empty() ) {
+    while (!S.empty())
+    {
         /* get top element of S, set variables and pop() */
         T       = S.front();
         p       = T.p;
         left    = T.left;
         right   = T.right;
 
-        S.pop_front();
+        S.pop();
 
         debugl(1, "------------- new triple for interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
 
@@ -507,7 +533,7 @@ BezClip_roots(
         while(1) {
             debugl(1, "\n\n------------- interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
             /* get convex hull */
-            PolyAlg::computeBezierControlPolyConvexHull<deg, R>(*p, pcvhull, 1E-10);
+            PolyAlg::BezierControlPolyConvexHull<deg, R>::compute(*p, pcvhull, 1E-10);
 
             /* compute new interval */
             PolyAlg::BezClip_getNewInterval(
@@ -601,8 +627,8 @@ BezClip_roots(
                 p->split(0.5 + tol4rel, NULL, pright);
 
                 /* push two new intervals to consider onto the queue */
-                S.push_front( BezClip_Triple<deg, R>(pleft , left         , middle - tol4) );
-                S.push_front( BezClip_Triple<deg, R>(pright, middle + tol4, right        ) );
+                S.push( BezClip_Triple<deg, R>(pleft , left         , middle - tol4) );
+                S.push( BezClip_Triple<deg, R>(pright, middle + tol4, right        ) );
             }
             else {
                 debugl(1, "bisecting interval: [%+20.13E, %+20.13E] and [%+20.13E, %+20.13E]\n", left, middle, middle, right);
@@ -611,8 +637,8 @@ BezClip_roots(
                 p->split(0.5, pleft, pright);
 
                 /* push two new intervals to consider onto stack */
-                S.push_front( BezClip_Triple<deg, R>(pright, middle, right ) );
-                S.push_front( BezClip_Triple<deg, R>(pleft , left  , middle) );
+                S.push( BezClip_Triple<deg, R>(pright, middle, right ) );
+                S.push( BezClip_Triple<deg, R>(pleft , left  , middle) );
             }
         }
 

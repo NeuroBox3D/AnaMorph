@@ -45,14 +45,14 @@
 
 #include "Vector.hh"
 #include "StaticVector.hh"
-#include "debug.hh"
 
 template <typename R>
 class Vec3 : public Vector<R> {
     public:
                                             Vec3();
+                                            Vec3(const R& v);
                                             Vec3(
-                                                R const &x,
+	                                            R const &x,
                                                 R const &y,
                                                 R const &z);
         /* compatibility size-based constructor and resize() that accepts size 3 only. useful if Vec3 is used as a
@@ -126,6 +126,7 @@ class Vec3<double>
 
         // constructors
         Vec3();
+        Vec3(double v);
         Vec3(double x, double y, double z);
         Vec3(const Vec3& v);
 
@@ -174,7 +175,7 @@ class Vec3<double>
         void print_debugl(uint32_t level) const;
 
     private:
-        using StaticVector::v;
+        using StaticVector<3, double>::v;
 };
 
 

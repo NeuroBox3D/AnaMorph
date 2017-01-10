@@ -40,204 +40,187 @@
  * 
  * -------------------------------------------------------------------------------- */
 
-#include "../include/Vec3.hh"
+#include "../include/Vec2.hh"
 #include "debug.hh"
 
 
-Vec3<double>::Vec3()
+Vec2::Vec2()
 {}
 
-Vec3<double>::Vec3(double _v)
+Vec2::Vec2(double _v)
 {
     v[0] = _v;
     v[1] = _v;
-    v[2] = _v;
 }
 
-Vec3<double>::Vec3(double x, double y, double z)
+Vec2::Vec2(double x, double y)
 {
     v[0] = x;
     v[1] = y;
-    v[2] = z;
 }
 
 
-Vec3<double>::Vec3(const Vec3<double>& _v)
+Vec2::Vec2(const Vec2& _v)
 {
     v[0] = _v[0];
     v[1] = _v[1];
-    v[2] = _v[2];
 }
 
 
-Vec3<double>::~Vec3()
+Vec2::~Vec2()
 {}
 
 
-Vec3<double>& Vec3<double>::operator=(const Vec3<double>& _v)
+Vec2& Vec2::operator=(const Vec2& _v)
 {
     v[0] = _v[0];
     v[1] = _v[1];
-    v[2] = _v[2];
 
     return *this;
 }
 
 
-void Vec3<double>::resize(uint32_t size)
+void Vec2::resize(uint32_t size)
 {
-    if (size != 3)
-        throw("Vec3<double>::resize(size_t): given size != 3.");
+    if (size != 2)
+        throw("Vec2::resize(size_t): given size != 2.");
 }
 
 
-Vec3<double> Vec3<double>::operator+(const Vec3<double>& _v) const
+Vec2 Vec2::operator+(const Vec2& _v) const
 {
-    Vec3<double> r;
+    Vec2 r;
     r[0] = v[0] + _v[0];
     r[1] = v[1] + _v[1];
-    r[2] = v[2] + _v[2];
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator+=(const Vec3<double>& _v)
+Vec2& Vec2::operator+=(const Vec2& _v)
 {
     v[0] += _v[0];
     v[1] += _v[1];
-    v[2] += _v[2];
     return *this;
 }
 
-Vec3<double> Vec3<double>::operator-(const Vec3<double>& _v) const
+Vec2 Vec2::operator-(const Vec2& _v) const
 {
-    Vec3<double> r;
+    Vec2 r;
     r[0] = v[0] - _v[0];
     r[1] = v[1] - _v[1];
-    r[2] = v[2] - _v[2];
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator-=(const Vec3<double>& _v)
+Vec2& Vec2::operator-=(const Vec2& _v)
 {
     v[0] -= _v[0];
     v[1] -= _v[1];
-    v[2] -= _v[2];
     return *this;
 }
 
 
-Vec3<double> Vec3<double>::operator*(double x) const
+Vec2 Vec2::operator*(double x) const
 {
-    Vec3<double> r;
+    Vec2 r;
     r[0] = v[0] * x;
     r[1] = v[1] * x;
-    r[2] = v[2] * x;
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator*=(double x)
+Vec2& Vec2::operator*=(double x)
 {
     v[0] *= x;
     v[1] *= x;
-    v[2] *= x;
     return *this;
 }
 
-Vec3<double> Vec3<double>::operator/(double x) const
+Vec2 Vec2::operator/(double x) const
 {
-    Vec3<double> r;
+    Vec2 r;
     r[0] = v[0] / x;
     r[1] = v[1] / x;
-    r[2] = v[2] / x;
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator/=(double x)
+Vec2& Vec2::operator/=(double x)
 {
     v[0] /= x;
     v[1] /= x;
-    v[2] /= x;
     return *this;
 }
 
 
-double Vec3<double>::operator*(const Vec3<double>& _v) const
+double Vec2::operator*(const Vec2& _v) const
 {
-    return v[0]*_v[0] + v[1]*_v[1] + v[2]*_v[2];
+    return v[0]*_v[0] + v[1]*_v[1];
 }
 
-Vec3<double> Vec3<double>::cross(const Vec3<double>& _v) const
+double Vec2::cross(const Vec2& _v) const
 {
-    Vec3<double> r;
-    r[0] = v[1]*_v[2] - v[2]*_v[1];
-    r[1] = v[2]*_v[0] - v[0]*_v[2];
-    r[2] = v[0]*_v[1] - v[1]*_v[0];
-    return r;
+    return v[0]*_v[1] - v[1]*_v[0];
 }
 
 
-bool Vec3<double>::operator==(const Vec3<double>& _v) const
+bool Vec2::operator==(const Vec2& _v) const
 {
-    return v[0] == _v[0] && v[1] == _v[1] && v[2] == _v[2];
+    return v[0] == _v[0] && v[1] == _v[1];
 }
 
-bool Vec3<double>::operator!=(const Vec3<double>& _v)
+bool Vec2::operator!=(const Vec2& _v)
 {
-    return v[0] != _v[0] || v[1] != _v[1] || v[2] != _v[2];
-}
-
-
-bool Vec3<double>::operator<(const Vec3<double>& _v) const
-{
-    return v[0] < _v[0] && v[1] < _v[1] && v[2] < _v[2];
-}
-
-bool Vec3<double>::operator>(const Vec3<double>& _v) const
-{
-    return v[0] > _v[0] && v[1] > _v[1] && v[2] > _v[2];
-}
-
-bool Vec3<double>::operator>=(const Vec3<double>& _v) const
-{
-    return v[0] >= _v[0] && v[1] >= _v[1] && v[2] >= _v[2];
-}
-
-bool Vec3<double>::operator<=(const Vec3<double>& _v) const
-{
-    return v[0] <= _v[0] && v[1] <= _v[1] && v[2] <= _v[2];
+    return v[0] != _v[0] || v[1] != _v[1];
 }
 
 
-double Vec3<double>::len2(void) const
+bool Vec2::operator<(const Vec2& _v) const
 {
-    return sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    return v[0] < _v[0] && v[1] < _v[1];
 }
 
-double Vec3<double>::len2squared(void) const
+bool Vec2::operator>(const Vec2& _v) const
 {
-    return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+    return v[0] > _v[0] && v[1] > _v[1];
+}
+
+bool Vec2::operator>=(const Vec2& _v) const
+{
+    return v[0] >= _v[0] && v[1] >= _v[1];
+}
+
+bool Vec2::operator<=(const Vec2& _v) const
+{
+    return v[0] <= _v[0] && v[1] <= _v[1];
 }
 
 
-Vec3<double>& Vec3<double>::normalize()
+double Vec2::len2(void) const
 {
-    double n = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    return sqrt(v[0]*v[0] + v[1]*v[1]);
+}
+
+double Vec2::len2squared(void) const
+{
+    return v[0]*v[0] + v[1]*v[1];
+}
+
+
+Vec2& Vec2::normalize()
+{
+    double n = sqrt(v[0]*v[0] + v[1]*v[1]);
     v[0] /= n;
     v[1] /= n;
-    v[2] /= n;
     return *this;
 }
 
 
-void Vec3<double>::print() const
+void Vec2::print() const
 {
-    printf("(%f, %f, %f)\n", v[0], v[1], v[2]);
+    printf("(%f, %f)\n", v[0], v[1]);
 }
 
-void Vec3<double>::print_debugl(uint32_t level) const
+void Vec2::print_debugl(uint32_t level) const
 {
     debugTabInc();
-    debugl(level, "(%f, %f, %f)\n", v[0], v[1], v[2]);
+    debugl(level, "(%f, %f)\n", v[0], v[1]);
     debugTabDec();
 }
 

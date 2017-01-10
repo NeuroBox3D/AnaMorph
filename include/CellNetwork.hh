@@ -1077,6 +1077,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
             private:
                 /* private ctors, can only be called by CellNetwork. */
                 CellNetworkIterator()
+            	: int_ds(NULL), pred(NULL), network(NULL)
                 {
                     this->explicitlyInvalidate();
                 }
@@ -1089,19 +1090,17 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
                         /* call Graph::GraphIterator constructor in initializer list */
                         : Graph<Tn, Tv, Te>::template GraphIterator<BaseType, InternalIteratorType>(network, it)
                 {
-                    this->network   = network;
                     this->int_ds    = ds;
                     this->pred      = p;
+                    this->network   = network;
                 }
 
             public:
                 CellNetworkIterator(CellNetworkIterator const &x)
-                    /* call Graph::GraphIterator constructor in initializer list */
-                    : Graph<Tn, Tv, Te>::template GraphIterator<BaseType, InternalIteratorType>(x)
-                {
-                    this->network   = x.network;
-                    this->int_ds    = x.int_ds;
-                }
+            	/* call Graph::GraphIterator constructor in initializer list */
+                : Graph<Tn, Tv, Te>::template GraphIterator<BaseType, InternalIteratorType>(x),
+				  int_ds(x.int_ds), pred(NULL), network(x.network)
+                {}
 
                 CellNetworkIterator &
                 operator=(CellNetworkIterator const &x)

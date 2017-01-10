@@ -780,13 +780,13 @@ BezierCurve<degree, R>::getBoundingBox(uint32_t subdivision_detph) const
     /* l now contains (potentially a lot) of BezierCurve's from the iterated subdivision. get minimum / maximum
      * component vectgor from all control points */
     std::list<this_type> &list = *l;
-    Vec3<R> bb_min                  =  onesVec3<R>() * inf<R>();
-    Vec3<R> bb_max                  =  onesVec3<R>() * (-inf<R>());
+    Vec3<R> bb_min(inf<R>());
+    Vec3<R> bb_max(-inf<R>());
     for (auto &bc : list) {
         auto cplist = bc.getControlPoints();
         for (auto &cp : cplist) {
-            bb_min = minVec3<R>(bb_min, cp);
-            bb_max = maxVec3<R>(bb_max, cp);
+            minVec3<R>(bb_min, bb_min, cp);
+            maxVec3<R>(bb_max, bb_max, cp);
         }
     }
 

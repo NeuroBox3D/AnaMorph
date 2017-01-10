@@ -510,26 +510,45 @@ Mesh<Tm, Tv, Tf, R>::Face::operator<(const Face &b) const
     else {
         /* get two lists of indices, get minimum, cycle until minimum values are in front() of both
          * lists */
-        std::list<uint32_t>     a_indices, b_indices;
-        uint32_t                a_min, b_min;
 
-        if (this->isTri() && b.isTri()) {
-            this->getIndices(a_indices);
-            a_min = *( std::min_element(a_indices.begin(), a_indices.end()) );
-            while (a_indices.front() != a_min) {
-                a_indices.push_back(a_indices.front());
-                a_indices.pop_front();
+        if (this->isTri() && b.isTri())
+        {
+        	uint32_t i[4];
+            getIndices(i[0], i[1], i[2], i[3]);
+            if (i[1] <= i[0] && i[1] <= i[2])
+            {
+            	i[3] = i[0];	// use i3 as tmp
+            	i[0] = i[1];
+            	i[1] = i[2];
+            	i[2] = i[3];
+            }
+            else if (i[2] <= i[0] && i[2] <= i[1])
+            {
+            	i[3] = i[2];
+				i[2] = i[1];
+				i[1] = i[0];
+				i[0] = i[3];
             }
 
-            b.getIndices(b_indices);
-            b_min = *( std::min_element(b_indices.begin(), b_indices.end()) );
-            while (b_indices.front() != b_min) {
-                b_indices.push_back(b_indices.front());
-                b_indices.pop_front();
+        	uint32_t j[4];
+            b.getIndices(j[0], j[1], j[2], j[3]);
+            if (j[1] <= j[0] && j[1] <= j[2])
+            {
+            	j[3] = j[0];	// use j3 as tmp
+            	j[0] = j[1];
+            	j[1] = j[2];
+            	j[2] = j[3];
+            }
+            else if (j[2] <= j[0] && j[2] <= j[1])
+            {
+            	j[3] = j[2];
+				j[2] = j[1];
+				j[1] = j[0];
+				j[0] = j[3];
             }
 
             /* component-wise compare */
-            return (a_indices < b_indices);
+            return (i[0] < j[0] && i[1] < j[1] && i[2] < j[2]);
         }
         else if (this->isQuad() && b.isQuad()) {
             throw MeshEx(MESH_LOGIC_ERROR, "Face::operator<(): don't use me on quads yet .__^");
@@ -555,26 +574,44 @@ Mesh<Tm, Tv, Tf, R>::Face::operator>(const Face &b) const
     else {
         /* get two lists of indices, get minimum, cycle until minimum values are in front() of both
          * lists */
-        std::list<uint32_t>     a_indices, b_indices;
-        uint32_t                a_min, b_min;
+        if (this->isTri() && b.isTri())
+        {
+        	uint32_t i[4];
+			getIndices(i[0], i[1], i[2], i[3]);
+			if (i[1] <= i[0] && i[1] <= i[2])
+			{
+				i[3] = i[0];	// use i3 as tmp
+				i[0] = i[1];
+				i[1] = i[2];
+				i[2] = i[3];
+			}
+			else if (i[2] <= i[0] && i[2] <= i[1])
+			{
+				i[3] = i[2];
+				i[2] = i[1];
+				i[1] = i[0];
+				i[0] = i[3];
+			}
 
-        if (this->isTri() && b.isTri()) {
-            this->getIndices(a_indices);
-            a_min = *( std::min_element(a_indices.begin(), a_indices.end()) );
-            while (a_indices.front() != a_min) {
-                a_indices.push_back(a_indices.front());
-                a_indices.pop_front();
-            }
+			uint32_t j[4];
+			b.getIndices(j[0], j[1], j[2], j[3]);
+			if (j[1] <= j[0] && j[1] <= j[2])
+			{
+				j[3] = j[0];	// use j3 as tmp
+				j[0] = j[1];
+				j[1] = j[2];
+				j[2] = j[3];
+			}
+			else if (j[2] <= j[0] && j[2] <= j[1])
+			{
+				j[3] = j[2];
+				j[2] = j[1];
+				j[1] = j[0];
+				j[0] = j[3];
+			}
 
-            b.getIndices(b_indices);
-            b_min = *( std::min_element(b_indices.begin(), b_indices.end()) );
-            while (b_indices.front() != b_min) {
-                b_indices.push_back(b_indices.front());
-                b_indices.pop_front();
-            }
-
-            /* component-wise compare */
-            return (a_indices > b_indices);
+			/* component-wise compare */
+			return (i[0] > j[0] && i[1] > j[1] && i[2] > j[2]);
         }
         else if (this->isQuad() && b.isQuad()) {
             throw MeshEx(MESH_LOGIC_ERROR, "Face::operator>(): don't use me on quads yet .__^");
@@ -763,18 +800,17 @@ Mesh<Tm, Tv, Tf, R>::Face::getIndices() const
 
 template <typename Tm, typename Tv, typename Tf, typename R>
 void
-Mesh<Tm, Tv, Tf, R>::Face::getIndices(
-    std::list<uint32_t> &l) const
+Mesh<Tm, Tv, Tf, R>::Face::getIndices(uint32_t& i1, uint32_t& i2, uint32_t& i3, uint32_t& i4) const
 {
     this->checkTriQuad("Mesh::Face::getIndices()");
 
-    l.clear();
-    l.push_back(this->vertices[0]->id());
-    l.push_back(this->vertices[1]->id());
-    l.push_back(this->vertices[2]->id());
-    if (this->isQuad()) {
-        l.push_back(this->vertices[3]->id());
-    }
+    i1 = vertices[0]->id();
+    i2 = vertices[1]->id();
+    i3 = vertices[2]->id();
+    if (this->isQuad())
+        i4 = vertices[3]->id();
+    else
+    	i4 = i3;
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -834,7 +870,7 @@ Mesh<Tm, Tv, Tf, R>::Face::getBoundingBox() const
     this->checkTriQuad("Mesh::Face::getBoundingBox()");
 
     debugl(5, "Mesh::Face::getBoundingBox()\n");
-    debugTabInc();
+    //debugTabInc();
 
     Vec3<R> v_i, v_j, v_k, v_l;
 
@@ -846,22 +882,23 @@ Mesh<Tm, Tv, Tf, R>::Face::getBoundingBox() const
     }
 
     Vec3<R> bb_min  = v_i;
-    bb_min          = minVec3(bb_min, v_j);
-    bb_min          = minVec3(bb_min, v_k);
+    minVec3(bb_min, v_i, v_j);
+    minVec3(bb_min, bb_min, v_k);
     if (this->isQuad()) {
-        bb_min = minVec3(bb_min, v_l);
+        minVec3(bb_min, bb_min, v_l);
     }
 
     Vec3<R> bb_max  = v_i;
-    bb_max          = maxVec3(bb_max, v_j);
-    bb_max          = maxVec3(bb_max, v_k);
+    maxVec3(bb_max, bb_max, v_j);
+    maxVec3(bb_max, bb_max, v_k);
     if (this->isQuad()) {
-        bb_max = maxVec3(bb_max, v_l);
+    	maxVec3(bb_max, bb_max, v_l);
     }
 
     /* extend bounding box by 2.5%, but no less than 1E-3, on each side. */
-    return (BoundingBox<R>({bb_min, bb_max}).extend(0.025, Vec3<R>(1E-3, 1E-3, 1E-3)));
+    return (BoundingBox<R>(bb_min, bb_max).extend(0.025, Vec3<R>(1E-3, 1E-3, 1E-3)));
 
+    // code never gets here!?s
     debugl(5, "aabb (widened): (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)\n",
             bb_min[0], bb_min[1], bb_min[2],
             bb_max[0], bb_max[1], bb_max[2]);
@@ -1727,6 +1764,9 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 Mesh<Tm, Tv, Tf, R> &
 Mesh<Tm, Tv, Tf, R>::operator=(const Mesh &X)
 {
+	static int calls = 0;
+	std::cout << "Mesh::operator= call " << ++calls << std::endl;
+
     /* clear all data */
     this->clear();
 
@@ -1779,11 +1819,15 @@ Mesh<Tm, Tv, Tf, R>::operator=(const Mesh &X)
      * the caller can copy a mesh and re-use ids, although pointers and iterators are invalidated. in case of moving,
      * ids are invalidated, by pointers stay intact. easy association of mesh components simplified complex processed
      * significantly.. */
-    std::list<uint32_t> xf_vlist;
     face_iterator       fit;
-    for (auto &xf : X.faces) {
-        xf.getIndices(xf_vlist);
-        fit = this->faces.insert(xf_vlist);
+	uint32_t i1, i2, i3, i4;
+    for (auto &xf : X.faces)
+    {
+        xf.getIndices(i1, i2, i3, i4);
+        if (i3 == i4) // triangle
+        	fit = faces.insert(i1, i2, i3);
+        else // quadrilateral
+        	fit = faces.insert(i1, i2, i3, i4);
 
         /* copy the rest of the information from xf */
         fit->traversal_state    = xf.traversal_state;
@@ -3430,14 +3474,14 @@ Mesh<Tm, Tv, Tf, R>::getEdgeBoundingBox(
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getEdgeBoundingBox(): neither (u,v) nor (v,u) for the given vertices u, v is not an edge of the mesh.");
     }
 
-    aabb_min    = minVec3(u, v);
-    aabb_max    = maxVec3(u, v);
+    minVec3(aabb_min, u, v);
+    maxVec3(aabb_max, u, v);
 
     /* enlarge bounding box slightly to be save */
     /* if the difference in one coord is exactly zero, then a relative offset won't help.  use a
      * minimum absolute value of 1E-3 to prevent this. the offset vector below always has positive
      * components.. */
-    offset      = maxVec3<R>( Vec3<R>(1E-3, 1E-3, 1E-3), fabsVec3<R>(aabb_max - aabb_min)*0.025);
+    maxVec3<R>(offset, Vec3<R>(1E-3, 1E-3, 1E-3), fabsVec3<R>(aabb_max - aabb_min)*0.025);
     aabb_min   -= offset;
     aabb_max   += offset;
 
@@ -4635,7 +4679,7 @@ Mesh<Tm, Tv, Tf, R>::readFromObjFile(const char *filename)
         }
         debugl(1, "done adding faces.\n");
     }
-    catch (MeshEx err) {
+    catch (MeshEx& err) {
         printf("caught exception: \"%s\".\n", err.error_msg.c_str() );
     }
 
@@ -5008,9 +5052,9 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::insert(
         uint32_t    v0_id, v1_id, v2_id;
         auto        lit = id_list.begin();
 
-        v0_id = *lit++;
-        v1_id = *lit++;
-        v2_id = *lit;
+        v0_id = *lit;
+        v1_id = *++lit;
+        v2_id = *++lit;
 
         return ( this->insert(v0_id, v1_id, v2_id) );
     }
@@ -5018,10 +5062,10 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::insert(
         uint32_t    v0_id, v1_id, v2_id, v3_id;
         auto        lit = id_list.begin();
 
-        v0_id = *lit++;
-        v1_id = *lit++;
-        v2_id = *lit++;
-        v3_id = *lit;
+        v0_id = *lit;
+        v1_id = *++lit;
+        v2_id = *++lit;
+        v3_id = *++lit;
 
         return ( this->insert(v0_id, v1_id, v2_id, v3_id) );
     }

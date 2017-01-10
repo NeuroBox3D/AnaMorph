@@ -280,9 +280,6 @@ namespace NLM {
     {
         using Aux::Numbers::inf;
         using Aux::VecMat::onesVec3;
-        using Aux::VecMat::fabsVec3;
-        using Aux::VecMat::minVec3;
-        using Aux::VecMat::maxVec3;
 
         debugl(0, "NeuritePath::updateGeometry().\n");
         debugTabInc();
@@ -525,74 +522,52 @@ namespace NLM {
 
         Vec3<R> const           zbase = Aux::VecMat::zbase<R>();
 
-        uint32_t                i;
-        uint32_t                refill = 1024;
-        std::vector<Vec3<R>>    candidates(refill);
-        R                       r_min, max_min;
+        uint32_t                nRetry = 1024;
+        Vec3<R>					candidate(nRetry);
+        R                       r_min;
         Vec3<R>                 result;
 
         /* check if global z vector is mu-permissible for all neurite segment curves of this path */
         r_min = inf<R>();
-        for (auto &C : this->canal_segments_magnified) {
+        for (auto &C : this->canal_segments_magnified)
             r_min = std::min(r_min, C->checkRenderVector(zbase));
-        }
 
-        if (r_min > mu) {
+        if (r_min > mu)
+        {
+        	//std::cout << "Found render vector in z attempt." << std::endl;
             return zbase;
         }
 
 
-        uint32_t const max_attempts = 16;
-        max_min                     = -inf<R>();
-        for (uint32_t attempt = 0; attempt < max_attempts; attempt++) {
-            debugl(0, "NeuritePath::findPermissibleRenderVector(): attempt %d with %d candidates.\n", attempt + 1, refill);
-            //max_min = -inf<R>();
+        uint32_t const max_attempts = 1024;
+        for (uint32_t attempt = 0; attempt < max_attempts; attempt++)
+        {
+            debugl(0, "NeuritePath::findPermissibleRenderVector(): attempt %d with %d candidates.\n", attempt + 1, nRetry);
 
-            /* (re)fill candidates */
-            for (i = 0; i < refill; i++) {
-                candidates[i] = Aux::VecMat::randUnitVec3<R>();
-            }
+            candidate = Aux::VecMat::randUnitVec3<R>();
 
             /* check all candidates, pick alpha-permissible if possible, otherwise pick the best one if max_min is not
              * -inf */
-            for (Vec3<R> const &r : candidates) {
-                debugl(2, "NeuritePath()::findPermissibleRenderVector(): current candidate: ");
-                #ifdef __DEBUG___
-                r.print();
-                #endif
+			debugl(2, "NeuritePath()::findPermissibleRenderVector(): current candidate: ");
+			#ifdef __DEBUG___
+			candidate.print();
+			#endif
 
-                r_min = inf<R>();
-                for (auto &C : this->canal_segments_magnified) {
-                    r_min = std::min(r_min, C->checkRenderVector(r));
-                }
+			r_min = inf<R>();
+			for (auto &C : this->canal_segments_magnified)
+				r_min = std::min(r_min, C->checkRenderVector(candidate));
 
-                debugl(2, "r_min: %5.4f, max_min: %5.4f\n", r_min, max_min);
-
-                /* r_min now stores the minimum of the minima over all neurite spine curves of P. update
-                 * max_min if r is better than the previous result */
-                if (r_min > max_min) {
-                    //debugl(3, "=> update\n");
-                    max_min = r_min;
-                    result  = r;
-                }
-
-            }
+			debugl(2, "r_min: %5.4f, max_min: %5.4f\n", r_min, max_min);
 
             /* check if max_min > alpha, return result if that is the case, otherwise try the next candidate */
-            if (max_min > lambda) {
+            if (r_min > lambda) {
                 debugl(0, "attempt %d of %d, max_min = %5.4f => %5.4f-permissible for P. returning..\n", attempt + 1, max_attempts, max_min, lambda);
-                return result;
+                //std::cout << "Found render vector in attempt " << attempt << std::endl;
+                return candidate;
             }
         }
 
-        if (max_min == -inf<R>()) {
-            throw("NeuritePath::findPermissibleRenderVector(). no permissible render vector found.");
-        }
-        else {
-            printf("NeuritePath::findPermissibleRenderVector(): WARNING: no %5.4f-permissible render vector found in %5d attempts of %5d candidates each. returning best candidate (%5.4f-permissible) instead.\n",
-                lambda, max_attempts, refill, max_min);
-            return result;
-        }
+        throw("NeuritePath::findPermissibleRenderVector(). no permissible render vector found.");
     }
 
     template <typename R>
@@ -2875,7 +2850,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                                     std::thread(NLM_CellNetwork<R>::startWorkerThread, &(thread_slots[i]))
                                 );
                         }
-                        catch (std::system_error err) {
+                        catch (std::system_error& err) {
                             throw("(static) NLM_CellNetwork::processIntersectionJobsMultiThreaded(): caught std::system-error from thread() constructor => system could not spawn thread.");
                         }
                     }
@@ -3029,7 +3004,7 @@ NLM_CellNetwork<R>::performFullAnalysis()
     std::copy(job_list.begin(), job_list.end(), job_vec.begin());
     job_list.clear();
 
-    std::random_shuffle(job_vec.begin(), job_vec.end());
+    //std::random_shuffle(job_vec.begin(), job_vec.end());
 
     std::copy(job_vec.begin(), job_vec.end(), std::back_inserter(job_list));
     job_vec.clear();
@@ -3163,7 +3138,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
 
     std::list<typename NeuritePathTree::vertex_iterator>    npt_vertices_bfs_ordered;
 
-    Mesh<Tm, Tv, Tf, R>                                     M_cell, M_cell_backup, M_S, M_P, tmp;
+    Mesh<Tm, Tv, Tf, R>                                     M_cell, M_cell_backup, M_S, M_P;
 
     bool                                                    end_circle_offset;
     std::vector<
@@ -3178,7 +3153,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
     for (auto &s : this->soma_vertices) {
         NLM::SomaInfo<R> &s_info  = s.soma_data;
 
-        M_S = s_info.soma_sphere.template generateMesh<Tm, Tv, Tf>();
+        s_info.soma_sphere.template generateMesh<Tm, Tv, Tf>(M_S);
         M_cell.moveAppend(M_S);
 
         /* iterate over all neurite path trees, i.e. all neurites, of the soma. */
@@ -3436,13 +3411,13 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     /* RedBlueUnion call has been succcessful. break inner meshing loop */
                     break_inner_meshing_loop = true;
                 }
-                catch (RedBlue_Ex_InternalLogic logic_ex) {
+                catch (RedBlue_Ex_InternalLogic& logic_ex) {
                     throw logic_ex;
                 }
-                catch (RedBlue_Ex_Disjoint disjoint_ex) {
+                catch (RedBlue_Ex_Disjoint& disjoint_ex) {
                     throw disjoint_ex;
                 }
-                catch (RedBlue_Ex_ComplexEdges<R> complex_ex) {
+                catch (RedBlue_Ex_ComplexEdges<R>& complex_ex) {
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: %d complexly intersecting edges.. splitting.\n", complex_ex.edge_isec_info.size()); 
                     debugTabInc();
 
@@ -3539,12 +3514,12 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     tmp.writeObjFile("M_P_split");
                     */
                 }
-                catch (RedBlue_Ex_NumericalEdgeCase numerical_ex) {
+                catch (RedBlue_Ex_NumericalEdgeCase& numerical_ex) {
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: numerical edge case => retry..\n");
                     new_outer_iteration = true;
                     restore_M_cell      = !numerical_ex.R_intact;
                 }
-                catch (RedBlue_Ex_Triangulation<R> tri_ex) {
+                catch (RedBlue_Ex_Triangulation<R>& tri_ex) {
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: error during triangulation of outside / inside polygons. => retry..\n");
 
                     /* decrease radius factor, but lower bound by radius_factor_safe_lb. */
@@ -3552,13 +3527,13 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     new_outer_iteration = true;
                     restore_M_cell      = !tri_ex.R_intact;
                 }
-                catch (RedBlue_Ex_NumIsecPoly isecpoly_ex) {
+                catch (RedBlue_Ex_NumIsecPoly& isecpoly_ex) {
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: number of intersection polygons != 1.\n");
                     radius_factor       = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
                     new_outer_iteration = true;
                     restore_M_cell      = !isecpoly_ex.R_intact;
                 }
-                catch (RedBlue_Ex_AffectedCircleTrivial trivcircle_ex) {
+                catch (RedBlue_Ex_AffectedCircleTrivial& trivcircle_ex) {
                     throw trivcircle_ex;
                 }
                 debugl(0, "inner meshing loop time: %5.4f\n\n", Aux::Timing::tack(14));
@@ -3700,7 +3675,7 @@ NLM_CellNetwork<R>::renderModellingMeshesIndividually(std::string filename) cons
     for (auto &s : this->soma_vertices) {
         /* generate mesh for soma sphere and append to cell mesh. */
         NLM::SomaInfo<R> const &s_info  = s.soma_data;
-        M_S                             = s_info.soma_sphere.template generateMesh<Tm, Tv, Tf>();
+        s_info.soma_sphere.template generateMesh<Tm, Tv, Tf>(M_S);
         M_cell.moveAppend(M_S);
         
         /* iterate over all neurite path trees and append meshes from all neurite paths */
