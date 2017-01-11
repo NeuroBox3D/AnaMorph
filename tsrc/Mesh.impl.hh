@@ -3640,6 +3640,7 @@ Mesh<Tm, Tv, Tf, R>::splitEdge(
 
     uint32_t const n = lambda_values.size();
     if (n == 0) {
+        debugTabDec();
         throw("Mesh::splitEdge(): vector of split points (lambda_values) is empty. won't silently discard ineffectual call.");
     }
 
@@ -3657,6 +3658,7 @@ Mesh<Tm, Tv, Tf, R>::splitEdge(
     /* all lambda values must be in ]0,1[ */
     for (auto &lambda : lambda_values) {
         if (lambda <= 0.0 || lambda >= 1.0) {
+            debugTabDec();
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::splitEdge(): givne lambda must be in (0, 1).");
         }
     }
