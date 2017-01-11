@@ -675,8 +675,12 @@ MeshAlg::RedBlueAlgorithm(
     /* generate tuple lists with extra function to avoid code repetition. pass list of edge intersection information
      * structs by reference to store information about potential complexly intersecting edges (both red and blue). */
     std::list<RedBlue_EdgeIsecInfo<TR>> complex_edge_info_list;
-    RedBlue_generateRBTupleList<Tm, Tv, Tf, TR>(R, B, true,  R_edges_B_faces_candidates, red_tuples, complex_edge_info_list);
-    RedBlue_generateRBTupleList<Tm, Tv, Tf, TR>(B, R, false, B_edges_R_faces_candidates, blue_tuples, complex_edge_info_list);
+    try
+    {
+        RedBlue_generateRBTupleList<Tm, Tv, Tf, TR>(R, B, true,  R_edges_B_faces_candidates, red_tuples, complex_edge_info_list);
+        RedBlue_generateRBTupleList<Tm, Tv, Tf, TR>(B, R, false, B_edges_R_faces_candidates, blue_tuples, complex_edge_info_list);
+    }
+    catch (RedBlue_Ex&) {debugTabDec(); throw;}
     debugl(2, "tuple lists generated..\n");
 
     /* if complex_edge_info_list is non-empty, there are complexly intersecting edges, maybe both red and blue
@@ -684,6 +688,7 @@ MeshAlg::RedBlueAlgorithm(
      * appropriate measures. */
     if (!complex_edge_info_list.empty()) {
         /* generate exception */
+        debugTabDec();
         throw RedBlue_Ex_ComplexEdges<TR>(
                 "RedBlueAlgorithm(): two RedBlue_generateRBTupleList() calls discovered complexly intersecting edges.",
                 complex_edge_info_list
@@ -717,6 +722,7 @@ MeshAlg::RedBlueAlgorithm(
     /* if both lists are empty, there can't be any intersection. throw exception. */
     if ( red_tuples.empty() && blue_tuples.empty() ) {
         debugl(0, "redpoints and bluepoints both empty. nothing to do => returning.\n");
+        debugTabDec();
         throw RedBlue_Ex_Disjoint("RedBlue_Algorithm(): no red edge intersect a blue face and vice versa => red and blue meshes disjoint.");
     }
     /* if there is no red tuple but at least one blue tuple, then all blue edges intersect the SAME red face, resulting
@@ -725,6 +731,7 @@ MeshAlg::RedBlueAlgorithm(
      * splitting the red triangle properly. */
     else if ( red_tuples.empty() ) {
         debugl(0, "redpoints empty..\n");
+        debugTabDec();
         throw RedBlue_Ex_AffectedCircleTrivial(
                 "RedBlue_Algorithm(): red tuple list empty => affected circle of red triangles trivial, i.e. consisting of exactly one red face => split it.", 
                 true,
@@ -735,6 +742,7 @@ MeshAlg::RedBlueAlgorithm(
      * affected faces. throw exception */
     else if ( blue_tuples.empty() ) {
         debugl(0, "bluepoints empty..\n");
+        debugTabDec();
         throw RedBlue_Ex_AffectedCircleTrivial(
                 "RedBlue_Algorithm(): blue tuple list empty => affected circle of blue triangles trivial, i.e. consisting of exactly one blue face => split it.", 
                 false,
@@ -748,8 +756,12 @@ MeshAlg::RedBlueAlgorithm(
      * polygon.*/
 
     /*  cyclically order the computed tuple lists individually. */
-    RedBlue_cyclicallyOrderTupleList(R, true,  red_tuples);
-    RedBlue_cyclicallyOrderTupleList(B, false, blue_tuples);
+    try
+    {
+        RedBlue_cyclicallyOrderTupleList(R, true,  red_tuples);
+        RedBlue_cyclicallyOrderTupleList(B, false, blue_tuples);
+    }
+    catch (RedBlue_Ex&) {debugTabDec(); throw;}
     debugl(2, "tuple lists cyclically ordered..\n");
 
 #ifdef __DEBUG__
@@ -892,7 +904,8 @@ MeshAlg::RedBlueAlgorithm(
     }
 
     /* cut hole in R */
-    RedBlue_cutHole(R, true,  isecpoly_tuples, keep_red_outside_part);
+    try {RedBlue_cutHole(R, true,  isecpoly_tuples, keep_red_outside_part);}
+    catch (RedBlue_Ex&) {debugTabDec(); throw;}
 
     debugl(2, "RED mesh cut.\n");
 
@@ -911,7 +924,8 @@ MeshAlg::RedBlueAlgorithm(
      * rest of R during merging, the container changes, and so all iterators would be invalid. to get around this, all
      * iterators are converted to pointers, all vertices are moved, and finally fresh red iterators are generated
      * afterwards. */
-    RedBlue_cutHole(B, false, isecpoly_tuples, keep_blue_outside_part, blue_update_its);
+    try {RedBlue_cutHole(B, false, isecpoly_tuples, keep_blue_outside_part, blue_update_its);}
+    catch (RedBlue_Ex&) {debugTabDec(); throw;}
 
     debugl(1, "BLUE mesh cut.\n");
 
@@ -992,6 +1006,7 @@ MeshAlg::RedBlueAlgorithm(
             ++pit, ++lit;
         }
         if (lit != blue_update_its->end()) {
+            debugTabDec();
             throw RedBlue_Ex_InternalLogic("RedBlue_Algorithm(): blue_update_its list not yet finished after scan-update from blue_update_pointers list. internal logic error.");
         }
     }
@@ -1016,7 +1031,8 @@ MeshAlg::RedBlueUnion(
     debugTabInc();
 
     /* simple forward to RedBlueAlgorithm: keeping both OUTSIDE parts creates the union mesh */
-    MeshAlg::RedBlueAlgorithm(R, B, true, true, blue_update_its);
+    try {MeshAlg::RedBlueAlgorithm(R, B, true, true, blue_update_its);}
+    catch (RedBlue_Ex&) {debugTabDec(); throw;}
     
     debugTabDec();
     debugl(0, "MeshAlg::RedBlueUnion(): done.\n");
@@ -1037,7 +1053,8 @@ MeshAlg::RedBlueRedMinusBlue(
 
     /* simple forward to RedBlueAlgorithm: for set diffrence, keep outside part of R, keep inside
      * part of B */
-    MeshAlg::RedBlueAlgorithm(R, B, true, false, blue_update_its);
+    try {MeshAlg::RedBlueAlgorithm(R, B, true, false, blue_update_its);}
+    catch (RedBlue_Ex&) {debugTabDec(); throw;}
 
     debugTabDec();
     debugl(0, "MeshAlg::RedBlueRedMinusBlue(): done.\n");
@@ -1060,7 +1077,9 @@ MeshAlg::RedBlueIntersection(
      * during the cutting with RedBlue_cutHole(), the inside parts are reoriented consistently.
      * however, only in the case of "set" intersection, the orientation of the result mesh has to
      * be inverted again to produce the usually desired orientation. */
-    MeshAlg::RedBlueAlgorithm(R, B, false, false, blue_update_its);
+    try {MeshAlg::RedBlueAlgorithm(R, B, false, false, blue_update_its);}
+    catch (RedBlue_Ex&) {debugTabDec(); throw;}
+
     R.invertOrientation();
 
     debugTabDec();
@@ -1111,7 +1130,6 @@ RedBlue_generateRBTupleList(
         uv_nisec_faces = 0;
 
         /* extract the edge e = (u, v) from the current front() element of X_edges_Y_faces_candidates */ 
-        debugl(0, "-----------------\n");
         u_it        = X_edges_Y_faces_candidates[i].vrt1->iterator();
         v_it        = X_edges_Y_faces_candidates[i].vrt2->iterator();
 
@@ -1155,6 +1173,7 @@ RedBlue_generateRBTupleList(
         for (auto &candidate_tri : e_Y_candidate_tris) {
             debugl(2, "checking edge (%5d, %5d) vs candidate face %5d for intersection..\n", u_it->id(), v_it->id(), candidate_tri->id());
             if (candidate_tri->isQuad()) {
+                debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_InternalLogic("RedBlue_generateRBTupleList(): quad discovered. operatio on affected quads unsupported (and unsupportable) due to underlying mathematical structure.\n");
             }
 
@@ -1169,8 +1188,7 @@ RedBlue_generateRBTupleList(
                  * also check if lambda is too close to zero or one, and throw edge case exception
                  * if it is. */
                 if (std::abs(x_lambda) < 1E-10 || std::abs(x_lambda - 1.0) < 1E-10) {
-                    debugTabDec();
-                    debugTabDec();
+                    debugTabDec(); debugTabDec(); debugTabDec();
                     throw RedBlue_Ex_NumericalEdgeCase(
                             "RedBlue_generateRBTupleList(): edge starting / ending on intersected face.",
                             /* both red and blue meshes are still intact at this point, since no cutting has been
@@ -1224,7 +1242,7 @@ RedBlue_generateRBTupleList(
          * the blue mesh is thrown by RedBlue_Algorithm if complex edges ever occur.  the caller must then split all
          * complex edge or react with other appropriate measures. */
         if (uv_nisec_faces > 1) {
-            debugl(0, "Mesh::RedBlueUnion(): red edge {%5d %5d} is complexely intersecting: %5d > 1 blue faces intersected. throwing exception..\n", v_it->id(), u_it->id(), uv_nisec_faces);
+            debugl(0, "Mesh::RedBlue_generateRBTupleList(): red edge {%5d %5d} is complexely intersecting: %5d > 1 blue faces intersected. throwing exception..\n", v_it->id(), u_it->id(), uv_nisec_faces);
             complex_edge_info_list.push_back(
                 RedBlue_EdgeIsecInfo<TR>(
                     /* red edge iff X_red == true */
@@ -1358,13 +1376,11 @@ RedBlue_cyclicallyOrderTupleList(
          * intersection polygons is >= 2, throw matching exception to indicate this to the caller. */
         if (!found_nb) {
             if (M_tuples.back().isNeighbour(M_tuples.front())) {
-                debugTabDec();
-                debugTabDec();
+                debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_NumIsecPoly("RedBlue_cyclicallyOrderTupleList(): > 1 distinct intersection polygons discovered.");
             }
             else {
-                debugTabDec();
-                debugTabDec();
+                debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_InternalLogic("RedBlue_cyclicallyOrderTupleList(): discovered tuple without neighbour, but no intersection polygon has yet been completed => internal logic error.");
             }
         }
@@ -1417,6 +1433,7 @@ RedBlue_cutHole(
 
     /* check if front vertex is of the right colour */
     if ( !Aux::Logic::lequiv(M_red, isecpoly_tuples.front().red) ) {
+        debugTabDec();
         throw RedBlue_Ex_InternalLogic("RedBlue_cutHole(): first point in tuple list has different colour than mesh to be cut.");
     }
 
@@ -1761,6 +1778,7 @@ RedBlue_cutHole(
                  * or the exception happens during cutting the red mesh.  however, if M is the red mesh, i.e. M_red ==
                  * true, then the blue mesh is still intact.  otherwise both meshes are no longer intact when the
                  * exception is thrown. => B_intact is true iff M_red is true. */
+                debugTabDec(); debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_NumericalEdgeCase(
                         "edge case during (planar) outside polygon triangulation..",
                         false,
@@ -1769,6 +1787,7 @@ RedBlue_cutHole(
                 break;
 
             case TEST_INCONCLUSIVE:
+                debugTabDec(); debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_NumericalEdgeCase(
                         "inconclusive test result during (planar) outside polygon triangulation..",
                         false,
@@ -1780,6 +1799,7 @@ RedBlue_cutHole(
                 break;
 
             default:
+                debugTabDec(); debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_InternalLogic("RedBlue_cutHole(): Aux::Geometry::triangulateSimplePlanarPolygon retunred invalid result code.");
         }
         debugl(2, "2d triangulation algorithm done.\n");
@@ -1932,6 +1952,7 @@ RedBlue_cutHole(
         }
 
         if (lit != update_vertex_its->end()) {
+            debugTabDec();
             throw RedBlue_Ex_InternalLogic("RedBlue_cutHole(): update_vertex_its list not yet finished after scan-update from update_vertex_pointers list. internal logic error.");
         }
     }
@@ -2259,6 +2280,8 @@ GEC_getAvgAreaOfPermissibleSurroundingTriangles(
     if (npermissible_triangles == 0) {
         debugl(0, "MeshAlg::GEC_getAvgAreaOfPermissibleSurroundingTriangles(): WARNING: triangle %d: can't compute average, since no %5.4f-permissible triangle found in the %d-neighbour of %d. returning area %5.4f as \"average\"\n.",
             tri_it->id(), max_ar, depth, tri_it->id(), tri_it->getTriArea());
+
+        debugTabDec();
         return (tri_it->getTriArea());
     }
     else {
@@ -2494,6 +2517,7 @@ MeshAlg::partialFlushToObjFile(
             flush_face_list.push_back({ false, f->getIndices() });
         }
         else {
+            debugTabDec();
             throw("MeshAlg::partialFlush(): discovered face that is neither quad nor triangle. flushing not (yet) supported.");
         }
 
@@ -2616,6 +2640,7 @@ MeshAlg::partialFlushToObjFile(
                 id = it->second;
             }
             else {
+                debugTabDec(); debugTabDec();
                 throw("MeshAlgorithms::partialFlush(): failed to locate vertex index in id_replace_map. internal logic error.");
             }
         }
@@ -2647,6 +2672,7 @@ MeshAlg::partialFlushToObjFile(
     char line[1024];
 
     if (!swap_file) {
+        debugTabDec();
         throw("MeshAlg::partialFlush(): can't open swap file for writing.");
     }
 
@@ -2706,6 +2732,7 @@ MeshAlg::partialFlushToObjFile(
                 }
             }
             else {
+                debugTabDec(); debugTabDec();
                 throw("MeshAlg::partialFlush(): obj line longer than 1024 characters. please limit comments to reasonable line width.");
             }
         }
@@ -2752,9 +2779,11 @@ MeshAlg::partialFlushToObjFile(
 
     /* remove original file, rename swap_file to original file, adjust FILE * reference in file_info */
     if ( remove( (filename + ".obj").c_str() ) != 0) {
+        debugTabDec();
         throw("MeshAlg::partialFlush(): can't remove old obj file before overwriting with swap file.");
     }
     if (rename( (swap_filename + ".obj").c_str(), (filename + ".obj").c_str() ) != 0) {
+        debugTabDec();
         throw("MeshAlg::partialFlush(): can't rename swap file to filename of obj file.");
     }
 
@@ -2762,6 +2791,7 @@ MeshAlg::partialFlushToObjFile(
     /* update file pointer in obj_file_info: reopen new obj file (moved swap file) in append mode and rewind() */
     FILE *tmp = fopen( (filename + ".obj").c_str(), "r+");
     if (!tmp) {
+        debugTabDec();
         throw("MeshAlg::partialFlush(): can't re-open obj file after having removed and overwritten old one with swap file.");
     }
     else {

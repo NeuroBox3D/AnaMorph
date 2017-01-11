@@ -1056,9 +1056,6 @@ BLRCanalSurface<degree, R>::computeIntersectionSystem(
 
     uint32_t i, j;
 
-    debugl(1, "CanalSurface::computeIntersectionSystem(): m = %d, n = %d\n", degree, degree);
-    debugTabInc();
-
     /* gamma[k] - delta[k] elevated to bidegree (m, n) */
     std::vector<BiBernsteinPolynomial<degree, degree, R, R> >
         dist_gamma_delta(3, BiBernsteinPolynomial<degree, degree, R, R>(0));

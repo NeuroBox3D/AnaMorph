@@ -184,8 +184,8 @@ void BezierControlPolyConvexHull<deg, R>::compute
 
 #ifdef __DEBUG__
     debugl(1, "\n\n Computing convex hull of control polygon.. control points are:\n");
-    for (i = 0; i < deg + 1; i++) {
-        debugl(0, "%2d: %+20.13E %+20.13E\n", i, (R)i / (R)n, p[i]);
+    for (i = 0; i < (int)deg + 1; i++) {
+        debugl(0, "%2d: %+20.13E %+20.13E\n", i, (R)i / (R)deg, p[i]);
     }
 #endif
 
@@ -1714,15 +1714,7 @@ BiLinClip_roots(
         depth           = T.depth;
 
         S.pop_back();
-        debugTabDec();
-        debugTabDec();
-        debugTabDec();
-        debugTabDec();
         debugl(1, "Popped another element from queue (%zd remaining).\n", S.size());
-        debugTabInc();
-        debugTabInc();
-        debugTabInc();
-        debugTabInc();
 
         /* reset flags */
         subdivide       = false;

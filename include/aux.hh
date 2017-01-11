@@ -316,7 +316,7 @@ namespace Aux {
                 c_3 = delta[j];
 
                 debugl(1, "segment function = %d, c_0: %f, c_1: %f, c_2: %f, c_3: %f\n", j, c_0, c_1, c_2, c_3);
-                debugl(1, "a[%d] = %f, b[%d] = %f, alpha[%d] = %f, beta[%d] = %f, gamma[%d] = %f, delta[%d] = %f\n", j, a[j], j, b[j], j, alpha[j], j, beta[j], j, gamma[j], j, delta[j]);
+                debugl(1, "a[%d] = %f, alpha[%d] = %f, beta[%d] = %f, gamma[%d] = %f, delta[%d] = %f\n", j, a[j], j, alpha[j], j, beta[j], j, gamma[j], j, delta[j]);
                 debugl(1, "t[%d] = %f, x[%d] = %f\n", j, t[j], j, x[j]);
 
                 result_vector[4*j    ] = c_3;

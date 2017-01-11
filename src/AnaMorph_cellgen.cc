@@ -1077,7 +1077,7 @@ AnaMorph_cellgen::run()
                 if (this->force_meshing) {
                     printf("\t NOTE: meshing forced in spite of potentially unclean network.\n");fflush(stdout);
                 }
-                    
+
                 C.renderCellNetwork<bool, bool, bool>(network_name);
 
                 printf("done.\n\n");

@@ -278,17 +278,14 @@ namespace CubeCommon {
             case F_DOWN:
             case F_UP:
                 return mirrorVertexDownUp(vtype);
-                break;
 
             case F_RIGHT:
             case F_LEFT:
                 return mirrorVertexLeftRight(vtype);
-                break;
 
             case F_FRONT:
             case F_BACK:
                 return mirrorVertexFrontBack(vtype);
-                break;
 
             default:
                 throw("mirrorVertexFace(): invalid mirror type (== face type) given.\n");

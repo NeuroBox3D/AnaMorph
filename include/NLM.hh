@@ -337,83 +337,56 @@ namespace NLM {
              * neurite segment in said neurite path. */
             typename NLM_CellNetwork<R>::NeuritePathTree   *npt;
 
-            typename NLM_CellNetwork<R>::
-                NeuritePathTree::vertex_iterator            npt_it;
-
-            uint32_t                                        npt_ns_idx;
-
-            /* magnified neurite segment canal surface */
-            BLRCanalSurface<3ul, R>                                  canal_segment_magnified;
-
-            /* intersection-related members */
-            bool                                                clean;
-
             /* radii of neighbours from smdv def */
             R                                                   v_src_rmax_nb;
             R                                                   v_dst_rmax_nb;
 
-            bool                                                pmdv;
-            bool                                                spmdv;
-            bool                                                smdv;
+            typename NLM_CellNetwork<R>::NeuritePathTree::vertex_iterator npt_it;
 
-            bool                                                reg;
-            std::shared_ptr<
-                    typename NLM_CellNetwork<R>::REG_IsecInfo
-                >                                               reg_isec_info;
+            std::shared_ptr<typename NLM_CellNetwork<R>::REG_IsecInfo> reg_isec_info;
+            std::shared_ptr<typename NLM_CellNetwork<R>::LSI_IsecInfo> lsi_isec_info;
+            std::shared_ptr<typename NLM_CellNetwork<R>::GSI_IsecInfo> gsi_isec_info;
 
-            bool                                                lsi;
-            std::shared_ptr<
-                    typename NLM_CellNetwork<R>::LSI_IsecInfo
-                >                                               lsi_isec_info;
+            std::list<typename NLM_CellNetwork<R>::NSNS_IsecInfo*> nsns_intersections;
+            std::list<typename NLM_CellNetwork<R>::SONS_IsecInfo*> sons_intersections;
+
+            /* magnified neurite segment canal surface */
+            BLRCanalSurface<3ul, R> canal_segment_magnified;
+
+            uint32_t npt_ns_idx;
 
 
-            bool                                                gsi;
-            std::shared_ptr<
-                    typename NLM_CellNetwork<R>::GSI_IsecInfo
-                >                                               gsi_isec_info;
+            /* intersection-related members */
+            bool clean;
 
-            bool                                                rc_sons;
-            bool                                                ic_sons;
+            bool pmdv;
+            bool spmdv;
+            bool smdv;
 
-            bool                                                rc_nsns;
-            bool                                                icrn_nsns;
-            bool                                                icin_nsns;
+            bool reg;
+
+            bool lsi;
+            bool gsi;
+
+            bool rc_sons;
+            bool ic_sons;
+
+            bool rc_nsns;
+            bool icrn_nsns;
+            bool icin_nsns;
 
             /* lists of intersection info structs: soma-neurite segment and neurite segment-neurite segmenta
              * */
-            std::list<
-                    typename NLM_CellNetwork<R>::
-                        NSNS_IsecInfo *
-                >                                           nsns_intersections;
-
-            std::list<
-                    typename NLM_CellNetwork<R>::
-                        SONS_IsecInfo *
-                >                                           sons_intersections;
 
         public:
-            NeuriteSegmentInfo() : reg_isec_info(), lsi_isec_info(), gsi_isec_info()
+            NeuriteSegmentInfo()
+            : npt(NULL), v_src_rmax_nb(0.0), v_dst_rmax_nb(0.0),
+              reg_isec_info(), lsi_isec_info(), gsi_isec_info(),
+              npt_ns_idx(0), clean(false), pmdv(false), spmdv(false), smdv(false), reg(false),
+              lsi(false), gsi(false), rc_sons(false), ic_sons(false), rc_nsns(false),
+              icrn_nsns(false), icin_nsns(false)
             {
-                this->npt           = NULL;
-                this->npt_it.explicitlyInvalidate();
-                this->npt_ns_idx    = 0;
-
-                this->clean         = false;
-                this->pmdv          = false;
-                this->spmdv         = false;
-                this->smdv          = false;
-                this->reg           = false;
-                //this->reg_isec_info = NULL;
-                this->lsi           = false;
-                //this->lsi_isec_info = NULL;
-                this->gsi           = false;
-                //this->gsi_isec_info = NULL;
-                this->rc_nsns       = false;
-                this->rc_sons       = false;
-
-                this->icrn_nsns     = false;
-                this->ic_sons       = false;
-                this->icin_nsns     = false;
+                npt_it.explicitlyInvalidate();
             }
 
             void

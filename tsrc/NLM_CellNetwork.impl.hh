@@ -544,6 +544,7 @@ namespace NLM {
         {
             debugl(0, "NeuritePath::findPermissibleRenderVector(): attempt %d with %d candidates.\n", attempt + 1, nRetry);
 
+            std::cout << "    Calling rand for permissible render vector candidate (" << std::rand() << ")";
             candidate = Aux::VecMat::randUnitVec3<R>();
 
             /* check all candidates, pick alpha-permissible if possible, otherwise pick the best one if max_min is not
@@ -557,11 +558,11 @@ namespace NLM {
 			for (auto &C : this->canal_segments_magnified)
 				r_min = std::min(r_min, C->checkRenderVector(candidate));
 
-			debugl(2, "r_min: %5.4f, max_min: %5.4f\n", r_min, max_min);
+			debugl(2, "r_min: %5.4f", r_min);
 
             /* check if max_min > alpha, return result if that is the case, otherwise try the next candidate */
             if (r_min > lambda) {
-                debugl(0, "attempt %d of %d, max_min = %5.4f => %5.4f-permissible for P. returning..\n", attempt + 1, max_attempts, max_min, lambda);
+                debugl(0, "attempt %d of %d, r_min = %5.4f => %5.4f-permissible for P. returning..\n", attempt + 1, max_attempts, r_min, lambda);
                 //std::cout << "Found render vector in attempt " << attempt << std::endl;
                 return candidate;
             }
@@ -2787,7 +2788,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
     /* if not single-threaded, set njobs_per_thread to 1/(5*nthreads) of the number of total jobs, but not less than 500. just a
      * heuristic setting to avoid too low or too high work load */
     uint32_t njobs_per_thread;
-    if (nthreads == 1) {
+    if (nthreads <= 1) {
         njobs_per_thread = job_queue.size();
     }
     else {
@@ -3032,6 +3033,7 @@ NLM_CellNetwork<R>::performFullAnalysis()
         IsecJob *generic_job    = job_sptr.get();
         uint32_t type           = generic_job->type();
         if (!generic_job->result) {
+            debugTabDec();
             throw("NLM_CellNetwork<R>::performFullAnalysis(): list of positive intersection jobs contains job whose "\
                 "result value indicates no intersection. internal logic error.");
         }
@@ -3104,10 +3106,12 @@ NLM_CellNetwork<R>::performFullAnalysis()
                 f_info.icin_nsns    = true;
             }
             else {
+                debugTabDec();
                 throw("NLM_CellNetwork::performFullAnalysis(): intersection analysis returned NSNS_Job with unknown type. internal logic error.");
             }
         }
         else {
+            debugTabDec();
             throw("NLM_CellNetwork::performFullAnalysis(): unknown job type discovered. internal logic error.\n");
         }
     }
@@ -3154,6 +3158,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
         NLM::SomaInfo<R> &s_info  = s.soma_data;
 
         s_info.soma_sphere.template generateMesh<Tm, Tv, Tf>(M_S);
+
         M_cell.moveAppend(M_S);
 
         /* iterate over all neurite path trees, i.e. all neurites, of the soma. */
@@ -3171,6 +3176,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 std::list<typename NeuritePathTree::Vertex *> sv_cc;  
 
                 uint32_t tid = npt.getFreshTraversalId();
+
                 npt.getConnectedComponentBreadthFirst(
                     sv->iterator(),
                     tid,
@@ -3200,7 +3206,8 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
         NLM::NeuritePath<R> const &P    = (*npt_vit)->vertex_data;
 
         /* find permissible render vector for neurite path */
-        Vec3<R> render_vector           = P.findPermissibleRenderVector();
+        Vec3<R> render_vector;
+        render_vector = P.findPermissibleRenderVector();
 
         /* variables for angular offset */
         R           phi_0;
@@ -3263,7 +3270,8 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
             M_cell.invertFaceSelection(flush_faces);
 
             /* .. and perform the flush */
-            MeshAlg::partialFlushToObjFile(M_cell, M_cell_flushinfo, flush_faces);
+            try {MeshAlg::partialFlushToObjFile(M_cell, M_cell_flushinfo, flush_faces);}
+            catch (...) {debugTabDec(); debugTabDec(); throw;}
 
             printf("done.\n");
         }
@@ -3317,11 +3325,13 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                         ++fp_it; 
                     }
                     else {
+                        debugTabDec(); debugTabDec(); debugTabDec();
                         throw("NLM_CellNetwork::renderCellNetwork(): failed to locate flush boundary vertex via id during cell mesh backup.");
                     }
                 }
 
                 if (fp_it != M_cell_flushinfo.last_boundary_vertices.end()) {
+                    debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): iterator to MeshObjFlushInfo::last_boundary_vertices has not reached end() after cell mesh backup. internal logic error.");
                 }
 
@@ -3340,29 +3350,33 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
             debugl(0, "choosing random phi_0 and generating initial mesh segment..\n");
 
             /* compute random angular offset phi_0 */
-            phi_0           = Aux::Numbers::frand(0.0, (2*(R)M_PI) / (R)this->meshing_canal_segment_n_phi_segments);
+            phi_0 = 0.0;//Aux::Numbers::frand(0.0, (2*(R)M_PI) / (R)this->meshing_canal_segment_n_phi_segments);
 
             /* clear path mesh */
             M_P.clear();
 
             /* generate P's initial segment mesh and append to M */
-            P.template generateInitialSegmentMesh<Tm, Tv, Tf>(
-                /* append to mesh M_P for path P*/
-                M_P,
-                /* n_phi_segments default to 16 for testing */
-                this->meshing_canal_segment_n_phi_segments, 
-                /* render vector */
-                render_vector,
-                /* phi_0, arclen_dt = 1E-3 */
-                phi_0,
-                1E-3,
-                /* end circle info */
-                end_circle_offset,
-                end_circle_its,
-                closing_vertex_it,
-                /* radius factor, which is being ignored for neurite root paths. */
-                radius_factor,
-				this->meshing_preserve_crease_edges);
+            try
+            {
+                P.template generateInitialSegmentMesh<Tm, Tv, Tf>(
+                    /* append to mesh M_P for path P*/
+                    M_P,
+                    /* n_phi_segments default to 16 for testing */
+                    this->meshing_canal_segment_n_phi_segments,
+                    /* render vector */
+                    render_vector,
+                    /* phi_0, arclen_dt = 1E-3 */
+                    phi_0,
+                    1E-3,
+                    /* end circle info */
+                    end_circle_offset,
+                    end_circle_its,
+                    closing_vertex_it,
+                    /* radius factor, which is being ignored for neurite root paths. */
+                    radius_factor,
+                    this->meshing_preserve_crease_edges);
+            }
+            catch (...) {debugTabDec(); debugTabDec(); debugTabDec(); throw;}
 
             /* triangulate M_P for RedBlueAlgorithm */
             M_P.triangulateQuads();
@@ -3412,9 +3426,11 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     break_inner_meshing_loop = true;
                 }
                 catch (RedBlue_Ex_InternalLogic& logic_ex) {
+                    debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                     throw;
                 }
                 catch (RedBlue_Ex_Disjoint& disjoint_ex) {
+                    debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                     throw;
                 }
                 catch (RedBlue_Ex_ComplexEdges<R>& complex_ex) {
@@ -3453,6 +3469,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                         for (auto &lambda : e_info.edge_lambdas) {
                             debugl(2, "lambda: %5.4f\n", lambda);
                             if (lambda <= 0 || lambda >= 1) {
+                                debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                                 throw("NLM_CellNetwork::renderCellNetwork(): got exceptino about complex edge indicating fractional edge intersection value lambda outside ]0, 1[."\
                                     " internal logic error.");
                             }
@@ -3481,6 +3498,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                                 M_cell.splitEdge(u_it, v_it, e_split_points);
                             }
                             else {
+                                debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                                 throw("NLM_CellNetwork::renderCellNetwork(): discovered invalid vertex id contained "\
                                     " in complex edge information of RedBlue_Ex_ComplexEdges (id not found). internal"\
                                     " logic error.");
@@ -3495,6 +3513,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                                 M_P.splitEdge(u_it, v_it, e_split_points);
                             }
                             else {
+                                debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                                 throw("NLM_CellNetwork::renderCellNetwork(): discovered invalid vertex id contained "\
                                     " in complex edge information of RedBlue_Ex_ComplexEdges (id not found). internal"\
                                     " logic error.");
@@ -3534,6 +3553,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     restore_M_cell      = !isecpoly_ex.R_intact;
                 }
                 catch (RedBlue_Ex_AffectedCircleTrivial& trivcircle_ex) {
+                    debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                     throw;
                 }
                 debugl(0, "inner meshing loop time: %5.4f\n\n", Aux::Timing::tack(14));
@@ -3555,6 +3575,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 /* if radius_factor has reached radius_factor_safe_lb, throw exception, since a definitely safe radius
                  * should already have been reached. */
                 if (radius_factor == radius_factor_safe_lb) {
+                    debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): reached safe lower bound radius factor for current neurite path. this must not happen for clean cell networks.");
                 }
                 /* otherwise start another meshing run */
@@ -3571,6 +3592,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
              * and append rest of path to M_cell. */
             for (auto &it : circle_its_update) {
                 if (it.explicitlyInvalid()) {
+                    debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): RedBlueUnion algorithm has explicitly invalidated an "\
                         "end circle iterator or the closing vertex iterator of the current path P's initial mesh "
                         "segment. in a clean network, this should be impossible. numerical edge case due to tight "
@@ -3579,6 +3601,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 }
                 else if (!it.checkContainer(M_cell)) {
                     debugl(0, "it.container: %p, M_cell (ptr): %p, M_P (ptr): %p.\n", it.getContainer(), &M_cell, &M_P);
+                    debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): RedBlueUnion algorithm has returned an "\
                         "updated end circle iterator that does not refer to the partially completed cell mesh. "\
                         "internal logic error.");
@@ -3593,25 +3616,29 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
             end_circle_its      = circle_its_update;
 
             /* append P's tail mesh (for neurite canal segments 1, .., m) to M */
-            P.template appendTailMesh<Tm, Tv, Tf>(
-                /* append to the partial cell mesh M_cell */
-                M_cell,
-                /* n_phi_segments default to 16 for testing */
-                this->meshing_canal_segment_n_phi_segments, 
-                /* render vector */
-                render_vector,
-                /* phi_0, arclen_dt = 1E-3 */
-                phi_0,
-                1E-3,
-                /* end circle information from RedBlue merged initial segment as start circle information for tail */
-                end_circle_offset,
-                end_circle_its,
-                closing_vertex_it,
-                /* store return iterators for subsequent generation of terminal half-sphere */
-               &end_circle_offset,
-               &end_circle_its,
-               &closing_vertex_it,
-			    this->meshing_preserve_crease_edges);
+            try
+            {
+                P.template appendTailMesh<Tm, Tv, Tf>(
+                    /* append to the partial cell mesh M_cell */
+                    M_cell,
+                    /* n_phi_segments default to 16 for testing */
+                    this->meshing_canal_segment_n_phi_segments,
+                    /* render vector */
+                    render_vector,
+                    /* phi_0, arclen_dt = 1E-3 */
+                    phi_0,
+                    1E-3,
+                    /* end circle information from RedBlue merged initial segment as start circle information for tail */
+                    end_circle_offset,
+                    end_circle_its,
+                    closing_vertex_it,
+                    /* store return iterators for subsequent generation of terminal half-sphere */
+                   &end_circle_offset,
+                   &end_circle_its,
+                   &closing_vertex_it,
+                    this->meshing_preserve_crease_edges);
+            }
+            catch (...) {debugTabDec(); debugTabDec(); debugTabDec(); throw;}
 
             debugl(1, "tail path mesh appended. appending terminal half-sphere.\n");
 
@@ -3653,7 +3680,8 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
      * flush obj file. */
     std::list<typename Mesh<Tm, Tv, Tf, R>::Face *> remaining_faces = {};
     M_cell.invertFaceSelection(remaining_faces);
-    MeshAlg::partialFlushToObjFile(M_cell, M_cell_flushinfo, remaining_faces);
+    try {MeshAlg::partialFlushToObjFile(M_cell, M_cell_flushinfo, remaining_faces);}
+    catch (...) {debugTabDec(); debugTabDec(); throw;}
 
     debugTabDec();
     debugl(0, "NLM_CellNetwork<R>::renderCellNetwork(): done.\n");

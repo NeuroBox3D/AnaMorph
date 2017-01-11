@@ -1765,7 +1765,8 @@ Mesh<Tm, Tv, Tf, R> &
 Mesh<Tm, Tv, Tf, R>::operator=(const Mesh &X)
 {
 	static int calls = 0;
-	std::cout << "Mesh::operator= call " << ++calls << std::endl;
+    std::cout << "Mesh::operator= call " << ++calls << std::endl;
+    //std::cout << "current random number: " << std::rand() << std::endl;
 
     /* clear all data */
     this->clear();
@@ -2240,6 +2241,7 @@ Mesh<Tm, Tv, Tf, R>::moveAppend(
             B_vit       = B.V.erase(B_vit); 
         }
         else {
+            debugTabDec();
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::moveAppend(): insertion of vertex pointer into this->V with fresh id failed. internal logic error.");
         }
     }
@@ -2254,11 +2256,13 @@ Mesh<Tm, Tv, Tf, R>::moveAppend(
         new_id      = this->F_idq.getId();
         auto it = this->F.find(new_id);
         if ( it != this->F.end()) {
+            debugTabDec();
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::moveAppend(): fresh id already taken in this->F. internal logic error.\n");
         }
         f_rpair     = this->F.insert( { new_id, FacePointerType(B_fit->second) } );
         inserted    = f_rpair.second;
         if (!inserted) {
+            debugTabDec();
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::moveAppend(): insertion of face pointer into this->F with fresh id failed. internal logic error.");
         }
         else {
@@ -2275,6 +2279,7 @@ Mesh<Tm, Tv, Tf, R>::moveAppend(
 
     /* clear all information from B (B.V and B.F are empty, yet id queues etc are still set */
     if (!B.F.empty() || !B.V.empty()) {
+        debugTabDec();
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::moveAppend(): internal vertex and face maps of appended mesh not empty at the end of process. internal logic error.");
     }
     B.clear();

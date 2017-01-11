@@ -85,7 +85,8 @@ namespace Aux {
         double
         frand(double min, double max)
         {
-            double f = (double)rand() / RAND_MAX;
+            double f = (double)std::rand() / RAND_MAX;
+            std::cout << " (ok)" << std::endl;
             return (min + f*(max - min));
         }
 
@@ -272,22 +273,18 @@ namespace Aux {
             else {
                 debugTabInc();
 
-                double  lambda_isec, mu_isec;
+                x_lambda = (v[0]*w[1] - v[1]*w[0]) / denom;
+                x_mu     = (u[0]*w[1] - u[1]*w[0]) / denom;
 
-                lambda_isec = (v[0]*w[1] - v[1]*w[0]) / denom;
-                mu_isec     = (u[0]*w[1] - u[1]*w[0]) / denom;
-
-                if (mu_isec < -eps || mu_isec > 1.0 + eps) {
-                    debugl(0, "rayLineSegment2d(): lambda_isec: %5.4f (ray), mu_isec: %5.4f (line segment) out of range.\n", lambda_isec, mu_isec);
+                if (x_mu < -eps || x_mu > 1.0 + eps) {
+                    debugl(0, "rayLineSegment2d(): x_lambda: %5.4f (ray), x_mu: %5.4f (line segment) out of range.\n", x_lambda, x_mu);
 
                     debugTabDec();
                     return DISJOINT;
                 }
                 else {
-                    debugl(0, "lambda_isec: %5.4f (ray), mu_isec: %5.4f (line segment) within range => interseciton.\n", lambda_isec, mu_isec);
-                    x           = p + u*lambda_isec;
-                    x_lambda    = lambda_isec;
-                    x_mu        = mu_isec;
+                    debugl(0, "x_lambda: %5.4f (ray), x_mu: %5.4f (line segment) within range => interseciton.\n", x_lambda, x_mu);
+                    x           = p + u*x_lambda;
                     
                     debugTabDec();
                     return INTERSECTION;
@@ -300,7 +297,7 @@ namespace Aux {
         uint32_t
         pointInSimplePolygon(
             std::vector<Vertex2d>   vertices,
-            const Vec2&                    p,
+            const Vec2&             p,
             double                  eps)
         {
             Vec2                    d;
@@ -328,6 +325,7 @@ namespace Aux {
 
                 /* pick a random 2d vector d and cast the ray p + lambda*d, intersect it with
                  * all edges of the polygon. when close to an edge case, repeat with another random vector */
+                std::cout << "    Calling rand for intersect direction (" << std::rand() << ")";
                 d = Aux::VecMat::randUnitVec2();
 
                 /* intersect all edges, interpreted as line segments in 2d. wrap around case (last, first)
@@ -341,11 +339,13 @@ namespace Aux {
                         /* if lambda in [0,1] is smaller than eps in magnitude, the point lies on the edge =>
                          * edge case */
                         if (fabs(x_lambda) < eps) {
+                            debugTabDec();
                             return EDGE_CASE;
                         }
 
                         /* if x is too close to the either one of the vertices, again.. */
                         if ( (x - v_i).len2squared() < 1E-8 || (x - v_ipo).len2squared() < 1E-8) {
+                            debugTabDec();
                             return EDGE_CASE;
                         }
                         /* edge i = (v_i, v_{i+1}) is intersected with positive lambda (edge case caught
@@ -483,7 +483,7 @@ namespace Aux {
 
                         /* if vertex at position is a principal vertex, check if its a mouth or ear: it's an ear iff any
                          * point on the edge (k-1, k+1) is INSIDE the polygon (otherwise a mouth). since the
-                         * edge (k-1, k+1) doesn't intersect any other ede, only one point must be checked,
+                         * edge (k-1, k+1) doesn't intersect any other edge, only one point must be checked,
                          * which is chosen randomly to avoid edge cases. */
                         if (k_principal) {
                             debugl(0, "got principal vertex %5d..\n", w_id);
@@ -495,6 +495,7 @@ namespace Aux {
                             debugTabInc();
                             while (++iter < maxiter) {
                                 debugl(0, "checking whether principal vertex is mouth or ear..\n");
+                                std::cout << "    Calling rand in polygon triangulation (" << std::rand() << ")";
                                 u_v_edgepoint       = u + (v - u) * Aux::Numbers::frand(0.1, 0.9);
                                 pointcheck_result   = pointInSimplePolygon(vertices_copy, u_v_edgepoint);
 
@@ -541,6 +542,7 @@ namespace Aux {
                             /* maxiter iterations have been performed without leaving the loop via return or exception
                              * => indicate inconclusive result after maximum number of iterations. */
                             if (iter == maxiter) {
+                                debugTabDec(); debugTabDec();
                                 return TEST_INCONCLUSIVE;
                             }
                         }
@@ -557,6 +559,7 @@ namespace Aux {
                     if (!got_ear) {
                         /* check if we have reached this point without finding an ear */
                         //printf("WARNING: triangulateSimplePlanarPolygon(): more than three vertices remaining, yet no ear left => simple / without holes?\n");
+                        debugTabDec();
                         return EDGE_CASE;
                     }
                 }
@@ -1176,6 +1179,14 @@ setDebugTab(uint32_t tab)
     debug_tab = tab;
 }
 
+uint32_t
+getDebugTab()
+{
+    return debug_tab;
+}
+
+
+
 void
 setDebugLevel(uint32_t level)
 {
@@ -1230,10 +1241,10 @@ debugprintf(std::string filename, int line, std::string fmt, ...)
         va_list     ap;
 
         char tabs[512]  = {0};
-        char singletab  = '\t';
+        const char* singletab  = "  ";
         /* construct tabs */
         for (i = 0; i < debug_tab; i++) {
-            strncat(tabs, &singletab, 1);
+            strncat(tabs, singletab, 2);
         }
 
         char foo[1024] = {0};
@@ -1280,13 +1291,13 @@ debugprintf_wlevel(uint32_t level, std::string filename, int line, std::string f
 
             pos += sprintf(buffer, "[ %20s | %5d ]: ", bar, line);
             for (i = 0; i < debug_tab; i++) {
-                pos += sprintf(&buffer[pos], "\t");
+                pos += sprintf(&buffer[pos], "  ");
             }
         } 
         else {
             pos += sprintf(buffer, "[ %20s | %5d ]: ", foo, line);
             for (i = 0; i < debug_tab; i++) {
-                pos += sprintf(&buffer[pos], "\t");
+                pos += sprintf(&buffer[pos], "  ");
             }
         }
 

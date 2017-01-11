@@ -61,6 +61,7 @@ void        setDebugComponent(uint32_t comp);
 void        setDebugLevel(uint32_t level);
 void        setMaxDebugLevel(uint32_t max_level);
 void        setDebugTab(uint32_t tab);
+uint32_t    getDebugTab();
 
 void        disableComponentDebug(uint32_t comp);
 void        enableComponentDebug(uint32_t comp);

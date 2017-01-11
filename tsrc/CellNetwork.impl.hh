@@ -2313,14 +2313,10 @@ template <
     typename Tns, typename Tas, typename Tds, typename Tnr, typename Tar, typename Tdr, typename R
 >
 CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
-NeuriteSegment::NeuriteSegment(NeuriteSegment const &e) : NeuronEdge(e)
-{
-    this->soma                  = e.soma;
-    this->neurite               = e.neurite;
-    this->v_neurite_src         = e.v_neurite_src;
-    this->v_neurite_dst         = e.v_neurite_dst;
-    this->neurite_segment_data  = e.neurite_segment_data;
-}
+NeuriteSegment::NeuriteSegment(NeuriteSegment const &e)
+: NeuronEdge(e), v_neurite_src(e.v_neurite_src), v_neurite_dst(e.v_neurite_dst),
+  soma(e.soma), neurite(e.neurite), neurite_segment_data(e.neurite_segment_data)
+{}
 
 template <
     typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
@@ -2836,12 +2832,11 @@ template <
     typename Tns, typename Tas, typename Tds, typename Tnr, typename Tar, typename Tdr, typename R
 >
 CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
-DendriteSegment::DendriteSegment(DendriteSegment const &e) : NeuriteSegment(e)
-{
-    this->v_dendrite_src        = e.v_dendrite_src;
-    this->v_dendrite_dst        = e.v_dendrite_dst;
-    this->dendrite_segment_data = e.dendrite_segment_data;
-}
+DendriteSegment::DendriteSegment(DendriteSegment const &e)
+: NeuriteSegment(e),
+  v_dendrite_src(e.v_dendrite_src), v_dendrite_dst(e.v_dendrite_dst),
+  dendrite_segment_data(e.dendrite_segment_data)
+{}
 
 template <
     typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
