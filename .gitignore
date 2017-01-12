@@ -2,4 +2,6 @@
 .project
 .settings/
 bin/
+lib/
+build/
 src/*.o
