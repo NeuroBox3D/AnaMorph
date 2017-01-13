@@ -15,6 +15,17 @@ option(SHARED "build shared library" OFF)
 message(STATUS "SHARED    ${SHARED}")
 
 
+## check if boost is available
+set(boost_cmp_flag)
+find_package(Boost)
+if (Boost_FOUND)
+	# we only need headers
+	include_directories(${Boost_INCLUDE_DIRS})
+	
+	# set compile flag
+	set(boost_cmp_flag -DWITH_BOOST)
+endif (Boost_FOUND)
+
 ## directories
 get_filename_component(ROOT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${ROOT_DIR}/bin)
@@ -32,7 +43,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 set(exclude_warnings "-Wno-variadic-macros -Wno-missing-braces -Wno-format -Wno-unused-parameter")
 set(warnings "-Wall -Wextra")
-set(cxx_flags "${warnings} ${exclude_warnings} ${additionalFlags} -std=${cpp_standard} -pedantic -O3 -pthread")
+set(cxx_flags "${warnings} ${exclude_warnings} ${additionalFlags} ${boost_cmp_flag} -std=${cpp_standard} -pedantic -O3 -pthread")
 
 if (DEBUG)
 	set(cxx_flags "${cxx_flags} -g -D__DEBUG__")
