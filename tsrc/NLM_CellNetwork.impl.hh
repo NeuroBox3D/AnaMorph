@@ -3455,30 +3455,26 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                         debugl(2, "complex edge: e = (%d, %d)\n", e_info.u_id, e_info.v_id);
 
                         /* sort and check lambdas */
-                        debugl(2, "sorting complex exception edge lambdas. size(): %zu..\n", e_info.edge_lambdas.size() );
-                        std::sort(e_info.edge_lambdas.begin(), e_info.edge_lambdas.end(), std::less<R>() );
-                        debugTabInc();
-                        for (auto &lambda : e_info.edge_lambdas) {
-                            debugl(3, "lambda: %5.4f\n", lambda);
-                            if (lambda <= 0 || lambda >= 1) {
-                                debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
-                                throw("NLM_CellNetwork::renderCellNetwork(): got exceptino about complex edge indicating fractional edge intersection value lambda outside ]0, 1[."\
-                                    " internal logic error.");
-                            }
+                        std::vector<R>& lambdas = e_info.edge_lambdas;
+                        const uint32_t n = lambdas.size();
+
+                        debugl(2, "sorting complex exception edge lambdas. size(): %zu..\n", lambdas.size() );
+                        std::sort(lambdas.begin(), lambdas.end(), std::less<R>() );
+                        if (lambdas[0] <= 0 || lambdas[n-1] >= 1)
+                        {
+                            debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
+                            throw("NLM_CellNetwork::renderCellNetwork(): got exceptino about complex edge indicating fractional edge intersection value lambda outside ]0, 1[."\
+                                " internal logic error.");
                         }
-                        debugTabDec();
 
                         /* compute split points */
-                        uint32_t const n = e_info.edge_lambdas.size();
-                        std::vector<R> e_split_points(n + 1);
+                        std::vector<R> e_split_points(n-1);
 
-                        e_split_points[0] = e_info.edge_lambdas[0] / 2.0;
                         debugl(3, "split_points[0] = %5.4f\n", e_split_points[0]);
                         for (uint32_t i = 1; i < n; i++) {
-                            e_split_points[i] = (e_info.edge_lambdas[i] + e_info.edge_lambdas[i - 1]) / 2.0;
+                            e_split_points[i-1] = (lambdas[i] + lambdas[i-1]) / 2.0;
                             debugl(3, "split_points[%d] = %5.4f\n", i, e_split_points[i]);
                         }
-                        e_split_points[n] = (1.0 + e_info.edge_lambdas[n-1]) / 2.0;
                         debugl(3, "split_points[%d] = %5.4f\n", n, e_split_points[n]);
 
                         /* split in red mesh, i.e. M_cell */
