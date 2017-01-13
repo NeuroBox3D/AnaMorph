@@ -64,7 +64,15 @@ class ParametricCurve {
          * template parameters (which are implicitly used inside the declaration) */
         void                    checkDimDomain(
                                     ParametricCurve const  &x,
+                                    const char*             fn) const;
+
+        void                    checkDimDomain(
+                                    ParametricCurve const  &x,
                                     std::string const      &fn) const;
+
+        void                    checkEvalParameter(
+                                    T const     &x,
+                                    const char*  fn) const;
 
         void                    checkEvalParameter(
                                     T const                &x,

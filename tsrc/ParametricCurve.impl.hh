@@ -59,6 +59,29 @@ ParametricCurve<C2F, T, Tr>::checkDimDomain(
 
 template < typename C2F, typename T, typename Tr>
 void
+ParametricCurve<C2F, T, Tr>::checkDimDomain(
+    ParametricCurve const  &x,
+    const char* fn) const
+{
+    if (this->getDim() != x.getDim() || this->t0 != x.t0 || this->t1 != x.t1) {
+        throw(std::string(fn) + " implement parametric curve domain mismatch exception please");
+    }
+}
+
+template < typename C2F, typename T, typename Tr>
+void
+ParametricCurve<C2F, T, Tr>::checkEvalParameter(
+    T const      &x,
+    const char*   fn) const
+{
+    if (x < this->t0 || x > this->t1) {
+        debugl(1, "ParametricCurve::checkEvalParameter(): x (%s) out of range[%s, %s]\n", std::to_string(x).c_str(), std::to_string(this->t0).c_str(), std::to_string(this->t1).c_str());
+        throw(std::string(fn) + " implement parameter out of domain exception please");
+    }
+}
+
+template < typename C2F, typename T, typename Tr>
+void
 ParametricCurve<C2F, T, Tr>::checkEvalParameter(
     T const                &x,
     std::string const      &fn) const
