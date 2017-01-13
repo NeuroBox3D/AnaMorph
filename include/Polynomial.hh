@@ -46,8 +46,7 @@
 #ifndef POLYNOMIAL_H
 #define POLYNOMIAL_H
 
-#include "Tensor.hh"
-#include "Vector.hh"
+#include "StaticVector.hh"
 #include "Vec3.hh"
 #include "aux.hh"
 

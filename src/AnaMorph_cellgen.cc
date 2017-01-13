@@ -483,8 +483,8 @@ AnaMorph_cellgen::AnaMorph_cellgen(
             usage_string)
 {
     /* default settings */
-    this->ana                                       = true;;
-    this->ana_nthreads                              = 4;
+    this->ana                                       = true;
+    this->ana_nthreads                              = 1;
     this->ana_univar_solver_eps                     = 1E-6;
     this->ana_bivar_solver_eps                      = 1E-4;
 

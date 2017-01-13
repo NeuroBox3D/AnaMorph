@@ -44,7 +44,6 @@
 #define PARAMETRIC_CURVE_H
 
 #include "common.hh"
-#include "Tensor.hh"
 #include "Vec3.hh"
 #include "BoundingBox.hh"
 #include "Polynomial.hh"

@@ -458,8 +458,8 @@ BiBernsteinPolynomial<deg1, deg2, F, R>::multiply(const BiBernsteinPolynomial<d1
                 for (j = std::max(0, l - (int)d2); j < std::min(l, (int)deg2) + 1; ++j)
                 {
                     r_coeff(k, l) +=
-                        p(i, j) * q(k - i, l - j) * bicof<F>(deg1, i) * bicof<F>(d1, k - i) * bicof<F>(deg2, j) * bicof<F>(d2, l - j)
-                        / (bicof<F>(deg1 + d1, k) * bicof<F>(deg2 + d2, l));
+                        p(i, j) * q(k - i, l - j) * bicof<F, deg1>(i) * bicof<F, d1>(k - i) * bicof<F, deg2>(j) * bicof<F, d2>(l - j)
+                        / (bicof<F, deg1+d1>(k) * bicof<F, deg2+d2>(l));
                 }
             }
         }
@@ -662,8 +662,8 @@ BiBernsteinPolynomial<deg1, deg2, F, R>::elevateDegree()
                 for (j = std::max(0, l - (int)d2); j < std::min(l, (int)deg2) + 1; ++j)
                 {
                     elev_coeff(k, l) +=
-                        this->coeff(i, j) * bicof<F>(deg1, i) * bicof<F>(d1, k - i) * bicof<F>(deg2, j) * bicof<F>(d2, l - j)
-                        / (bicof<R>(deg1 + d1, k) * bicof<F>(deg2 + d2, l));
+                        this->coeff(i, j) * bicof<F, deg1>(i) * bicof<F, d1>(k - i) * bicof<F, deg2>(j) * bicof<F, d2>(l - j)
+                        / (bicof<R, deg1+d1>(k) * bicof<F, deg2+d2>(l));
                 }
             }
         }
@@ -678,22 +678,33 @@ template <uint32_t deg1, uint32_t deg2, typename F, typename R>
 void
 BiBernsteinPolynomial<deg1, deg2, F, R>::convertFromPowerBasis(const coeff_type& coeff_pow)
 {
-    using Aux::Numbers::bicof;
-
     uint32_t i, j, k, l;
 
     for (k = 0; k <= deg1; ++k)
     {
         for (l = 0; l <= deg2; ++l)
         {
-            coeff(k, l) = 0.0;
-            for (i = 0; i <= k; ++i)
+            R ifac = (R)1;
+            R jfac = (R)1;
+
+            // first step (i==0)
+            coeff(k, l) = coeff_pow(0, 0);
+            for (j = 1; j <= l; ++j)
             {
-                for (j = 0; j <= l; ++j)
+                jfac *= (R)(l-j+1) / (R)(deg1-j+1);  // jfac = bicof(l,j) / bicof(deg2,j)
+                coeff(k, l) += jfac * coeff_pow(0, j);
+            }
+
+            // rest
+            for (i = 1; i <= k; ++i)
+            {
+                ifac *= (R)(k-i+1) / (R)(deg1-i+1); // ifac = bicof(k,i) / bicof(deg1,i)
+                jfac = (R)1;
+                coeff(k, l) += ifac * coeff_pow(i, 0);
+                for (j = 1; j <= l; ++j)
                 {
-                    this->coeff(k, l) +=
-                        coeff_pow(i, j) * bicof<F>(k, i) * bicof<F>(l, j) /
-                        (bicof<F>(deg1, i) * bicof<F>(deg2, j));
+                    jfac *= (R)(l-j+1) / (R)(deg1-j+1);  // jfac = bicof(l,j) / bicof(deg2,j)
+                    coeff(k, l) += ifac * jfac * coeff_pow(i, j);
                 }
             }
         }

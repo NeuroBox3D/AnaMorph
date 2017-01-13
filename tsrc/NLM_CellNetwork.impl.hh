@@ -1743,7 +1743,7 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     R const                    &univar_solver_eps,
     std::vector<NLM::p2<R>>    &isec_stat_points)
 {
-    //debugl(1, "(static) NLM_CellNetwork::checkSomaNeuriteIntersection()\n");
+    //debugl(2, "NLM_CellNetwork::checkSomaNeuriteIntersection()\n");
     bool                                    result;
     uint32_t                                i;
     R                                       r_S, r_Gamma_max, thres, dist, feps, t_i;
@@ -1753,13 +1753,13 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     std::vector<PolyAlg::RealInterval<R> >   roots;
     std::vector<PolyAlg::RealInterval<R> >   candidate_points;
 
-    debugl(1, "getting data from soma sphere..\n");
+    debugl(2, "getting data from soma sphere..\n");
     /* get soma centre, radius and max radius of pipe surface. compute threshold, which is (rmax + S_r)^2 */
     S_c         = S.centre();
     r_Gamma_max = Gamma.getMaxRadius();
     r_S         = S.radius();
     
-    debugl(1, "computing threshold..\n");
+    debugl(2, "computing threshold..\n");
     thres       = (r_Gamma_max + r_S);
     thres      *= thres;
 
@@ -1767,7 +1767,7 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     candidate_points.push_back( PolyAlg::RealInterval<R>(0.0, 0.0));
     candidate_points.push_back( PolyAlg::RealInterval<R>(1.0, 1.0));
 
-    debugl(1, "SONS: computing check polynomial..\n");
+    debugl(2, "SONS: computing check polynomial..\n");
 
     /* get the check polynomial */
     Gamma.spineCurveComputeStationaryPointDistPoly(S_c, p);
@@ -1792,7 +1792,7 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
         dist    = (S_c - Gamma.spineCurveEval(t_i)).len2squared();
 
         if (neurite_root_segment && t_i <= offset) {
-            debugl(1, "skipping candidate point %5.4f for neurite root canal segment.\n", t_i); 
+            debugl(3, "skipping candidate point %5.4f for neurite root canal segment.\n", t_i);
         } 
         else if (dist <= thres + feps) {
             result = true;
@@ -2021,8 +2021,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     /* scale down to generous absolute error bound */
     feps *= 1E-10;
 
-    debugl(2, "solving bivariate system with bivariate linear clipping..\n");
-    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving bivariate system with bivariate linear clipping..\n");
+    debugl(2, "checkNeuriteNeuriteIntersection(): solving bivariate system with bivariate linear clipping..\n");
     /* solve the system of bivariate polynomials with bivariate linear clipping.
      * NOTE: unnecessarily, the bivariate linaer clipping implementation requires both polynomials
      * to be in the same basis, because the same legendre approximation matrices are used. this is
@@ -2047,10 +2046,9 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     /* append root rectangles returned by bivariate linear clipping to candidate points */
     candidate_points.insert(candidate_points.end(), pq_roots.begin(), pq_roots.end());
 
-    debugl(2, "BilClip returned %ld roots.\n", roots.size());
-    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): bivariate linear clipping returned %ld roots.\n", roots.size());
+    debugl(2, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): bivariate linear clipping returned %ld roots.\n", roots.size());
 
-    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving four univariate edge polynomial systems.\n");
+    debugl(2, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving four univariate edge polynomial systems.\n");
     /* solve four edge polynomial systems and append respective roots, converted to rectangles, to candidate_points. */
     edge_roots.clear();
     PolyAlg::BezClip_roots<5u, R>(pe_x0, 0.0, 1.0, univar_solver_eps, edge_roots);
@@ -2101,7 +2099,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
             */
     }
 
-    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done. evaluating results..\n");
+    debugl(2, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done. evaluating results..\n");
 
     /* evaluate all candiate points */
     isec_stat_points.clear();
@@ -2112,10 +2110,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
         //dist        = canalSurfacesSqDist(Gamma, Delta, z_i[0], z_i[1]);
         dist        = (Gamma.spineCurveEval(z_i[0]) - Delta.spineCurveEval(z_i[1])).len2squared();
         if (dist <= thres) {
-            debugl(2, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
-                    i, z_i[0], z_i[1], dist, thres);
-
-            debugl(1, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
+            debugl(3, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
                     i, z_i[0], z_i[1], dist, thres);
 
             /* got a true candidate point. set result = true and append candidate points to isec_stat_points. */
@@ -2123,12 +2118,12 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
             isec_stat_points.push_back( NLM::p3<R>(candidate_points[i], dist) );
         }
         else {
-            debugl(2, "candidate point i = %d: (%f, %f) has distance dist = %f > thres = %f => no intersection\n",
+            debugl(3, "candidate point i = %d: (%f, %f) has distance dist = %f > thres = %f => no intersection\n",
                     i, z_i[0], z_i[1], dist, thres);
         }
     }
     debugTabDec();
-    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done...\n");
+    debugl(2, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done...\n");
     return result;
 }
 
@@ -2333,7 +2328,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
         }
     }
     debugTabDec();
-    debugl(1, "NLM_CellNetwork::checkAdjacentNeuriteNeuriteIntersection(): done.\n");
+    debugl(2, "NLM_CellNetwork::checkAdjacentNeuriteNeuriteIntersection(): done.\n");
 
     return result;
 }
@@ -2373,7 +2368,7 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
         for (auto generic_job_shared_ptr : tinfo->job_list) {
             generic_job         = generic_job_shared_ptr.get();
 
-            debugl(1, "Thread %2d: processing job %5d: type: %2d\n", tinfo->thread_id, job_index, generic_job->type());
+            debugl(1, "Thread %2d: processing job %5d/%5d: type: %2d\n", tinfo->thread_id, ++job_index, tinfo->job_list.size(), generic_job->type());
 
             /* reset all specialized pointers to NULL */
             reg_job             = NULL;
@@ -2782,6 +2777,9 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
         njobs_per_thread = std::max( 500u, (uint32_t)(job_queue.size() / (5 * nthreads) ) );
     }
 
+    uint32_t dbgcmp = getDebugComponent();
+    setDebugComponent(DBG_DMC);
+
     debugTabInc();
     uint32_t    njobs_remaining = job_queue.size();
     auto        jit             = job_queue.begin();
@@ -2839,6 +2837,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                                 );
                         }
                         catch (std::system_error& err) {
+                            setDebugComponent(dbgcmp);
                             throw("(static) NLM_CellNetwork::processIntersectionJobsMultiThreaded(): caught std::system-error from thread() constructor => system could not spawn thread.");
                         }
                     }
@@ -2846,6 +2845,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                         debugl(1, "main loop too quick to relock thread mutex %d. unlocking..\n", i);
                     }
                     else {
+                        setDebugComponent(dbgcmp);
                         throw("NLM_CellNetwork::processIntersectionJobsMultiThreaded(): discovered thread with unknown value for ThreadInfo::thread_state. internal logic error.");
                     }
 
@@ -2857,6 +2857,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                     debugl(5, "Thread slot %2d: still active..\n", i);
                 }
                 else {
+                    setDebugComponent(dbgcmp);
                     throw("NLM_CellNetwork::processIntersectionJobsMultiThreaded(): discovered thread with unknown value for ThreadInfo::thread_state. internal logic error.");
                 }
             }
@@ -2869,6 +2870,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
         /* sleep a few microseconds so as not to burn cpu time on the main thread with polling */
         usleep(50000);
     }
+
     debugTabDec();
 
     debugl(1, "NLM_CellNetwork::processIntersectionJobs(): job queue empty. joining..\n");
@@ -2902,13 +2904,17 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
             debugl(1, "Thread slot %2d: never been used..\n", i);
         }
         else if (thread_slots[i].thread_state == THREAD_PROCESSING) {
+            setDebugComponent(dbgcmp);
             throw("NLM_CellNetwork::processIntersectionJobs(): discovered thread with state PROCESSING after locking mutex. internal logic error.");
         }
         else {
+            setDebugComponent(dbgcmp);
             throw("NLM_CellNetwork::processIntersectionJobsMultiThreaded(): discovered thread with unknown value for ThreadInfo::thread_state. internal logic error.");
         }
     }
     fflush(stdout);
+    setDebugComponent(dbgcmp);
+
     debugl(1, "NLM_CellNetwork::processIntersectionJobs(): joined. done.\n");
 }
 
@@ -2955,26 +2961,21 @@ NLM_CellNetwork<R>::performFullAnalysis()
 
     /* precompute data for polynomials / numerical solvers.  disable dynamic recomputation of inner products,
      * approximation data, etc.. i.e. set them to immutable. otherwise, multiple concurrent write-access during e.g.
-     * dynamic recomputation of required values would result in undefined behaviour in multi-tnhreaded environments. all
-     * quired values are precomputed beforehand and never touched during analysis. maximum BB degree 24 and BB bi-degree
+     * dynamic recomputation of required values would result in undefined behaviour in multi-threaded environments. all
+     * required values are precomputed beforehand and never touched during analysis. maximum BB degree 24 and BB bi-degree
      * (8, 8) is sufficient for the currently considered modelling settings (mainly cubic bezier curves as spine
      * curves). should the settings be insufficient, the solvers will throw exceptions. in single-threaded environments,
      * it is safe to dynamically recompute the data as needed. */
-    // EDIT (mbreit, 06-01-2017): This is no longer necessary as the polynomials are now templated by their degree
-    // and sizes of the precomputed arrays do no longer change (once initialized).
-    // Same goes for BLRCanalSurfaces.
-    /*
-    BernsteinPolynomial<3u, R, R>::initBernsteinBasisInnerProducts(24);
-    BernsteinPolynomial<3u, R, R>::setInnerProductDataImmutable();
+    // EDIT (mbreit, 06-01-2017): This is no longer necessary for the Bernstein polynomials inner products
+    //                            and the global self intersection data.
+    //BernsteinPolynomial<3u, R, R>::initBernsteinBasisInnerProducts(24);
 
     debugl(1, "various approximation data for univariate and bivariate numerical solvers..\n");
-    PolyAlg::BiLinClip_getApproximationData<8u, 8u, R>(
-            // disable dynamic recomputation after computation to be thread-safe.
-            false);
+    PolyAlg::BiLinClip_getApproximationData<7u, 7u, R>();
 
-    debugl(1, "global self-intersection data for maximum radius pipe surface approximation..\n");
-    BLRCanalSurface<3u, R>::initGlobalSelfIntersectionData();
-    */
+    //debugl(1, "global self-intersection data for maximum radius pipe surface approximation..\n");
+    //BLRCanalSurface<3u, R>::initGlobalSelfIntersectionData();
+
 
     /* update mdv information */
     this->updateAllMDVInformation();
@@ -2992,15 +2993,13 @@ NLM_CellNetwork<R>::performFullAnalysis()
     std::copy(job_list.begin(), job_list.end(), job_vec.begin());
     job_list.clear();
 
+    // shuffle jobs to generate more even load with high probability
     //std::random_shuffle(job_vec.begin(), job_vec.end());
 
     std::copy(job_vec.begin(), job_vec.end(), std::back_inserter(job_list));
     job_vec.clear();
 
     printf("processing %zu intersection jobs using %d worker threads.\n", job_list.size(), this->analysis_nthreads); 
-
-    /* shuffle jobs to generate more even load with high probability */
-    //std::random_shuffle(job_list.begin(), job_list.end());
 
     /* process all jobs multi-threaded */
     this->processIntersectionJobsMultiThreaded(this->analysis_nthreads, job_list, intersection_list);
@@ -3044,7 +3043,7 @@ NLM_CellNetwork<R>::performFullAnalysis()
 
             ns_info.updateLSIStatus(lsi_isec_info);
 
-            printf("\t LSI:       (%5d).\n", lsi_isec_info->ns_it->id());
+            printf("\t local self-intersection:      (%5d).\n", lsi_isec_info->ns_it->id());
         }
         else if (type == JOB_GSI) {
             GSI_Job        *gsi_job                     = dynamic_cast<GSI_Job *>(generic_job);
@@ -3052,7 +3051,7 @@ NLM_CellNetwork<R>::performFullAnalysis()
             NLM::NeuriteSegmentInfo<R> &ns_info         = gsi_isec_info->ns_it->neurite_segment_data;
             ns_info.updateGSIStatus(gsi_isec_info);
 
-            printf("\t GSI:       (%5d)\n", gsi_isec_info->ns_it->id());
+            printf("\t global self-intersection:     (%5d)\n", gsi_isec_info->ns_it->id());
         }
         else if (type == JOB_SONS) {
             SONS_Job            *sons_job               = dynamic_cast<SONS_Job *>(generic_job);
@@ -3061,7 +3060,7 @@ NLM_CellNetwork<R>::performFullAnalysis()
             NLM::NeuriteSegmentInfo<R> &ns_info         = sons_isec_info->ns_it->neurite_segment_data;
             ns_info.ic_sons                             = true;
 
-            printf("\t SONS:      (%5d, %5d).\n", sons_isec_info->s_it->id(), sons_isec_info->ns_it->id());
+            printf("\t soma/neurite:                 (%5d, %5d).\n", sons_isec_info->s_it->id(), sons_isec_info->ns_it->id());
         }
         else if (type == JOB_NS_NS_ADJ || type == JOB_NS_NS_NONADJ) {
             NSNS_Job       *nsns_job                    = dynamic_cast<NSNS_Job *>(generic_job);
@@ -3078,17 +3077,17 @@ NLM_CellNetwork<R>::performFullAnalysis()
             /* set flags depending on the type of NSNS intersection. */
             uint32_t isec_type = nsns_isec_info->type();
             if (isec_type == RC_NSNS) {
-                printf("\t RC-NSNS:   (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
+                printf("\t inter-cell neurites:      (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
                 e_info.rc_nsns      = true;
                 f_info.rc_nsns      = true;
             }
             else if (isec_type == ICRN_NSNS) {
-                printf("\t ICRN-NSNS: (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
+                printf("\t intra-cell inter-neurite: (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
                 e_info.icrn_nsns    = true;
                 f_info.icrn_nsns    = true;
             }
             else if (isec_type == ICIN_NSNS || isec_type == ICIN_NSNSA) {
-                printf("\t ICIN-NSNS: (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
+                printf("\t intra-cell intra-neurite: (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
                 e_info.icin_nsns    = true;
                 f_info.icin_nsns    = true;
             }

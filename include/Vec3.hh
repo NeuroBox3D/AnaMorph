@@ -43,91 +43,19 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-#include "Vector.hh"
 #include "StaticVector.hh"
 
 template <typename R>
-class Vec3 : public Vector<R> {
-    public:
-                                            Vec3();
-        explicit                            Vec3(const R& v);
-                                            Vec3(
-	                                            R const &x,
-                                                R const &y,
-                                                R const &z);
-        /* compatibility size-based constructor and resize() that accepts size 3 only. useful if Vec3 is used as a
-         * template argument that requires this type of constructor */
-        explicit                            Vec3(uint32_t n);
-
-                                            Vec3(Vec3 const &v);
-        Vec3                               &operator=(Vec3 const &v);
-
-                                           ~Vec3();
-
-        void                                resize(uint32_t size);
-
-        /* component access */
-        R                                  &operator()(uint32_t i);
-        R const                            &operator()(uint32_t i) const;
-        R                                  &operator[](uint32_t i);
-        R const                            &operator[](uint32_t i) const;
-
-        /* arithmetic */
-        Vec3                                operator+(Vec3 const &v) const;
-        Vec3                               &operator+=(Vec3 const &v);
-
-        Vec3                                operator-(Vec3 const &v) const;
-        Vec3                               &operator-=(Vec3 const &v);
-
-        Vec3                                operator*(R const &x) const;
-        Vec3                               &operator*=(R const &x);
-
-        Vec3                                operator/(R const &x) const;
-        Vec3                               &operator/=(R const &x);
-
-        /* scalar product, inner product */
-        R                                   operator*(Vec3 const &v) const;
-
-        /* cross product */
-        Vec3<R>                             cross(Vec3 const &v) const;
-
-        /* relational operators */
-        bool                                operator==(Vec3 const &v) const;
-        bool                                operator!=(Vec3 const &v);
-
-        /* tuple-like comparison operators: a < b iff a[0] < b[0] && .. && a[2] < b[2].
-         *
-         * a > b iff !(a == b) && !(a < b) */
-        bool                                operator<(Vec3 const &v) const;
-        bool                                operator>(Vec3 const &v) const;
-        bool                                operator>=(Vec3 const &v) const;
-        bool                                operator<=(Vec3 const &v) const;
-
-        /* length for p2-norm (eucl) */
-        R                                   len2(void) const;
-        R                                   len2squared(void) const;
-
-        Vec3<R>                            &normalize();
-
-        void                                print() const;
-        void                                print_debugl(uint32_t level) const;
-};
-
-
-// EDIT: mbreit, 04.01.2017
-// this is very inefficient for vectors of known size!
-// I therefore give a specialization for Vec3(double)
-template <>
-class Vec3<double>
-: public StaticVector<3, double>
+class Vec3
+: public StaticVector<3, R>
 {
     public:
-        typedef StaticVector<3, double> base_type;
+        typedef StaticVector<3, R> base_type;
 
         // constructors
         Vec3();
-        Vec3(double v);
-        Vec3(double x, double y, double z);
+        Vec3(R v);
+        Vec3(R x, R y, R z);
         Vec3(const Vec3& v);
 
         // destructor
@@ -145,13 +73,13 @@ class Vec3<double>
         Vec3 operator-(const Vec3& v) const;
         Vec3& operator-=(const Vec3& v);
 
-        Vec3 operator*(double x) const;
-        Vec3& operator*=(double x);
-        Vec3 operator/(double x) const;
-        Vec3& operator/=(double x);
+        Vec3 operator*(R x) const;
+        Vec3& operator*=(R x);
+        Vec3 operator/(R x) const;
+        Vec3& operator/=(R x);
 
         // scalar product, cross product
-        double operator*(const Vec3& v) const;
+        R operator*(const Vec3& v) const;
         Vec3 cross(const Vec3& v) const;
 
         // relational operators
@@ -165,8 +93,8 @@ class Vec3<double>
         bool operator<=(const Vec3& v) const;
 
         // norm
-        double len2(void) const;
-        double len2squared(void) const;
+        R len2(void) const;
+        R len2squared(void) const;
 
         Vec3 &normalize();
 
@@ -175,10 +103,10 @@ class Vec3<double>
         void print_debugl(uint32_t level) const;
 
     private:
-        using StaticVector<3, double>::v;
+        using StaticVector<3, R>::v;
 };
 
 
-#include "../tsrc/Vec3.impl.hh"
+//#include "../tsrc/Vec3.impl.hh"
 
 #endif

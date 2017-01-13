@@ -57,6 +57,7 @@ enum DEBUG_COMPONENT {
 
 void        initDebug();
 
+uint32_t    getDebugComponent();
 void        setDebugComponent(uint32_t comp);
 void        setDebugLevel(uint32_t level);
 void        setMaxDebugLevel(uint32_t max_level);

@@ -1983,8 +1983,8 @@ BernsteinPolynomial<degree, F, R>::computeBernsteinBasisInnerProduct(uint32_t i,
     bool F_is_floating_point = std::is_floating_point<F>::value;
     if (F_is_floating_point) {
         /* compute new inner products up to given maximum degree if necessary */
-        return bicof<F>(degree, i) * bicof<F>(degree, j)
-                / ((F)(degree + degree + 1) * bicof<F>(degree + degree, i + j));
+        return bicof<F, degree>(i) * bicof<F, degree>(j)
+                / ((F)(degree + degree + 1) * bicof<F, 2*degree>(i + j));
     }
     // else if (F_is_rational) {.. }
     else {
@@ -2178,7 +2178,7 @@ BernsteinPolynomial<degree, F, R>::multiply(const BernsteinPolynomial<deg, F, R>
     {
         res(k) = 0;
         for (i = std::max(0, k - (int)deg); i < std::min((int)degree, k) + 1; i++)
-            res(k) += p(i) * q(k-i) * bicof<F>(degree, i) * bicof<F>(deg, k-i) / bicof<F>(deg+degree, k);
+            res(k) += p(i) * q(k-i) * bicof<F, degree>(i) * bicof<F, deg>(k-i) / bicof<F, deg+degree>(k);
     }
 
     return res;
@@ -2224,7 +2224,7 @@ BernsteinPolynomial<degree, F, R>::elevateDegree()
     {
         elev_coeff[k] = 0;
         for (i = std::max(0, k - (int)deg + (int)degree); i < std::min((int)degree, k) + 1; i++)
-            elev_coeff[k] += coeff[i] * bicof<F>(degree, i) * bicof<F>(deg-degree, k-i) / bicof<F>(deg, k);
+            elev_coeff[k] += coeff[i] * bicof<F, degree>(i) * bicof<F, deg-degree>(k-i) / bicof<F, deg>(k);
     }
 
     res.setCoeffs(elev_coeff);

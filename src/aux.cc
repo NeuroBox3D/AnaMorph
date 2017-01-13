@@ -1164,6 +1164,12 @@ initDebug()
     debug_max_level                     = 0;
 }
 
+uint32_t
+getDebugComponent()
+{
+    return debug_component;
+}
+
 void
 setDebugComponent(uint32_t comp)
 {

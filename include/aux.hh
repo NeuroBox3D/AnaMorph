@@ -54,10 +54,8 @@
 #endif
 
 #include "common.hh"
-#include "Tensor.hh"
 #include "Vec2.hh"
 #include "Vec3.hh"
-#include "Matrix.hh"
 #include "StaticVector.hh"
 #include "StaticMatrix.hh"
 
@@ -92,50 +90,38 @@ namespace Aux {
 
         /* -------------- */
 
-        #define BICOF_DEFAULT_SIZE 128
-
         /* numerically save init of binomial coefficients */
-        template <typename R>
+        template <typename R, uint32_t n>
         R
-        bicof(uint32_t n, uint32_t k)
+        bicof(uint32_t k)
         {
 #ifdef WITH_BOOST
             return boost::math::binomial_coefficient<R>(n, k);
 #else
-            static Matrix<R> bicof(BICOF_DEFAULT_SIZE + 1, BICOF_DEFAULT_SIZE + 1);
-            static uint32_t     bicof_max_n     = BICOF_DEFAULT_SIZE;
-            static uint32_t     bicof_recompute = true;
+            static StaticVector<n+1, R> bicof;
+            static bool bicof_recompute = true;
 
             /* indicate necessity to (re)compute more binomial coefficients by toggling flag if required n is
              * larger than maximum precomputed one */
-            if (n > bicof_max_n) {
-                bicof_recompute = true;
-            }
-
-            if (bicof_recompute) {
+            if (bicof_recompute)
+            {
                 debugl(2, "initBinomialCoefficients(): ... \n");
 
-                /* allocate bicof array. use macro BICOF_DEFAULT_SIZE as lower bound */
-                uint32_t max_n = std::max((uint32_t)BICOF_DEFAULT_SIZE, n);
-
-                bicof.resize(max_n + 1, max_n + 1);
-
                 /* fill in binomial coefficients */
-                for (n = 0; n < max_n + 1; n++) {
-                    bicof(n, 0) = 1.0;
-                    for (k = 1; k < n; k++) {
-                        bicof(n, k) = floor(0.5 + exp(lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1) ));
-                    }
-                    bicof(n, n) = 1.0;
-                }
+                bicof[0] = R(1);
+                for (k = 1; k < n; ++k)
+                    bicof[k] = floor(0.5 + exp(lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1)));
+
+                bicof[n] = (R)1;
+
                 debugl(2, "done.\n");
 
-                bicof_max_n     = max_n;
                 bicof_recompute = false;
             }
-            return bicof(n, k);
+            return k < n+1 ? bicof[k] : (R)0;
 #endif
         }
+
     }
 
     namespace Numerics {
@@ -450,16 +436,6 @@ namespace Aux {
         }
 
 
-        template <typename T>
-        inline Vector<T>
-        kronecker_vec(uint32_t n, uint32_t i)
-        {
-            Vector<T> r(n, 0);
-            r[i] = 1;
-            return r;
-        }
-
-
         template <uint32_t N, typename T>
         inline StaticVector<N, T>
         kronecker_static_vec(uint32_t i)
@@ -467,16 +443,6 @@ namespace Aux {
             StaticVector<N, T> r(0);
             r[i] = 1;
             return r;
-        }
-
-        template <typename T>
-        inline Matrix<T>
-        kronecker_mat(uint32_t m, uint32_t n, uint32_t i, uint32_t j)
-        {
-            Matrix<T> M(m, n);;
-            M.fill(0);
-            M(i,j) = 1;
-            return M;
         }
 
         template <uint32_t M, uint32_t N, typename T>

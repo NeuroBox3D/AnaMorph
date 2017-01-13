@@ -43,18 +43,20 @@
 #include "../include/Vec3.hh"
 #include "debug.hh"
 
-
-Vec3<double>::Vec3()
+template <typename R>
+Vec3<R>::Vec3()
 {}
 
-Vec3<double>::Vec3(double _v)
+template <typename R>
+Vec3<R>::Vec3(R _v)
 {
     v[0] = _v;
     v[1] = _v;
     v[2] = _v;
 }
 
-Vec3<double>::Vec3(double x, double y, double z)
+template <typename R>
+Vec3<R>::Vec3(R x, R y, R z)
 {
     v[0] = x;
     v[1] = y;
@@ -62,7 +64,8 @@ Vec3<double>::Vec3(double x, double y, double z)
 }
 
 
-Vec3<double>::Vec3(const Vec3<double>& _v)
+template <typename R>
+Vec3<R>::Vec3(const Vec3<R>& _v)
 {
     v[0] = _v[0];
     v[1] = _v[1];
@@ -70,11 +73,13 @@ Vec3<double>::Vec3(const Vec3<double>& _v)
 }
 
 
-Vec3<double>::~Vec3()
+template <typename R>
+Vec3<R>::~Vec3()
 {}
 
 
-Vec3<double>& Vec3<double>::operator=(const Vec3<double>& _v)
+template <typename R>
+Vec3<R>& Vec3<R>::operator=(const Vec3<R>& _v)
 {
     v[0] = _v[0];
     v[1] = _v[1];
@@ -84,23 +89,26 @@ Vec3<double>& Vec3<double>::operator=(const Vec3<double>& _v)
 }
 
 
-void Vec3<double>::resize(uint32_t size)
+template <typename R>
+void Vec3<R>::resize(uint32_t size)
 {
     if (size != 3)
-        throw("Vec3<double>::resize(size_t): given size != 3.");
+        throw("Vec3<R>::resize(size_t): given size != 3.");
 }
 
 
-Vec3<double> Vec3<double>::operator+(const Vec3<double>& _v) const
+template <typename R>
+Vec3<R> Vec3<R>::operator+(const Vec3<R>& _v) const
 {
-    Vec3<double> r;
+    Vec3<R> r;
     r[0] = v[0] + _v[0];
     r[1] = v[1] + _v[1];
     r[2] = v[2] + _v[2];
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator+=(const Vec3<double>& _v)
+template <typename R>
+Vec3<R>& Vec3<R>::operator+=(const Vec3<R>& _v)
 {
     v[0] += _v[0];
     v[1] += _v[1];
@@ -108,16 +116,18 @@ Vec3<double>& Vec3<double>::operator+=(const Vec3<double>& _v)
     return *this;
 }
 
-Vec3<double> Vec3<double>::operator-(const Vec3<double>& _v) const
+template <typename R>
+Vec3<R> Vec3<R>::operator-(const Vec3<R>& _v) const
 {
-    Vec3<double> r;
+    Vec3<R> r;
     r[0] = v[0] - _v[0];
     r[1] = v[1] - _v[1];
     r[2] = v[2] - _v[2];
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator-=(const Vec3<double>& _v)
+template <typename R>
+Vec3<R>& Vec3<R>::operator-=(const Vec3<R>& _v)
 {
     v[0] -= _v[0];
     v[1] -= _v[1];
@@ -126,16 +136,18 @@ Vec3<double>& Vec3<double>::operator-=(const Vec3<double>& _v)
 }
 
 
-Vec3<double> Vec3<double>::operator*(double x) const
+template <typename R>
+Vec3<R> Vec3<R>::operator*(R x) const
 {
-    Vec3<double> r;
+    Vec3<R> r;
     r[0] = v[0] * x;
     r[1] = v[1] * x;
     r[2] = v[2] * x;
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator*=(double x)
+template <typename R>
+Vec3<R>& Vec3<R>::operator*=(R x)
 {
     v[0] *= x;
     v[1] *= x;
@@ -143,16 +155,18 @@ Vec3<double>& Vec3<double>::operator*=(double x)
     return *this;
 }
 
-Vec3<double> Vec3<double>::operator/(double x) const
+template <typename R>
+Vec3<R> Vec3<R>::operator/(R x) const
 {
-    Vec3<double> r;
+    Vec3<R> r;
     r[0] = v[0] / x;
     r[1] = v[1] / x;
     r[2] = v[2] / x;
     return r;
 }
 
-Vec3<double>& Vec3<double>::operator/=(double x)
+template <typename R>
+Vec3<R>& Vec3<R>::operator/=(R x)
 {
     v[0] /= x;
     v[1] /= x;
@@ -161,14 +175,16 @@ Vec3<double>& Vec3<double>::operator/=(double x)
 }
 
 
-double Vec3<double>::operator*(const Vec3<double>& _v) const
+template <typename R>
+R Vec3<R>::operator*(const Vec3<R>& _v) const
 {
     return v[0]*_v[0] + v[1]*_v[1] + v[2]*_v[2];
 }
 
-Vec3<double> Vec3<double>::cross(const Vec3<double>& _v) const
+template <typename R>
+Vec3<R> Vec3<R>::cross(const Vec3<R>& _v) const
 {
-    Vec3<double> r;
+    Vec3<R> r;
     r[0] = v[1]*_v[2] - v[2]*_v[1];
     r[1] = v[2]*_v[0] - v[0]*_v[2];
     r[2] = v[0]*_v[1] - v[1]*_v[0];
@@ -176,52 +192,61 @@ Vec3<double> Vec3<double>::cross(const Vec3<double>& _v) const
 }
 
 
-bool Vec3<double>::operator==(const Vec3<double>& _v) const
+template <typename R>
+bool Vec3<R>::operator==(const Vec3<R>& _v) const
 {
     return v[0] == _v[0] && v[1] == _v[1] && v[2] == _v[2];
 }
 
-bool Vec3<double>::operator!=(const Vec3<double>& _v)
+template <typename R>
+bool Vec3<R>::operator!=(const Vec3<R>& _v)
 {
     return v[0] != _v[0] || v[1] != _v[1] || v[2] != _v[2];
 }
 
 
-bool Vec3<double>::operator<(const Vec3<double>& _v) const
+template <typename R>
+bool Vec3<R>::operator<(const Vec3<R>& _v) const
 {
     return v[0] < _v[0] && v[1] < _v[1] && v[2] < _v[2];
 }
 
-bool Vec3<double>::operator>(const Vec3<double>& _v) const
+template <typename R>
+bool Vec3<R>::operator>(const Vec3<R>& _v) const
 {
     return v[0] > _v[0] && v[1] > _v[1] && v[2] > _v[2];
 }
 
-bool Vec3<double>::operator>=(const Vec3<double>& _v) const
+template <typename R>
+bool Vec3<R>::operator>=(const Vec3<R>& _v) const
 {
     return v[0] >= _v[0] && v[1] >= _v[1] && v[2] >= _v[2];
 }
 
-bool Vec3<double>::operator<=(const Vec3<double>& _v) const
+template <typename R>
+bool Vec3<R>::operator<=(const Vec3<R>& _v) const
 {
     return v[0] <= _v[0] && v[1] <= _v[1] && v[2] <= _v[2];
 }
 
 
-double Vec3<double>::len2(void) const
+template <typename R>
+R Vec3<R>::len2(void) const
 {
     return sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
-double Vec3<double>::len2squared(void) const
+template <typename R>
+R Vec3<R>::len2squared(void) const
 {
     return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 }
 
 
-Vec3<double>& Vec3<double>::normalize()
+template <typename R>
+Vec3<R>& Vec3<R>::normalize()
 {
-    double n = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    R n = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
     v[0] /= n;
     v[1] /= n;
     v[2] /= n;
@@ -229,12 +254,14 @@ Vec3<double>& Vec3<double>::normalize()
 }
 
 
-void Vec3<double>::print() const
+template <typename R>
+void Vec3<R>::print() const
 {
     printf("(%f, %f, %f)\n", v[0], v[1], v[2]);
 }
 
-void Vec3<double>::print_debugl(uint32_t level) const
+template <typename R>
+void Vec3<R>::print_debugl(uint32_t level) const
 {
     debugTabInc();
     debugl(level, "(%f, %f, %f)\n", v[0], v[1], v[2]);
@@ -242,3 +269,6 @@ void Vec3<double>::print_debugl(uint32_t level) const
 }
 
 
+
+// make Vec3<double> usable
+template class Vec3<double>;
