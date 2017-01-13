@@ -86,7 +86,6 @@ namespace Aux {
         frand(double min, double max)
         {
             double f = (double)std::rand() / RAND_MAX;
-            std::cout << " (ok)" << std::endl;
             return (min + f*(max - min));
         }
 
@@ -325,7 +324,6 @@ namespace Aux {
 
                 /* pick a random 2d vector d and cast the ray p + lambda*d, intersect it with
                  * all edges of the polygon. when close to an edge case, repeat with another random vector */
-                std::cout << "    Calling rand for intersect direction (" << std::rand() << ")";
                 d = Aux::VecMat::randUnitVec2();
 
                 /* intersect all edges, interpreted as line segments in 2d. wrap around case (last, first)
@@ -495,7 +493,6 @@ namespace Aux {
                             debugTabInc();
                             while (++iter < maxiter) {
                                 debugl(0, "checking whether principal vertex is mouth or ear..\n");
-                                std::cout << "    Calling rand in polygon triangulation (" << std::rand() << ")";
                                 u_v_edgepoint       = u + (v - u) * Aux::Numbers::frand(0.1, 0.9);
                                 pointcheck_result   = pointInSimplePolygon(vertices_copy, u_v_edgepoint);
 

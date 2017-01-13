@@ -144,7 +144,7 @@ Mesh<Tm, Tv, Tf, R>::Vertex::replaceAdjacentVertices(const std::map<Vertex *, Ve
         }
     }
 
-    this->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+    this->adjacent_vertices.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -192,8 +192,8 @@ Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStar(
      * method. since pointers have trivial operator=(), this is semantically equivalent to
      * clear()ing vstar and copying the list with std::copy. */
     vstar = this->adjacent_vertices;
-    vstar.sort();
-    vstar.unique();
+    vstar.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
+    vstar.unique([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() == y->id());});
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -215,8 +215,8 @@ Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStarIterators(
     std::list<vertex_iterator> &vstar) const
 {
     auto av_copy = this->adjacent_vertices;
-    av_copy.sort();
-    av_copy.unique();
+    av_copy.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
+    av_copy.unique([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() == y->id());});
 
     vstar.clear();
     for (auto &nb : av_copy) {
@@ -1547,8 +1547,9 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesSharedEdgeAndRemainingVertices(
     std::vector<Vertex *>   A_remaining_vertices, B_remaining_vertices;
 
     /* first, check if triangles share exactly one common edge */
-    std::sort(A_vertices.begin(), A_vertices.end());
-    std::sort(B_vertices.begin(), B_vertices.end());
+    auto vrtCmp = [] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());};
+    std::sort(A_vertices.begin(), A_vertices.end(), vrtCmp);
+    std::sort(B_vertices.begin(), B_vertices.end(), vrtCmp);
     std::set_intersection(
             A_vertices.begin(),
             A_vertices.end(),
@@ -1561,7 +1562,7 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesSharedEdgeAndRemainingVertices(
     if (AB_shared_vertices.size() == 2) {
         /* get remaining vertices by set difference. the created lists should have size == 1
          * always */
-        std::sort(AB_shared_vertices.begin(), AB_shared_vertices.end());
+        std::sort(AB_shared_vertices.begin(), AB_shared_vertices.end(), vrtCmp);
         std::set_difference(
                 A_vertices.begin(),
                 A_vertices.end(),
@@ -1620,8 +1621,9 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesCommonVertexAndRemainingVertices(
     std::vector<Vertex *>   AB_shared_vertices;
     std::vector<Vertex *>   A_remaining_vertices, B_remaining_vertices;
 
-    std::sort(A_vertices.begin(), A_vertices.end());
-    std::sort(B_vertices.begin(), B_vertices.end());
+    auto vrtCmp = [] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());};
+    std::sort(A_vertices.begin(), A_vertices.end(), vrtCmp);
+    std::sort(B_vertices.begin(), B_vertices.end()), vrtCmp;
     std::set_intersection(
             A_vertices.begin(),
             A_vertices.end(),
@@ -1632,7 +1634,7 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesCommonVertexAndRemainingVertices(
 
     if (AB_shared_vertices.size() == 1) {
         /* get remaining vertices for A and B */
-        std::sort(AB_shared_vertices.begin(), AB_shared_vertices.end());
+        std::sort(AB_shared_vertices.begin(), AB_shared_vertices.end(), vrtCmp);
         std::set_difference(
                 A_vertices.begin(),
                 A_vertices.end(),
@@ -1679,28 +1681,19 @@ Mesh<Tm, Tv, Tf, R>::Face::getTriRemainingVertex(
     vertex_iterator     u_it,
     vertex_iterator     v_it)
 {
-    /* init pointers lists by taking address of references returned by vertex_iterator::operator*().
-     * this does not create copies */
-    std::list<Vertex *> vlist   = { &(*v0_it), &(*v1_it), &(*v2_it) };
-    std::list<Vertex *> elist   = { &(*u_it), &(*v_it) };
-    std::list<Vertex *> remlist = {};
+    if ((u_it->id() == v1_it->id() && v_it->id() == v2_it->id())
+        || (v_it->id() == v1_it->id() && u_it->id() == v2_it->id()))
+        return v0_it;
 
-    vlist.sort(Mesh::Vertex::ptr_less);
-    elist.sort(Mesh::Vertex::ptr_less);
+    if ((u_it->id() == v0_it->id() && v_it->id() == v2_it->id())
+        || (v_it->id() == v0_it->id() && u_it->id() == v2_it->id()))
+        return v1_it;
 
-    std::set_difference(
-            vlist.begin(),
-            vlist.end(),
-            elist.begin(),
-            elist.end(),
-            std::inserter(remlist, remlist.begin()),
-            Mesh::Vertex::ptr_less
-        );
+    if ((u_it->id() == v0_it->id() && v_it->id() == v1_it->id())
+        || (v_it->id() == v0_it->id() && u_it->id() == v1_it->id()))
+        return v2_it;
 
-    if (remlist.size() != 1) {
-        throw MeshEx(MESH_LOGIC_ERROR, "(static) getTriRemainingVertex(): seems like given edge is not part of given triangle.");
-    }
-    else return ( remlist.front()->iterator() );
+    throw MeshEx(MESH_LOGIC_ERROR, "(static) getTriRemainingVertex(): seems like given edge is not part of given triangle.");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2692,8 +2685,8 @@ Mesh<Tm, Tv, Tf, R>::findVertices(
     Mesh::findOctreeRecursive(O, &(O->root), aabb_min, aabb_max, &vertex_list, NULL);
 
     /* we want unique lists */
-    vertex_list.sort(Mesh::Vertex::ptr_less);
-    vertex_list.unique();
+    vertex_list.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
+    vertex_list.unique([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() == y->id());});
 
     /* delete vertices whose bounding box does not intersect the given search box */
     for (auto it = vertex_list.begin(); it != vertex_list.end(); ) {
@@ -2744,8 +2737,8 @@ Mesh<Tm, Tv, Tf, R>::findFaces(
     Mesh::findOctreeRecursive(O, &(O->root), aabb_min, aabb_max, NULL, &face_list);
 
     /* we want unique lists */
-    face_list.sort(Mesh::Face::ptr_less);
-    face_list.unique();
+    face_list.sort([] (const Face* x, const Face* y) -> bool {return (x->id() < y->id());});
+    face_list.unique([] (const Face* x, const Face* y) -> bool {return (x->id() == y->id());});
 
     /* delete faces whose bounding box does not intersect the given search box */
     for (auto it = face_list.begin(); it != face_list.end(); ) {
@@ -2798,8 +2791,8 @@ Mesh<Tm, Tv, Tf, R>::find(
         Mesh::findOctreeRecursive(O, &(O->root), aabb_min, aabb_max, vertex_list, face_list);
 
         /* we want unique lists */
-        vertex_list->sort(Mesh::Vertex::ptr_less);
-        vertex_list->unique();
+        vertex_list->sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
+        vertex_list->unique([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() == y->id());});
 
         /* delete vertices whose bounding box does not intersect the given search box */
         Vec3<R> v_bb_min, v_bb_max;
@@ -2812,8 +2805,8 @@ Mesh<Tm, Tv, Tf, R>::find(
             }
         }
 
-        face_list->sort(Mesh::Face::ptr_less);
-        face_list->unique();
+        face_list->sort([] (const Face* x, const Face* y) -> bool {return (x->id() < y->id());});
+        face_list->unique([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() == y->id());});
 
         /* delete faces whose bounding box does not intersect the given search box */
         for (auto it = face_list->begin(); it != face_list->end(); ) {
@@ -3279,7 +3272,7 @@ Mesh<Tm, Tv, Tf, R>::getFacesIncidentToEdge(
     {
         for (itV = vFaces.begin(); itV != itVend; ++itV)
         {
-            if (*itU == *itV)
+            if ((*itU)->id() == (*itV)->id())
             {
                 if (++sz > sizeInOut)
                     throw MeshEx(MESH_LOGIC_ERROR, "Found more incident faces to edge than expected.");
@@ -3402,8 +3395,9 @@ Mesh<Tm, Tv, Tf, R>::getTriCommonEdge(
     std::vector<Vertex *> B_vertices = { B_v0, B_v1, B_v2 };
     std::vector<Vertex *> AB_shared_vertices;
 
-    std::sort(A_vertices.begin(), A_vertices.end());
-    std::sort(B_vertices.begin(), B_vertices.end());
+    auto vrtCmp = [] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());};
+    std::sort(A_vertices.begin(), A_vertices.end(), vrtCmp);
+    std::sort(B_vertices.begin(), B_vertices.end(), vrtCmp);
     std::set_intersection(
             A_vertices.begin(),
             A_vertices.end(),
@@ -3578,7 +3572,7 @@ Mesh<Tm, Tv, Tf, R>::splitEdge(
 
     /* compute and add new vertex, lambda must be in [0,1] */
     if (lambda <= 0.0 || lambda >= 1.0) {
-        throw MeshEx(MESH_LOGIC_ERROR, "Mesh::splitEdge(): givne lambda must be in (0, 1).");
+        throw MeshEx(MESH_LOGIC_ERROR, "Mesh::splitEdge(): given lambda must be in (0, 1).");
     }
 
     u_pos   = u_it->pos();
@@ -3641,7 +3635,7 @@ Mesh<Tm, Tv, Tf, R>::splitEdge(
     uint32_t const n = lambda_values.size();
     if (n == 0) {
         debugTabDec();
-        throw("Mesh::splitEdge(): vector of split points (lambda_values) is empty. won't silently discard ineffectual call.");
+        throw("Mesh::splitEdge(): vector of split points (lambda_values) is empty. won't silently discard ineffective call.");
     }
 
     Vec3<R>         u_pos, v_pos, n_pos;
@@ -3954,8 +3948,8 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
                 v_vertex->incident_faces.begin(),
                 v_vertex->incident_faces.end());
 
-        w_vertex->incident_faces.sort(Mesh::Face::ptr_less);
-        w_vertex->incident_faces.unique();
+        w_vertex->incident_faces.sort([] (const Face* x, const Face* y) -> bool {return (x->id() < y->id());});
+        w_vertex->incident_faces.unique([] (const Face* x, const Face* y) -> bool {return (x->id() == y->id());});
 
         /* replace vertex pointers to u and v with pointers to v in all incident faces */
         debugl(2, "new vertex w's incident faces: replacing vertex pointers to u/v with pointers to w.\n");
@@ -3980,7 +3974,7 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
         debugl(2, "merging lists of incident vertices of u and v.. updating pointers.\n");
         w_vertex->adjacent_vertices = u_vertex->adjacent_vertices;
         w_vertex->adjacent_vertices.insert(w_vertex->adjacent_vertices.end(), v_vertex->adjacent_vertices.begin(), v_vertex->adjacent_vertices.end());
-        w_vertex->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        w_vertex->adjacent_vertices.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
 
         /* replace pointers to u/v with pointers to w in all adjacent vertices */
         debugl(2, "new vertex w's adjacent vertices: replacing vertex pointers to u/v with pointers to w.\n");
@@ -4071,7 +4065,7 @@ Mesh<Tm, Tv, Tf, R>::mergeUnrelatedVertices(
             v_it->adjacent_vertices.end());
 
     /* sort with custom static comparison function for pointers */
-    w_it->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+    w_it->adjacent_vertices.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
 
     /* clear adjacent_vertices of u and v */
     u_it->adjacent_vertices.clear();
@@ -4083,8 +4077,8 @@ Mesh<Tm, Tv, Tf, R>::mergeUnrelatedVertices(
             w_it->incident_faces.end(),
             v_it->incident_faces.begin(),
             v_it->incident_faces.end());
-    w_it->incident_faces.sort(Mesh::Face::ptr_less);
-    w_it->incident_faces.unique();
+    w_it->incident_faces.sort([] (const Face* x, const Face* y) -> bool {return (x->id() < y->id());});
+    w_it->incident_faces.unique([] (const Face* x, const Face* y) -> bool {return (x->id() == y->id());});
 
     u_it->incident_faces.clear();
     v_it->incident_faces.clear();
@@ -5301,21 +5295,22 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::erase(face_iterator it)
         /* now remove vertex adjacencies created by this edge. the adjacency lists might contain
          * multiple duplicate entries, because an edge might be incident to several faces. remove
          * only ONE copy from the adjacency list. with a set, this would be very problematic */
+        auto sortFct = [] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());};
         removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_l);
         removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_j);
-        v_i->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        v_i->adjacent_vertices.sort(sortFct);
 
         removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_i);
         removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_k);
-        v_j->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        v_j->adjacent_vertices.sort(sortFct);
 
         removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_j);
         removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_l);
-        v_k->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        v_k->adjacent_vertices.sort(sortFct);
 
         removeFirstOccurrenceFromList(v_l->adjacent_vertices, v_k);
         removeFirstOccurrenceFromList(v_l->adjacent_vertices, v_i);
-        v_l->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        v_l->adjacent_vertices.sort(sortFct);
     }
     /* same for triangles */
     else if (f->isTri()) {
@@ -5333,17 +5328,18 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::erase(face_iterator it)
         }
 
         /* remove one occurance of adjacencies from the face */
+        auto sortFct = [] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());};
         removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_k);
         removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_j);
-        v_i->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        v_i->adjacent_vertices.sort(sortFct);
 
         removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_i);
         removeFirstOccurrenceFromList(v_j->adjacent_vertices, v_k);
-        v_j->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        v_j->adjacent_vertices.sort(sortFct);
 
         removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_j);
         removeFirstOccurrenceFromList(v_k->adjacent_vertices, v_i);
-        v_k->adjacent_vertices.sort(Mesh::Vertex::ptr_less);
+        v_k->adjacent_vertices.sort(sortFct);
     }
     else { 
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::FaceAccessor::erase(): supplied face is neither quad nor triangle. general case intentionally unsupported right now => internal logic error.");
@@ -5454,8 +5450,8 @@ Mesh<Tm, Tv, Tf, R>::checkInternalConsistency() const
         vptr_list.push_back(v);
     }
 
-    vptr_list.sort(Mesh::Vertex::ptr_less);
-    vptr_list.unique();
+    vptr_list.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
+    vptr_list.unique([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() == y->id());});
     if (vptr_list.size() != this->V.size()) {
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::checkInternalConsistency(): at least one vertex (pointer) stored under two differend ids..\n");
     }
@@ -5477,8 +5473,8 @@ Mesh<Tm, Tv, Tf, R>::checkInternalConsistency() const
         fptr_list.push_back(f);
     }
 
-    fptr_list.sort(Mesh::Face::ptr_less);
-    fptr_list.unique();
+    fptr_list.sort([] (const Face* x, const Face* y) -> bool {return (x->id() < y->id());});
+    fptr_list.unique([] (const Face* x, const Face* y) -> bool {return (x->id() == y->id());});
 
     if (fptr_list.size() != this->F.size()) {
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::checkInternalConsistency(): at least one face (pointer) stored under two differend ids..\n");

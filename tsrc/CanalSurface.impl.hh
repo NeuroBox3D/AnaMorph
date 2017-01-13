@@ -716,13 +716,16 @@ BezierCanalSurface<degree, RadF, R>::checkRenderVector(Vec3<R> const &r) const
 
 
     /* check all all roots in zroots */
-    R root;
+    R root; size_t nr = 0;
     debugTabInc();
     for (auto root_interval : z_roots) {
         root    = (root_interval.t0 + root_interval.t1) / 2.0;
         f_min   = std::min(f_min, p.eval(root) / q.eval(root));
         debugl(2, "function value of rational target function for root %5.4f of numerator polynomial: %5.4f\n",
             root, p.eval(root) / q.eval(root));
+Vec3<R> posi = spine_curve.eval(root);
+std::cout << "root " << ++nr << "/" << z_roots.size() << " = " << root << ",  r_val = " << p.eval(root) / q.eval(root)
+          << " at coords (" << posi[0] << ", " << posi[1] << "," << posi[2] << ")" << std::endl;
     }
     debugTabDec();
     debugl(2, "minimum target function value fmin: %5.4f\n", fmin);

@@ -832,56 +832,49 @@ namespace Aux {
             v2.print_debugl(2);
 
             /* calculate normal vector of the triangle plane */
-            Vec3<R> n, u, v, w;
-            R       lambda_plane, denom, uu, uv, vv, wu, wv;
-            R       s_i, t_i;
+            Vec3<R> u = v1 - v0;
+            Vec3<R> v = v2 - v0;
+            Vec3<R> p = p1 - p0;
 
-            u       = v1 - v0;
-            v       = v2 - v0;
-            n       = u.cross(v);
-            denom   = n * (p1 - p0);
+            Vec3<R> n = u.cross(v);
+            R denom = n * p;
 
             /* denom very small => infinite ray parallel to plane.. */
-            if (std::abs(denom) < ieps) {
+            if (std::abs(denom / n.len2() / p.len2()) < ieps) {
                 debugl(0, "n.len2(): %5.4e. denom = %5.4e < ieps => segment parallel to plane.\n", n.len2(), denom);
                 debugTabDec();
                 return DISJOINT;
             }
             else {
                 /* calculate parametric value lambda_plane of intersection point x: x = p_0 + lambda_plane(p_1 - p_0) */
-                lambda_plane    = n * (v0 - p0) / denom;
+                x_lambda = n * (v0 - p0) / denom;
 
                 /* infinite ray intersects the plane definitely (not parallel if we reach this line), but the
                  * parametric value has to be in [0,1] for the segment (p0, p1) to intersect the plane */
-                if (lambda_plane < 0.0 || lambda_plane > 1.0) {
-                    debugl(1, "lambda_plane = %10.5e not in [0,1] => finite segment does not intersect plane.\n", lambda_plane);
+                if (x_lambda < 0.0 || x_lambda > 1.0) {
+                    debugl(1, "x_lambda = %10.5e not in [0,1] => finite segment does not intersect plane.\n", x_lambda);
                     debugTabDec();
                     return DISJOINT;
                 }
                 else {
-                    debugl(1, "lambda_plane = %10.5e in [0,1] => finite segment intersects plane.\n", lambda_plane);
-                    x           = p0 + (p1 - p0)*lambda_plane;
-                    w           = x - v0;
+                    debugl(1, "x_lambda = %10.5e in [0,1] => finite segment intersects plane.\n", x_lambda);
+                    x = p0 + p*x_lambda;
+                    Vec3<R> w = x - v0;
 
-                    uv          = u*v;
-                    uu          = u*u;
-                    vv          = v*v;
-                    wu          = w*u;
-                    wv          = w*v;
+                    R uv = u*v;
+                    R uu = u*u;
+                    R vv = v*v;
+                    R wu = w*u;
+                    R wv = w*v;
 
-                    denom       = uv*uv - uu*vv;
+                    denom = uv*uv - uu*vv;
 
-                    s_i         = (uv*wv - vv*wu) / denom;
-                    t_i         = (uv*wu - uu*wv) / denom;
-
-                    x_lambda    = lambda_plane;
-                    x_s         = s_i;
-                    x_t         = t_i;
-                    x           = p0 + (p1 - p0)*x_lambda;
+                    x_s = (uv*wv - vv*wu) / denom;
+                    x_t = (uv*wu - uu*wv) / denom;
 
                     /* barycentric parameters of triangle outside [0,1]^2 => point not in triangle */
-                    if (s_i < 0.0 || t_i < 0.0 || (s_i + t_i > 1.0) ) {
-                        debugl(3, "barycentric parametric coordinates s_i = %10.5e, t_i = %10.5e => point not on triangle\n", s_i, t_i);
+                    if (x_s < 0.0 || x_t < 0.0 || (x_s + x_t > 1.0) ) {
+                        debugl(3, "barycentric parametric coordinates x_s = %10.5e, x_t = %10.5e => point not on triangle\n", x_s, x_t);
                         debugl(3, "Aux::Geometry::rayTriangle(): DISJOINT.\n");
                         debugTabDec();
                         return DISJOINT;
@@ -1590,19 +1583,21 @@ namespace Aux {
             return false;
         }
 
+        // EDIT: added pointer-* to parameter type of x and compare IDs rather than memory addresses
+        // as this function is used exclusively in the case where x is a pointer to a geometric object
         template<typename T>
         bool
         listSortedInsert(
-            std::list<T>    &l,
-            T               &x,
+            std::list<T*>    &l,
+            T*               x,
             bool             duplicates = false)
         {
             auto    lit = l.begin();
-            while (lit != l.end() && *lit < x) {
+            while (lit != l.end() && (*lit)->id() < x->id()) {
                 ++lit;
             }
 
-            if (lit != l.end() && !duplicates && *lit == x) {
+            if (lit != l.end() && !duplicates && (*lit)->id() == x->id()) {
                 return false;
             }
             else {
@@ -1674,6 +1669,7 @@ namespace Aux {
         /* generic binary searching for index on vectors, since C++ is so goddamn ugly it doesn't give you a efficient
          * way to do that. it WILL give you the iterator, but it won't give you its index without packing it
          * inside the key structure, which is just ugly */
+        // And this is so goddamn important that it is never once used here!
         template <typename T>
         bool
         binarySearchVector(std::vector<T> v, T x, uint32_t &x_idx)

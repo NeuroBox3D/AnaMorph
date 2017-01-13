@@ -598,14 +598,8 @@ template <typename Tg, typename Tv, typename Te>
 bool
 Graph<Tg, Tv, Te>::Edge::operator<(const Edge &b) const
 {
-    std::pair<
-            Graph<Tg, Tv, Te>::Vertex *,
-            Graph<Tg, Tv, Te>::Vertex *
-        >                                   e_ptr(this->v_src, this->v_dst),
-                                            b_ptr(b.v_src, b.v_dst);
-
-    return Vertex::ptr_less(e_ptr.first, b_ptr.first) ||
-            (!Vertex::ptr_less(b_ptr.first, e_ptr.first) && Vertex::ptr_less(e_ptr.second, b_ptr.second));
+    return v_src->id() < b.v_src->id() ||
+            (b.v_src->id() == v_src->id() && v_dst->id() < b.v_dst->id());
 }
 
 template <typename Tg, typename Tv, typename Te>
@@ -1903,8 +1897,9 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
     this->graph.vertices.erase(v_it);
 
     /* sort edges of u */
-    u_it->in_edges.sort(Edge::ptr_less);
-    u_it->out_edges.sort(Edge::ptr_less);
+    auto sort_fct = [] (const Edge* x, const Edge* y) -> bool {return (x->id() < y->id());};
+    u_it->in_edges.sort(sort_fct);
+    u_it->out_edges.sort(sort_fct);
 
     debugl(0, "neighbours of collapsed vertex: \n");
     debugTabInc();

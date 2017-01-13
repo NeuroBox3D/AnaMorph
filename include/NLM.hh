@@ -220,8 +220,8 @@ namespace NLM {
             BoundingBox<R>                          getBoundingBox() const;
 
             Vec3<R>                                 findPermissibleRenderVector(
-                                                        R lambda    = 0.2,
-                                                        R mu        = 0.5) const;
+                                                        R lambda    = 0.1,
+                                                        R mu        = 0.1) const;
 
         /* mesh generation */
             template<typename Tm, typename Tv, typename Tf>

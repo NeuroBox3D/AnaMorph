@@ -1337,7 +1337,7 @@ deCasteljauSplit
 {
     uint32_t i, k;
 
-    /* initialize Pi to b as above */
+    // We need this copy as coeff might be the same reference as coeff_left or coeff_right.
     StaticVector<degree+1, F> Pi = coeff;
     F plast_i;
 

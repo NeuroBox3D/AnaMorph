@@ -216,19 +216,24 @@ namespace MeshAlg {
             typename TMesh::Vertex* const _vrt2,
             typename TMesh::Face* const _f
         )
-        :vrt1(_vrt1), vrt2(_vrt2), f(_f) {};
+        :vrt1(_vrt1), vrt2(_vrt2), f(_f)
+        {
+            // sort vertices (edges are not directed)
+            if (vrt2->id() < vrt1->id())
+                std::swap(vrt1, vrt2);
+        };
 
         // for std::sort
         bool operator<(const EdgeFacePair& b) const
         {
+            // same vertex ordering
             if (vrt1->id() < b.vrt1->id()) return true;
             if (b.vrt1->id() < vrt1->id()) return false;
 
             if (vrt2->id() < b.vrt2->id()) return true;
             if (b.vrt2->id() < vrt2->id()) return false;
 
-            if (f->id() < b.f->id()) return true;
-            return false;
+            return f->id() < b.f->id();
         }
 
         // for std::unique

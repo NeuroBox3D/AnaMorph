@@ -513,9 +513,6 @@ class Graph {
             public:
                 Tv                                  vertex_data;
 
-                /* static comparison functor for pointers to Vertex */
-                static std::less<Vertex *>          ptr_less;
-
                 /* static getPtr() method required by iterator */
                 static Vertex *                     getPtr(typename std::map<uint32_t, VertexPointerType >::const_iterator const &it);
 
@@ -560,7 +557,7 @@ class Graph {
                 gotOutNeighbour(const Vertex * const &v) const
                 {
                     for (auto &e : this->out_edges) {
-                        if (v == &(*e->getDestinationVertex())) {
+                        if (v->id() == e->getDestinationVertex()->id()) {
                             return true;
                         }
                     }
@@ -591,7 +588,7 @@ class Graph {
                 gotInNeighbour(const Vertex * const &v) const
                 {
                     for (auto &e : this->in_edges) {
-                        if (v == &(*e->getSourceVertex())) {
+                        if (v->id() == e->getSourceVertex()->id()) {
                             return true;
                         }
                     }
@@ -715,9 +712,6 @@ class Graph {
 
             public:
                 Te                                  edge_data;
-
-                /* static comparison functor for pointers to Edge */
-                static std::less<Edge *>            ptr_less;
 
                 /* static getPtr() method required by iterator */
                 static Edge *                       getPtr(typename std::map<uint32_t, EdgePointerType >::const_iterator const &it);

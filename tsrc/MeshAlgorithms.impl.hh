@@ -446,14 +446,13 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
         Y_face  = pair.second;
 
         /* get all edges e = {u, v} of X_face, insert pair (e, Y_face) into X_edges_Y_faces_candidates,
-         * where care is taken to choose u as the "smaller" vertex pointer, using
-         * Mesh<Tm, Tv, Tf>::Vertex::ptr_less for comparison. */
+         * where care is taken to choose u as the "smaller" vertex pointer */
         X_face->getEdges(face_edges);
         for (auto &e : face_edges) {
             e_u = &(*e.first);
             e_v = &(*e.second);
 
-            if (Mesh<Tm, Tv, Tf, R>::Vertex::ptr_less( e_v, e_u )) {
+            if (e_v->id(), e_u->id()) {
                 std::swap(e_u, e_v);
             }
 
@@ -467,7 +466,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
             e_v = &(*e.second);
 
             /* swap if necessary */
-            if (Mesh<Tm, Tv, Tf, R>::Vertex::ptr_less( e_v, e_u )) {
+            if (e_v->id(), e_u->id()) {
                 std::swap(e_u, e_v);
             }
 
@@ -2575,11 +2574,15 @@ MeshAlg::partialFlushToObjFile(
             > const &y)
         -> bool
         {
-            return (Mesh<Tm, Tv, Tf, R>::Vertex::ptr_less(x.first, y.first)); // || (x.first == y.first && x.second < y.second) );
+            return x.first->id() < y.first->id(); // || (x.first == y.first && x.second < y.second) );
         };
 
+    auto pair_equal = [] (const std::pair<typename Mesh<Tm, Tv, Tf, R>::Vertex*, uint32_t>& x,
+                     const std::pair<typename Mesh<Tm, Tv, Tf, R>::Vertex*, uint32_t>& y) -> bool
+                     {return x.first->id() == y.first->id() && x.second == y.second;};
+
     in_boundary_vertices.sort(cmp);
-    in_boundary_vertices.unique();
+    in_boundary_vertices.unique(pair_equal);
     isolated_vertices.sort(cmp);
     boundary_vertices.sort(cmp);
 

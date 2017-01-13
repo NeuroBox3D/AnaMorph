@@ -503,7 +503,7 @@ BezClip_roots(
     /* queue to store triples(polynomial, interval limits) */
     std::queue<BezClip_Triple<deg, R> >  S;
     BezClip_Triple<deg, R>               T;
-    BernsteinPolynomial<deg, R, R>      *p, *pleft, *pright;
+    BernsteinPolynomial<deg, R, R>      *p, *pleft;
     R tol4 = tol;
     std::vector<Vec2>               pcvhull;
 
@@ -598,9 +598,8 @@ BezClip_roots(
         /* while loop has been broken. bisect if interval is relevant, still larger than tol and has
          * seized shrinking exponentially with a factor > 2 */
         if (bisect) {
-            /* alloc new polys */
-            pleft   = new BernsteinPolynomial<deg, R, R>();
-            pright  = new BernsteinPolynomial<deg, R, R>();
+            /* alloc new poly */
+            pleft = new BernsteinPolynomial<deg, R, R>();
 
             /* check if middle is a root */
             R middle  = (left + right) / 2.0;
@@ -623,26 +622,25 @@ BezClip_roots(
 
                 /* split p twice, once at 0.5 - tol4rel, once at 0.5 + tol4rel */
                 p->split(0.5 - tol4rel, pleft , NULL);
-                p->split(0.5 + tol4rel, NULL, pright);
+                p->split(0.5 + tol4rel, NULL, p);   // re-use p as pright
 
                 /* push two new intervals to consider onto the queue */
                 S.push( BezClip_Triple<deg, R>(pleft , left         , middle - tol4) );
-                S.push( BezClip_Triple<deg, R>(pright, middle + tol4, right        ) );
+                S.push( BezClip_Triple<deg, R>(p, middle + tol4, right        ) );
             }
             else {
                 debugl(1, "bisecting interval: [%+20.13E, %+20.13E] and [%+20.13E, %+20.13E]\n", left, middle, middle, right);
 
                 /* bisect interval and initialize left and right bernstein polys */
-                p->split(0.5, pleft, pright);
+                p->split(0.5, pleft, p);
 
                 /* push two new intervals to consider onto stack */
-                S.push( BezClip_Triple<deg, R>(pright, middle, right ) );
+                S.push( BezClip_Triple<deg, R>(p, middle, right ) );
                 S.push( BezClip_Triple<deg, R>(pleft , left  , middle) );
             }
         }
-
-        /* delete old poly */
-        delete p;
+        // delete old poly if no longer needed
+        else delete p;
 
         debugl(1, "\n\n");
     }

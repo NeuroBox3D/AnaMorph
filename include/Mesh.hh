@@ -558,9 +558,6 @@ class Mesh {
                 bool                                eraseIncidentFace(Face *f);
 
             public:
-                /* static comparison functor for pointers to Vertex */
-                static std::less<Vertex const *>    ptr_less;
-
                 uint32_t
                 id() const
                 {
@@ -609,7 +606,7 @@ class Mesh {
                 gotNeighbour(const Vertex * const &v) const
                 {
                     for (auto &u : this->adjacent_vertices) {
-                        if (u && v == u) {
+                        if (u && v->id() == u->id()) {
                             return true;
                         }
                     }
@@ -757,9 +754,6 @@ class Mesh {
                 bool                                operator>(const Face &b) const;
 
             public:
-                /* static comparison functor for pointers to Face */
-                static std::less<Face const *>      ptr_less;
-
                 uint32_t                            id() const;
                 face_iterator                       iterator() const;
                 face_const_iterator                 const_iterator() const;

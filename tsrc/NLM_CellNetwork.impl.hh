@@ -520,32 +520,33 @@ namespace NLM {
             throw("NeuritePath::findPermissibleRenderVector(): geometry has not been updated. can't find render vector.\n");
         }
 
-        Vec3<R> const           zbase = Aux::VecMat::zbase<R>();
-
-        uint32_t                nRetry = 1024;
-        Vec3<R>					candidate(nRetry);
+        Vec3<R> candidate = Aux::VecMat::zbase<R>();
         R                       r_min;
         Vec3<R>                 result;
 
-        /* check if global z vector is mu-permissible for all neurite segment curves of this path */
-        r_min = inf<R>();
+        // We allow ourselves one educated guess before creating random candidates:
+        // Check if global z vector is mu-permissible for all neurite segment curves of this path.
+        r_min = inf<R>(); size_t nSeg = 0;
         for (auto &C : this->canal_segments_magnified)
-            r_min = std::min(r_min, C->checkRenderVector(zbase));
+        {
+            std::cout << ++nSeg << "  ";
+            r_min = std::min(r_min, C->checkRenderVector(candidate));
+        }
 
         if (r_min > mu)
         {
         	//std::cout << "Found render vector in z attempt." << std::endl;
-            return zbase;
+            return candidate;
         }
 
 
         uint32_t const max_attempts = 1024;
         for (uint32_t attempt = 0; attempt < max_attempts; attempt++)
         {
-            debugl(0, "NeuritePath::findPermissibleRenderVector(): attempt %d with %d candidates.\n", attempt + 1, nRetry);
+            debugl(0, "NeuritePath::findPermissibleRenderVector(): attempt %d with %d candidates.\n", attempt + 1, 1024);
 
-            std::cout << "    Calling rand for permissible render vector candidate (" << std::rand() << ")";
             candidate = Aux::VecMat::randUnitVec3<R>();
+std::cout << "Called rand for cand, std::rand() = " << std::rand() << std::endl;
 
             /* check all candidates, pick alpha-permissible if possible, otherwise pick the best one if max_min is not
              * -inf */
@@ -557,6 +558,8 @@ namespace NLM {
 			r_min = inf<R>();
 			for (auto &C : this->canal_segments_magnified)
 				r_min = std::min(r_min, C->checkRenderVector(candidate));
+
+std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " << std::rand() << std::endl;
 
 			debugl(2, "r_min: %5.4f", r_min);
 
@@ -1373,9 +1376,6 @@ NLM_CellNetwork<R>::partitionCell(
      * neurite of the cell and hence also for the neurites connected to soma s. */
     this->initializeNetworkInfo();
     this->updateNLMNetworkInfo();
-
-    /* get reference to NLM_SomaInfo for s. */
-    //NLM::SomaInfo<R> &s_info = s_it->soma_data;
 
     /* iterator over all neurites, represented by neurite root edges, of soma s. */
     std::list<NeuriteRootEdge *> s_neurite_root_edges;
@@ -3262,8 +3262,10 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 }
             }
 
-            flush_faces.sort(Mesh<Tm, Tv, Tf, R>::Face::ptr_less);
-            flush_faces.unique();
+            auto sortFct = [] (const typename Mesh<Tm, Tv, Tf, R>::Face* x, const typename Mesh<Tm, Tv, Tf, R>::Face* y) -> bool {return (x->id() < y->id());};
+            auto uniqueFct = [] (const typename Mesh<Tm, Tv, Tf, R>::Face* x, const typename Mesh<Tm, Tv, Tf, R>::Face* y) -> bool {return (x->id() == y->id());};
+            flush_faces.sort(sortFct);
+            flush_faces.unique(uniqueFct);
 
             /* invert face selection to get set of definitely not affected faces for all merging operations yet to
              * be performed. */
@@ -3350,7 +3352,8 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
             debugl(0, "choosing random phi_0 and generating initial mesh segment..\n");
 
             /* compute random angular offset phi_0 */
-            phi_0 = 0.0;//Aux::Numbers::frand(0.0, (2*(R)M_PI) / (R)this->meshing_canal_segment_n_phi_segments);
+            phi_0 = Aux::Numbers::frand(0.0, (2*(R)M_PI) / (R)this->meshing_canal_segment_n_phi_segments);
+std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
 
             /* clear path mesh */
             M_P.clear();
@@ -3455,6 +3458,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
 
                     /* if complex edge growth factor is too large, start new outer meshing iteration */
                     if (complex_edge_growth_factor > this->meshing_complex_edge_max_growth_factor) {
+                        std::cout << "Complex edge growth factor too large.\n";
                         radius_factor   = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
                         new_outer_iteration = true;
                         restore_M_cell      = true;
@@ -3534,11 +3538,13 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     */
                 }
                 catch (RedBlue_Ex_NumericalEdgeCase& numerical_ex) {
+                    std::cout << "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: numerical edge case => retry..\n";
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: numerical edge case => retry..\n");
                     new_outer_iteration = true;
                     restore_M_cell      = !numerical_ex.R_intact;
                 }
                 catch (RedBlue_Ex_Triangulation<R>& tri_ex) {
+                    std::cout << "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: error during triangulation of outside / inside polygons. => retry..\n";
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: error during triangulation of outside / inside polygons. => retry..\n");
 
                     /* decrease radius factor, but lower bound by radius_factor_safe_lb. */
@@ -3547,6 +3553,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     restore_M_cell      = !tri_ex.R_intact;
                 }
                 catch (RedBlue_Ex_NumIsecPoly& isecpoly_ex) {
+                    std::cout << "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: number of intersection polygons != 1.\n";
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: number of intersection polygons != 1.\n");
                     radius_factor       = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
                     new_outer_iteration = true;
@@ -3563,6 +3570,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
 
             /* if maximum number of inner meshing loop iterations has been reached, restart outer meshing loop. */
             if (inner_loop_iter == this->meshing_inner_loop_maxiter) {
+                std::cout << "inner meshing loop broken because maximum number of iterations has been reached => restart outer meshing loop.\n";
                 debugl(0, "inner meshing loop broken because maximum number of iterations has been reached => restart outer meshing loop.\n");
                 radius_factor   = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
                 new_outer_iteration = true;
