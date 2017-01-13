@@ -542,10 +542,8 @@ namespace NLM {
 
             /* check all candidates, pick alpha-permissible if possible, otherwise pick the best one if max_min is not
              * -inf */
-			debugl(3, "NeuritePath()::findPermissibleRenderVector(): current candidate: ");
-			#ifdef __DEBUG__
-			candidate.print();
-			#endif
+			debugl(3, "NeuritePath()::findPermissibleRenderVector(): current candidate: (%5.4f, %5.4f, %5.4f)",
+			    candidate[0], candidate[0], candidate[0]);
 
 			r_min = inf<R>();
 			for (auto &C : this->canal_segments_magnified)
@@ -3514,11 +3512,15 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                      * another iteration of the inner meshing loop is performed, which issues another RedBlueUnion call
                      * on the same initial mesh segment after splitting complex edges. */
                     /*
-                    tmp = M_cell;
-                    tmp.writeObjFile("M_cell_split");
+                    Mesh<Tm, Tv, Tf, R> tmp = M_cell;
+                    std::ostringstream oss1;
+                    oss1 << "M_cell_split_" << inner_loop_iter;
+                    tmp.writeObjFile(oss1.str().c_str());
 
                     tmp = M_P;
-                    tmp.writeObjFile("M_P_split");
+                    std::ostringstream oss2;
+                    oss2 << "M_P_split_" << inner_loop_iter;
+                    tmp.writeObjFile(oss2.str().c_str());
                     */
                 }
                 catch (RedBlue_Ex_NumericalEdgeCase& numerical_ex) {

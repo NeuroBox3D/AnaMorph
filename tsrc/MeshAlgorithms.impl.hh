@@ -1246,10 +1246,7 @@ RedBlue_generateRBTupleList(
                 RedBlue_EdgeIsecInfo<TR>(
                     /* red edge iff X_red == true */
                     X_red,
-                    /* vertex ids of the edge in the red mesh, in the ORIGINAL order, not sorted by orientation, since
-                     * lambda depends on the order. original order is {v, u}, which is confusing, since in the struct
-                     * its {u, v}, but well.. */
-                    v_it->id(), u_it->id(),
+                    u_it->id(), v_it->id(),
                     e_isec_lambdas)
                 );
         }
