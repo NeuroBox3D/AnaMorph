@@ -183,18 +183,18 @@ void BezierControlPolyConvexHull<deg, R>::compute
     cvhull.reserve(2*(size_t)deg+3);
 
 #ifdef __DEBUG__
-    debugl(1, "\n\n Computing convex hull of control polygon.. control points are:\n");
+    debugl(2, "\n\n Computing convex hull of control polygon.. control points are:\n");
     for (i = 0; i < (int)deg + 1; i++) {
-        debugl(0, "%2d: %+20.13E %+20.13E\n", i, (R)i / (R)deg, p[i]);
+        debugl(1, "%2d: %+20.13E %+20.13E\n", i, (R)i / (R)deg, p[i]);
     }
 #endif
 
-    debugl(1, "\n\n---------------------- Computing upper convex hull by scanning to the right from i = 0 to n\n");
+    debugl(2, "\n\n---------------------- Computing upper convex hull by scanning to the right from i = 0 to n\n");
     cvhull.push_back(Vec2(0.0, p[0]));
     i = 0;
     while (i < (int)deg)
     {
-        debugl(1, "scanning from i = %d to the right..\n", i);
+        debugl(2, "scanning from i = %d to the right..\n", i);
         max_slope       = -inf<R>();
         max_slope_idx   = i;
 
@@ -202,21 +202,21 @@ void BezierControlPolyConvexHull<deg, R>::compute
         * computing (delta(y)) / (delta x) */
         for (j = i+1; j < (int)deg + 1; j++) {
             tmp = ( (R)deg * (p[j] - p[i])) / (R)(j - i);
-            debugl(1, "slope between (%d, %d) = %f\n", i, j, tmp);
+            debugl(2, "slope between (%d, %d) = %f\n", i, j, tmp);
             if (fabs(tmp - max_slope) < eps_slope) {
-                debugl(1, "two candidates pairs with same slope: (%d, %d) and (%d, %d). choosing current index %d, which is farther away..\n", i, max_slope_idx, i, j, j);
+                debugl(2, "two candidates pairs with same slope: (%d, %d) and (%d, %d). choosing current index %d, which is farther away..\n", i, max_slope_idx, i, j, j);
                 max_slope       = tmp;
                 max_slope_idx   = j;
             }
             else if (tmp > max_slope) {
                 max_slope       = tmp;
                 max_slope_idx   = j;
-                debugl(1, "proper new max slope: max_slope = %f, max_slope_idx = %d\n", max_slope, max_slope_idx);
+                debugl(2, "proper new max slope: max_slope = %f, max_slope_idx = %d\n", max_slope, max_slope_idx);
             }
         }
 
         /* next point on convex hull is ( (max_slope_idx / n), p[max_slope_idx]) */
-        debugl(1, "\nscan finished. next i: %d\n", max_slope_idx);
+        debugl(2, "\nscan finished. next i: %d\n", max_slope_idx);
         i = max_slope_idx;
         cvhull.push_back( Vec2( (R)i / (R)deg, p[i]) );
     }
@@ -226,12 +226,12 @@ void BezierControlPolyConvexHull<deg, R>::compute
         throw("PolyAlgorithms::computeBezierControlPolyConvexHull(): internal logic error.");
     }
 
-    debugl(1, "\n\n---------------------- Upper convex hull done. Computing lower convex hull by scanning back from i = n to 0\n");
+    debugl(2, "\n\n---------------------- Upper convex hull done. Computing lower convex hull by scanning back from i = n to 0\n");
 
     /* construct "lower" convex hull, symmetric to above construction of the "upper" convex hull */
     i = deg;
     while (i > 0) {
-        debugl(1, "scanning from i = %d to the left..\n", i);
+        debugl(2, "scanning from i = %d to the left..\n", i);
         max_slope           = -inf<R>();
         max_slope_idx       = i;
 
@@ -239,14 +239,14 @@ void BezierControlPolyConvexHull<deg, R>::compute
         for (j = i - 1; j >= 0; j--) {
             tmp = ( (R)deg * (p[i] - p[j])) / (R)(i - j);
             if (fabs(tmp - max_slope) < eps_slope) {
-                debugl(1, "two candidate pairs with numerically equal slope (vectors from last point to both colinear): (%d, %d) and (%d, %d). choosing current index %d, which is farther away..\n", i, max_slope_idx, i, j, j);
+                debugl(2, "two candidate pairs with numerically equal slope (vectors from last point to both colinear): (%d, %d) and (%d, %d). choosing current index %d, which is farther away..\n", i, max_slope_idx, i, j, j);
                 max_slope       = tmp;
                 max_slope_idx   = j;
             }
             else if (tmp > max_slope) {
                 max_slope       = tmp;
                 max_slope_idx   = j;
-                debugl(1, "new proper max slope: max_slope = %f, max_slope_idx = %d\n", max_slope, max_slope_idx);
+                debugl(2, "new proper max slope: max_slope = %f, max_slope_idx = %d\n", max_slope, max_slope_idx);
             }
         }
 
@@ -255,7 +255,7 @@ void BezierControlPolyConvexHull<deg, R>::compute
         cvhull.push_back( Vec2( (R)i / (R)deg, p[i]) );
     }
 
-    debugl(1, "\n");
+    debugl(2, "\n");
 
     /* i == 0 here, and the first point (0.0, p[0]) has been inserted twice. pop it */
     cvhull.pop_back();
@@ -359,7 +359,7 @@ BezClip_getNewInterval(
             cp      = cpnext;
             cpnext  = pcvhull[i + 1];
         }
-        //debugl(1, "\n\n i: %d, cp = (%+20.13E, %+20.13E), cpnext = (%+20.13E, %+20.13E)\n", i, cp[0], cp[1], cpnext[0], cpnext[1]);
+        //debugl(2, "\n\n i: %d, cp = (%+20.13E, %+20.13E), cpnext = (%+20.13E, %+20.13E)\n", i, cp[0], cp[1], cpnext[0], cpnext[1]);
 
         /* if current point of convex hull has y coordinate that is smaller than eps_strip */
         if ( std::abs(cp[1]) < eps) {
@@ -370,7 +370,7 @@ BezClip_getNewInterval(
         /* otherwise, if both points have y coordinates > EPS in magnitude and there's an
          * intersection with the x axis */
         else if ( (cp[1] < -eps && cpnext[1] > -eps) || (cp[1] > eps && cpnext[1] < -eps) ) {
-            //debugl(1, "intersection between current and next point... ");
+            //debugl(2, "intersection between current and next point... ");
             /* not all points with EPSilon strip of x axis */
             pcvhull_subset_eps_strip = false;
 
@@ -394,12 +394,12 @@ BezClip_getNewInterval(
 
             }
 
-            //debugl(1, "(x0, y0) = (%+20.13E, %+20.13E), (x1, y1) = (%+20.13E, %+20.13E)\n", x0, y0, x1, y1);
+            //debugl(2, "(x0, y0) = (%+20.13E, %+20.13E), (x1, y1) = (%+20.13E, %+20.13E)\n", x0, y0, x1, y1);
 
             /* compute intersection x value  and update min/max zero value if necessary */
             tmp = x0 - (y0*(x1 - x0)) / (y1 - y0);
 
-            //debugl(1, "point of intersection: %+20.13E\n", tmp);
+            //debugl(2, "point of intersection: %+20.13E\n", tmp);
 
             if (tmp < xzero_min) {
                 xzero_min = tmp;
@@ -428,11 +428,11 @@ BezClip_getNewInterval(
          * there is no intersection here, moving along.. */
         else {
             //debugl("y: %+20.13E, ynext: %+20.13E. either (std::abs(y) < eps && std::abs(ynext) < eps) or ( (y > eps && ynext > eps) || (y < -eps && ynext < eps) )\n", cp[1], cpnext[1]);
-            //debugl(1, "no intersection or both y values < eps\n");
+            //debugl(2, "no intersection or both y values < eps\n");
         }
     }
 
-    //debugl(1, "nisect = %d, xzero_min: %+20.13E, xzero_max: %+20.13E\n", nisect, xzero_min, xzero_max);
+    //debugl(2, "nisect = %d, xzero_min: %+20.13E, xzero_max: %+20.13E\n", nisect, xzero_min, xzero_max);
 
     if (nisect > 2) {
         throw("BezClip_getNewInterval(): nisect > 2, this must never happen.\n");
@@ -442,7 +442,7 @@ BezClip_getNewInterval(
     /* if convex hull is contained in eps strip [0,1]x[-eps, eps], then so is the function itself.  this is indicated by
      * the bool pcvhull_subset_eps_strip */
     if (xzero_min < R_inf) {
-        //debugl(1, "xzero_min: %+20.13E, xzero_max: %+20.13E\n", xzero_min, xzero_max);
+        //debugl(2, "xzero_min: %+20.13E, xzero_max: %+20.13E\n", xzero_min, xzero_max);
         if (xzero_max == -R_inf) {
             throw("xzero_min < INF and xzero_max == -INF. must never happen\n");
         }
@@ -478,7 +478,7 @@ BezClip_roots(
         throw("BezClip_roots(): given alpha / beta not sensible or not within [0, 1]");
     }
 
-    debugl(1, "BezClip_roots(): welcome..\n");
+    debugl(2, "BezClip_roots(): welcome..\n");
 
     BernsteinPolynomial<deg, R, R> *proot = new BernsteinPolynomial<deg, R, R>(pinput);
 
@@ -486,16 +486,16 @@ BezClip_roots(
      * BernsteinPolynomial<deg, R, R>::split(). notice that p itself is given as an argument and is changed by
      * its own split method */
     if (alpha != 0.0 || beta != 1.0) {
-        debugl(1, "BezClip_roots(): alpha != 0.0 || beta != 1.0.. clipping interval to [0, 1]\n");
+        debugl(2, "BezClip_roots(): alpha != 0.0 || beta != 1.0.. clipping interval to [0, 1]\n");
 
         /* left part is irrelevant, pass NULL, p is modified in-place */
         if (alpha != 0.0) {
-            debugl(1, "BezClip_roots(): alpha = %+20.13E != 0.0\n", alpha);
+            debugl(2, "BezClip_roots(): alpha = %+20.13E != 0.0\n", alpha);
             proot->split(alpha, NULL, proot);
         }
         /* right part is irrelevant, pass NULL, p is modified in-place */
         if (beta != 1.0) {
-            debugl(1, "BezClip_roots(): beta  = %+20.13E != 1.0\n", beta);
+            debugl(2, "BezClip_roots(): beta  = %+20.13E != 1.0\n", beta);
             proot->split( (beta - alpha) / (1.0 - alpha), proot, NULL);
         }
     }
@@ -521,14 +521,14 @@ BezClip_roots(
 
         S.pop();
 
-        debugl(1, "------------- new triple for interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
+        debugl(2, "------------- new triple for interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
 
         /* while interval is relevant and keeps shrinking exponentially with a rate > 2 when new convex hull is 
          * intersected with the t-axis, keep going.. should that seize without convergence, break the loop and bisect
          * the interval */
         bool bisect  = false;
         while(1) {
-            debugl(1, "\n\n------------- interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
+            debugl(2, "\n\n------------- interval: [%+20.13E, %+20.13E], size: %+20.13E\n", left, right, std::abs(right - left));
             /* get convex hull */
             PolyAlg::BezierControlPolyConvexHull<deg, R>::compute(*p, pcvhull, 1E-10);
 
@@ -548,12 +548,12 @@ BezClip_roots(
                 R isize       = std::abs(right - left);
                 R new_isize   = std::abs(new_right - new_left);
 
-                debugl(1, "\n\n interval [%+20.13E, %+20.13E] relevant. new interval: [%+20.13E, %+20.13E], new_isize: %+20.13E\n\n", left, right, new_left, new_right, new_isize);
+                debugl(2, "\n\n interval [%+20.13E, %+20.13E] relevant. new interval: [%+20.13E, %+20.13E], new_isize: %+20.13E\n\n", left, right, new_left, new_right, new_isize);
 
                 /* check if the convex hull, and hence also the function, is bounded by strip of length 2EPS around the x-axis */
                 if (pcvhull_subset_eps_strip) {
-                    debugl(1, "convex hull of function subset of strip [0,1]x[-EPS,EPS] => function < EPS in magnitude everywhere in [0,1]. convergence..\n");
-                    debugl(1, "setting root interval:   [%+20.13E, %+20.13E]. f(left) = %+20.13E, f(right) = %+20.13E\n", new_left, new_right, pinput.eval(new_left), pinput.eval(new_right) );
+                    debugl(2, "convex hull of function subset of strip [0,1]x[-EPS,EPS] => function < EPS in magnitude everywhere in [0,1]. convergence..\n");
+                    debugl(2, "setting root interval:   [%+20.13E, %+20.13E]. f(left) = %+20.13E, f(right) = %+20.13E\n", new_left, new_right, pinput.eval(new_left), pinput.eval(new_right) );
                     roots.push_back( RealInterval<R>(new_left, new_right) );
                     break;
                 }
@@ -561,7 +561,7 @@ BezClip_roots(
                 else {
                     /* interval already small enough (i.e. converged)? if so, add new root and break */
                     if (new_isize < tol) {
-                        debugl(1, "found root interval: [%+20.13E, %+20.13E]. f(left) = %+20.13E, f(right) = %+20.13E\n", new_left, new_right, pinput.eval(new_left), pinput.eval(new_right) );
+                        debugl(2, "found root interval: [%+20.13E, %+20.13E]. f(left) = %+20.13E, f(right) = %+20.13E\n", new_left, new_right, pinput.eval(new_left), pinput.eval(new_right) );
                         roots.push_back( RealInterval<R>(new_left, new_right) );
                         break;
                     }
@@ -578,19 +578,19 @@ BezClip_roots(
                         /* has interval shrunk at least a factor of two? if so, keep going, otherwise,
                          * break loop and bisect below */
                         if (new_isize > 0.5*isize) {
-                            debugl(1, "interval hasn't shrunken by a factor of at least 2. subdividing..\n");
+                            debugl(2, "interval hasn't shrunken by a factor of at least 2. subdividing..\n");
                             bisect = true;
                             break;
                         }
                         else {
-                            debugl(1, "interval has shrunk by a factor of at least 2. keep shrinking..\n");
+                            debugl(2, "interval has shrunk by a factor of at least 2. keep shrinking..\n");
                         }
                     }
                 }
             }
             /* interval irrelevant, break the loop. */
             else {
-                debugl(1, "interval [%+20.13E, %+20.13E] irrelevant. moving along..\n", left, right);
+                debugl(2, "interval [%+20.13E, %+20.13E] irrelevant. moving along..\n", left, right);
                 break;
             }
         }
@@ -613,12 +613,12 @@ BezClip_roots(
                  * middle + tol/4], yet this interval is of size tol/2 and is guaranteed to contain
                  * a root, so this is more precise than the usual case, where different roots could
                  * be contained in one interval of size ~tol as well.. */
-                debugl(1, "found root           [%+20.13E], function value: %+20.13E at middle of bisected interval.. \n", middle, pmid);
+                debugl(2, "found root           [%+20.13E], function value: %+20.13E at middle of bisected interval.. \n", middle, pmid);
                 roots.push_back( RealInterval<R>(middle - tol4, middle + tol4) );
 
                 /* we need to know where to cut in [0, 1] */
                 R tol4rel = tol / (4.0 * (right - left));
-                debugl(1, "tol4rel: %+20.13E\n", tol4rel);
+                debugl(2, "tol4rel: %+20.13E\n", tol4rel);
 
                 /* split p twice, once at 0.5 - tol4rel, once at 0.5 + tol4rel */
                 p->split(0.5 - tol4rel, pleft , NULL);
@@ -629,7 +629,7 @@ BezClip_roots(
                 S.push( BezClip_Triple<deg, R>(p, middle + tol4, right        ) );
             }
             else {
-                debugl(1, "bisecting interval: [%+20.13E, %+20.13E] and [%+20.13E, %+20.13E]\n", left, middle, middle, right);
+                debugl(2, "bisecting interval: [%+20.13E, %+20.13E] and [%+20.13E, %+20.13E]\n", left, middle, middle, right);
 
                 /* bisect interval and initialize left and right bernstein polys */
                 p->split(0.5, pleft, p);
@@ -642,7 +642,7 @@ BezClip_roots(
         // delete old poly if no longer needed
         else delete p;
 
-        debugl(1, "\n\n");
+        debugl(2, "\n\n");
     }
 
     setDebugComponent(DBG_GLOBAL);
@@ -778,7 +778,7 @@ BiLinClip_linsolve(
 
     /* check if A[0][0], which now contains the element biggest in magnitude, is < eps */
     if ( std::abs(A[0][0]) < eps) {
-        debugl(0, "BiLinClip_linsolve(): std::abs(Amax) < eps => system singular.\n");
+        debugl(1, "BiLinClip_linsolve(): std::abs(Amax) < eps => system singular.\n");
         return BLC_LINSOLVE_SINGULAR;
     }
 
@@ -793,7 +793,7 @@ BiLinClip_linsolve(
     b[3][1] += tmp*b[3][0];
 
     if (std::abs(A[1][1]) < eps) {
-        debugl(1, "BiLinClip_linsolve(): std::abs(A[1][1]) < EPS after elimination. matrix singular\n");
+        debugl(2, "BiLinClip_linsolve(): std::abs(A[1][1]) < EPS after elimination. matrix singular\n");
         return BLC_LINSOLVE_SINGULAR;
     }
 
@@ -957,8 +957,8 @@ BiLinClip_getNewRectangle(
 
     /* ----------------- end of inlined function BiLinClip_computeBestLinearApprox ---------------------- */
 
-    debugl(1, "BiLinClip_getNewRectangle: p_l00 = %20.13E, p_l10 = %20.13E, p_l01 = %20.13E, delta_p = %20.13E\n", p_l00, p_l10, p_l01, delta_p);
-    debugl(1, "BiLinClip_getNewRectangle: q_l00 = %20.13E, q_l10 = %20.13E, q_l01 = %20.13E, delta_q = %20.13E\n", q_l00, q_l10, q_l01, delta_q);
+    debugl(2, "BiLinClip_getNewRectangle: p_l00 = %20.13E, p_l10 = %20.13E, p_l01 = %20.13E, delta_p = %20.13E\n", p_l00, p_l10, p_l01, delta_p);
+    debugl(2, "BiLinClip_getNewRectangle: q_l00 = %20.13E, q_l10 = %20.13E, q_l01 = %20.13E, delta_q = %20.13E\n", q_l00, q_l10, q_l01, delta_q);
 
     /* if neither alpha nor beta are frozen, try to solve intersection system for two fat lines.
      * that system can be singular because
@@ -994,9 +994,9 @@ BiLinClip_getNewRectangle(
         err = BiLinClip_linsolve(A, b, s, linsolve_eps);
 
         /* print */
-        debugl(1, "solutions back in BiLinClip_getNewRectangle(): \n");
+        debugl(2, "solutions back in BiLinClip_getNewRectangle(): \n");
         for (i = 0; i < 4; i++) {
-            debugl(1, "s(%d): (%f %f)\n", i, s[i][0], s[i][1]);
+            debugl(2, "s(%d): (%f %f)\n", i, s[i][0], s[i][1]);
         }
 
         /* solver returned success */
@@ -1023,12 +1023,12 @@ BiLinClip_getNewRectangle(
                 }
             }
 
-            debugl(1, "bounding box of parallelogram:                          [%10.5f (%20.13E), %10.5f (%20.13E)]x[%10.5f (%20.13E), %10.5f (%20.13E)]\n", s_xmin, s_xmin, s_xmax, s_xmax, s_ymin, s_ymin, s_ymax, s_ymax);
+            debugl(2, "bounding box of parallelogram:                          [%10.5f (%20.13E), %10.5f (%20.13E)]x[%10.5f (%20.13E), %10.5f (%20.13E)]\n", s_xmin, s_xmin, s_xmax, s_xmax, s_ymin, s_ymin, s_ymax, s_ymax);
 
             /* intersection is empty iff x interval doesnt intersect [0,1] or y intervals doesnt intersect
              * [0,1]. */
             if (s_xmax < 0.0 || s_xmin > 1.0 || s_ymax < 0.0 || s_ymin > 1.0) {
-                debugl(1, "setting rectangle to irrelevant.\n");
+                debugl(2, "setting rectangle to irrelevant.\n");
                 rectangle_relevant = false;
                 return;
             }
@@ -1070,31 +1070,31 @@ BiLinClip_getNewRectangle(
                     new_beta1   = beta1;
                 }
 
-                debugl(1, "relative: intersection of bounding box with [0,1]:      [%10.5f (%20.13E), %10.5f (%20.13E)]x[%10.5f (%20.13E), %10.5f (%20.13E)]\n", s_xmin, s_xmin, s_xmax, s_xmax, s_ymin, s_ymin, s_ymax, s_ymax);
-                debugl(1, "absolute: new rectangle in absolute coordinates [0,1]:  [%10.5f (%20.13E), %10.5f (%20.13E)]x[%10.5f (%20.13E), %10.5f (%20.13E)]\n", new_alpha0, new_alpha0, new_alpha1, new_alpha1, new_beta0, new_beta0, new_beta1, new_beta1);
-                debugl(1, "\n");
+                debugl(2, "relative: intersection of bounding box with [0,1]:      [%10.5f (%20.13E), %10.5f (%20.13E)]x[%10.5f (%20.13E), %10.5f (%20.13E)]\n", s_xmin, s_xmin, s_xmax, s_xmax, s_ymin, s_ymin, s_ymax, s_ymax);
+                debugl(2, "absolute: new rectangle in absolute coordinates [0,1]:  [%10.5f (%20.13E), %10.5f (%20.13E)]x[%10.5f (%20.13E), %10.5f (%20.13E)]\n", new_alpha0, new_alpha0, new_alpha1, new_alpha1, new_beta0, new_beta0, new_beta1, new_beta1);
+                debugl(2, "\n");
                 return;
             }
         }
         else if (err == BLC_LINSOLVE_SINGULAR) {
-            debugl(0, "BiLinClip_getNewRectangle(): intersection system for fat lines singular. checking if p or q best linear fit is parallel to xy plane...\n");
+            debugl(1, "BiLinClip_getNewRectangle(): intersection system for fat lines singular. checking if p or q best linear fit is parallel to xy plane...\n");
 
             tmp = std::max( std::abs(A[0][0]), std::abs(A[0][1]) );
             if (tmp < linsolve_eps) {
-                debugl(0, "p plane nearly parallel to xy plane => checking if bounding planes are both above or below xy-plane..\n");
+                debugl(1, "p plane nearly parallel to xy plane => checking if bounding planes are both above or below xy-plane..\n");
                 offset = p_l00 - p_l10 - p_l01;
                 if ( offset + delta_p < -eps) {
-                    debugl(0, "p + delta_p has offset %f < -1E-14 => interval irrelevant\n", offset + delta_p);
+                    debugl(1, "p + delta_p has offset %f < -1E-14 => interval irrelevant\n", offset + delta_p);
                     rectangle_relevant = false;
                     return;
                 }
                 else if ( offset - delta_p > eps) {
-                    debugl(0, "p - delta_p has offset %f > 1E-14 => interval irrelevant\n", offset - delta_p);
+                    debugl(1, "p - delta_p has offset %f > 1E-14 => interval irrelevant\n", offset - delta_p);
                     rectangle_relevant = false;
                     return;
                 }
                 else {
-                    debugl(0, "p bounding planes probably sandwhich xy plane, offset: (%f, %f) => assuming relevant. leaving alpha and beta interval as is => subdivision..\n", offset - delta_q, offset + delta_p);
+                    debugl(1, "p bounding planes probably sandwhich xy plane, offset: (%f, %f) => assuming relevant. leaving alpha and beta interval as is => subdivision..\n", offset - delta_q, offset + delta_p);
                     rectangle_relevant  = true;
                     new_alpha0          = alpha0;
                     new_alpha1          = alpha1;
@@ -1106,15 +1106,15 @@ BiLinClip_getNewRectangle(
 
             tmp = std::max( std::abs(A[1][0]), std::abs(A[1][1]) );
             if (tmp < linsolve_eps) {
-                debugl(0, "q plane nearly parallel to xy plane => checking if bounding planes are both above or below xy-plane..\n");
+                debugl(1, "q plane nearly parallel to xy plane => checking if bounding planes are both above or below xy-plane..\n");
                 offset = q_l00 - q_l10 - q_l01;
                 if ( offset + delta_q < -eps) {
-                    debugl(0, "q + delta_q has offset %f < -1E-14 => interval irrelevant\n", offset + delta_q);
+                    debugl(1, "q + delta_q has offset %f < -1E-14 => interval irrelevant\n", offset + delta_q);
                     rectangle_relevant = false;
                     return;
                 }
                 else if ( offset - delta_q > eps) {
-                    debugl(0, "q - delta_q has offset %f > 1E-14 => interval irrelevant\n", offset - delta_q);
+                    debugl(1, "q - delta_q has offset %f > 1E-14 => interval irrelevant\n", offset - delta_q);
                     rectangle_relevant = false;
                     return;
                 }
@@ -1124,7 +1124,7 @@ BiLinClip_getNewRectangle(
                     new_alpha1          = alpha1;
                     new_beta0           = beta0;
                     new_beta1           = beta1;
-                    debugl(0, "q bounding planes probably sandwhich xy plane, offset: (%f, %f) => assuming relevant. leaving alpha and beta interval as is => subdivision..\n", offset - delta_q, offset + delta_q);
+                    debugl(1, "q bounding planes probably sandwhich xy plane, offset: (%f, %f) => assuming relevant. leaving alpha and beta interval as is => subdivision..\n", offset - delta_q, offset + delta_q);
                     return;
                 }
             }
@@ -1201,7 +1201,7 @@ BiLinClip_getNewRectangle(
 
         /* if system is singular, set new size to infinity */
         if (err == BLC_LINSOLVE_SINGULAR) {
-            debugl(0, "system for p singular..\n");
+            debugl(1, "system for p singular..\n");
             p_singular  = true;
             p_newsize   = R_inf;
         }
@@ -1229,29 +1229,29 @@ BiLinClip_getNewRectangle(
             /* compute new interval size */
             p_newsize   = p_newmax - p_newmin;
 
-            debugl(1, "p fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
+            debugl(2, "p fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
                     free_axis_name, p_newmin, p_newmin, p_newmax, p_newmax, p_newsize, p_newsize);
 
             /* determine if there is an intersectino with [0,1] */
             if (p_newmin > 1.0 || p_newmax < 0.0) {
-                debugl(1, "new %s interval does not intersect [0,1] -> discard rectangle.\n", free_axis_name);
+                debugl(2, "new %s interval does not intersect [0,1] -> discard rectangle.\n", free_axis_name);
                 rectangle_relevant = false;
                 return;
             }
             /* there is an intersection, perform intersection and set newsize variable */
             else {
                 rectangle_relevant = true;
-                debugl(1, "new %s interval intersects [0,1] -> rectangle potentially relevant.\n", free_axis_name);
+                debugl(2, "new %s interval intersects [0,1] -> rectangle potentially relevant.\n", free_axis_name);
                 if (p_newmin < 0.0) p_newmin = 0.0;
                 if (p_newmax > 1.0) p_newmax = 1.0;
 
                 p_newsize = p_newmax - p_newmin;
 
-                debugl(1, "p fat line: intersection with [0,1]:        [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
+                debugl(2, "p fat line: intersection with [0,1]:        [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
                         p_newmin, p_newmin, p_newmax, p_newmax, p_newsize, p_newsize);
             }
 
-            debugl(1, "p fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
+            debugl(2, "p fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
                     free_axis_name, p_newmin, p_newmin, p_newmax, p_newmax, p_newsize, p_newsize);
 
         }
@@ -1288,7 +1288,7 @@ BiLinClip_getNewRectangle(
 
         /* if system is singular, set new size to infinity */
         if (err == BLC_LINSOLVE_SINGULAR) {
-            debugl(0, "system for q singular..\n");
+            debugl(1, "system for q singular..\n");
             q_singular  = true;
             q_newsize   = R_inf;
         }
@@ -1315,34 +1315,34 @@ BiLinClip_getNewRectangle(
             /* compute new interval size */
             q_newsize   = q_newmax - q_newmin;
 
-            debugl(1, "q fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
+            debugl(2, "q fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
                     free_axis_name, q_newmin, q_newmin, q_newmax, q_newmax, q_newsize, q_newsize);
 
             /* determine if there is an intersectino with [0,1] */
             if (q_newmin > 1.0 || q_newmax < 0.0) {
-                debugl(1, "new %s interval does not intersect [0,1] -> discard rectangle.\n", free_axis_name);
+                debugl(2, "new %s interval does not intersect [0,1] -> discard rectangle.\n", free_axis_name);
                 rectangle_relevant = false;
                 return;
             }
             /* there is an intersection, perform intersection and set newsize variable */
             else {
                 rectangle_relevant = true;
-                debugl(1, "new %s interval intersectds [0,1] -> rectangle potentially relevant.\n", free_axis_name);
+                debugl(2, "new %s interval intersectds [0,1] -> rectangle potentially relevant.\n", free_axis_name);
                 if (q_newmin < 0.0) q_newmin = 0.0;
                 if (q_newmax > 1.0) q_newmax = 1.0;
 
                 q_newsize = q_newmax - q_newmin;
 
-                debugl(1, "q fat line: intersection with [0,1]:        [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
+                debugl(2, "q fat line: intersection with [0,1]:        [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
                         q_newmin, q_newmin, q_newmax, q_newmax, q_newsize, q_newsize);
             }
 
-            debugl(1, "q fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
+            debugl(2, "q fat line: new %s interval              [%f (%20.13E), %f (%20.13E)], size: %f (%20.13E)\n",
                     free_axis_name, q_newmin, q_newmin, q_newmax, q_newmax, q_newsize, q_newsize);
 
         }
 
-        debugl(1, "\n");
+        debugl(2, "\n");
 
         /* compute new interval if possible */
         if (!p_singular || !q_singular) {
@@ -1352,12 +1352,12 @@ BiLinClip_getNewRectangle(
 
                 /* take the better of the two */
                 if (p_newsize < q_newsize) {
-                    debugl(1, "comitting new beta interval from p fat line..\n");
+                    debugl(2, "comitting new beta interval from p fat line..\n");
                     new_beta0  = beta0 + (p_newmin * dbeta);
                     new_beta1  = beta0 + (p_newmax * dbeta);
                 }
                 else {
-                    debugl(1, "comitting new beta interval from q fat line..\n");
+                    debugl(2, "comitting new beta interval from q fat line..\n");
                     new_beta0  = beta0 + (q_newmin * dbeta);
                     new_beta1  = beta0 + (q_newmax * dbeta);
                 }
@@ -1368,12 +1368,12 @@ BiLinClip_getNewRectangle(
 
                 /* take the better of the two */
                 if (p_newsize < q_newsize) {
-                    debugl(1, "comitting new alpha interval from p fat line..\n");
+                    debugl(2, "comitting new alpha interval from p fat line..\n");
                     new_alpha0  = alpha0 + (p_newmin * dalpha);
                     new_alpha1  = alpha0 + (p_newmax * dalpha);
                 }
                 else {
-                    debugl(1, "comitting new alpha interval from q fat line..\n");
+                    debugl(2, "comitting new alpha interval from q fat line..\n");
                     new_alpha0  = alpha0 + (q_newmin * dalpha);
                     new_alpha1  = alpha0 + (q_newmax * dalpha);
                 }
@@ -1416,14 +1416,14 @@ BiLinClip_getApproximationData(
     // recompute if necessary and dynamic_recomputation == true
     if (firstCall)
     {
-        debugl(0, "BiLinClip_getApproximationData(): recomputing approximation data for pair (deg1, deg2) = (%d, %d).\n", deg1, deg2);
+        debugl(1, "BiLinClip_getApproximationData(): recomputing approximation data for pair (deg1, deg2) = (%d, %d).\n", deg1, deg2);
 
         BernsteinPolynomial<deg1, R, R> legendrePolBB1_0;
         BernsteinPolynomial<deg1, R, R> legendrePolBB1_1;
         BernsteinPolynomial<deg2, R, R> legendrePolBB2_0;
         BernsteinPolynomial<deg2, R, R> legendrePolBB2_1;
 
-        debugl(1, "initLegendrePolynomialsBB(): initializing univariate and bivariate shifted Legendre polynomials in Bernstein-Bezier basis... \n");
+        debugl(2, "initLegendrePolynomialsBB(): initializing univariate and bivariate shifted Legendre polynomials in Bernstein-Bezier basis... \n");
         fflush(stdout);
 
         R sign;
@@ -1520,21 +1520,21 @@ BiLinClip_getApproximationData(
                             LegendreBiPolBB10(k, l) *
                             BernsteinPolynomial<deg1, R, R>::getBernsteinBasisInnerProduct(i, k) *
                             BernsteinPolynomial<deg2, R, R>::getBernsteinBasisInnerProduct(j, l);
-                        debugl(1, "\tA10(%u,%u) += %f * %f * %f\n", i, j,
+                        debugl(2, "\tA10(%u,%u) += %f * %f * %f\n", i, j,
                             LegendreBiPolBB10(k, l),
                             BernsteinPolynomial<deg1, R, R>::getBernsteinBasisInnerProduct(i, k),
                             BernsteinPolynomial<deg2, R, R>::getBernsteinBasisInnerProduct(j, l));
                     }
                 }
 
-                debugl(1, "A10(%u,%u) = %f\n", i, j, LegendreBiApproximantMatrix10(i, j));
+                debugl(2, "A10(%u,%u) = %f\n", i, j, LegendreBiApproximantMatrix10(i, j));
             }
         }
 
         /* set dynamic recomputation flag after update */
         firstCall = false;
 
-        debugl(0, "BiLinClip_getApproximationData(): approximation data computed for pair (m, n) = (%d, %d).\n", deg1, deg2);
+        debugl(1, "BiLinClip_getApproximationData(): approximation data computed for pair (m, n) = (%d, %d).\n", deg1, deg2);
     }
 
     /* if no exception has been thrown due to disabled dynamic recomputation, all approximation data has already been
@@ -1548,7 +1548,7 @@ BiLinClip_getApproximationData(
     if (BiLinClip_A01) *BiLinClip_A01 = &LegendreBiApproximantMatrix01;
     if (BiLinClip_A10) *BiLinClip_A10 = &LegendreBiApproximantMatrix10;
 
-    debugl(1, "done.\n");
+    debugl(2, "done.\n");
 }
 
 /* NOTE: original algorithm again: diameter is numerically flawed as a metric,
@@ -1625,7 +1625,7 @@ BiLinClip_roots(
     }
 
     /* extract precomputed data for relevant bidegree (deg1, deg2) if it does not match last seen bidegree */
-    debugl(1, "BiLiClip_roots(): (deg1, deg2) = (%d, %d). fetching precomputed approximation data..\n", deg1, deg2);
+    debugl(2, "BiLiClip_roots(): (deg1, deg2) = (%d, %d). fetching precomputed approximation data..\n", deg1, deg2);
 
     const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L00;
     const BiBernsteinPolynomial<deg1, deg2, R, R>* BiLinClip_L10;
@@ -1654,12 +1654,12 @@ BiLinClip_roots(
     /* check if input domain is PRECISELY [0,1]^2 (yes, bitwise), for generally this will be the
      * case and we don't need to cut around with deCasteljau to rescale to [0,1]^2 */
     if (alpha0_input != 0.0 || alpha1_input != 1.0 || beta0_input != 0.0 || beta1_input != 1.0) {
-        debugl(1, "BiLiClip_roots(): input domain not [0,1]^2. cutting with deCasteljau\n");
+        debugl(2, "BiLiClip_roots(): input domain not [0,1]^2. cutting with deCasteljau\n");
         proot->clipToInterval(alpha0_input, alpha1_input, beta0_input, beta1_input, proot);
         qroot->clipToInterval(alpha0_input, alpha1_input, beta0_input, beta1_input, qroot);
     }
     else {
-        debugl(1, "BiLiClip_roots(): input domain [0,1]^2: fine..\n");
+        debugl(2, "BiLiClip_roots(): input domain [0,1]^2: fine..\n");
     }     
 
     std::list<BiLinClip_Tuple<deg1, deg2, R> >   S;
@@ -1712,7 +1712,7 @@ BiLinClip_roots(
         depth           = T.depth;
 
         S.pop_back();
-        debugl(1, "Popped another element from queue (%zd remaining).\n", S.size());
+        debugl(2, "Popped another element from queue (%zd remaining).\n", S.size());
 
         /* reset flags */
         subdivide       = false;
@@ -1728,7 +1728,7 @@ BiLinClip_roots(
             if (use_blacklist) {
                 for (auto &br : *blacklist) {
                     if (current_rectangle.subset(br)) {
-                        debugl(1, "---------- DEPTH: %d -- rectangle: [%20.13E:%20.13E]x[%20.13E:%23.10E] --- dalpha: %20.13E, dbeta: %20.13E -- AR: %20.13E -- BLACKLISTED => setting to irrelevant.\n",
+                        debugl(2, "---------- DEPTH: %d -- rectangle: [%20.13E:%20.13E]x[%20.13E:%23.10E] --- dalpha: %20.13E, dbeta: %20.13E -- AR: %20.13E -- BLACKLISTED => setting to irrelevant.\n",
                             depth, alpha0, alpha1, beta0, beta1, (alpha1 - alpha0), (beta1 - beta0),
                             std::max( (alpha1 - alpha0) / (beta1 - beta0), (beta1 - beta0) / (alpha1 - alpha0) ) );
 
@@ -1755,16 +1755,16 @@ BiLinClip_roots(
 
                 /* if rectangle ar is too large, freeze larger dimension variable */
                 if (rec_ar > rec_armax) {
-                    debugl(2, "AR: %f: maximum aspect %f ratio exceeded.... ", rec_ar, rec_armax);
+                    debugl(3, "AR: %f: maximum aspect %f ratio exceeded.... ", rec_ar, rec_armax);
                     /* freeze alpha / x */
                     if (rec_width > rec_height) {
-                        debugl(2, "freezing beta.\n\n");
+                        debugl(3, "freezing beta.\n\n");
                         alpha_frozen    = false;
                         beta_frozen     = true;
                     }
                     /* freeze beta / y */
                     else {
-                        debugl(2, "freezing alpha.\n\n");
+                        debugl(3, "freezing alpha.\n\n");
                         alpha_frozen    = true;
                         beta_frozen     = false;
                     }
@@ -1810,7 +1810,7 @@ BiLinClip_roots(
                     new_dalpha  = (new_alpha1 - new_alpha0);
                     new_dbeta   = (new_beta1 - new_beta0);
 
-                    debugl(1, "interval relevant: old interval sizes: (%20.13E)x(%20.13E), new interval sizes: (%20.13E)x(%20.13E)\n", dalpha, dbeta, new_dalpha, new_dbeta);
+                    debugl(2, "interval relevant: old interval sizes: (%20.13E)x(%20.13E), new interval sizes: (%20.13E)x(%20.13E)\n", dalpha, dbeta, new_dalpha, new_dbeta);
 
                     /* check if alpha or beta intervals have converged and freeze if so */
                     if (new_dalpha < tol) {
@@ -1824,7 +1824,7 @@ BiLinClip_roots(
 
                     /* check for convergence */
                     if (alpha_converged && beta_converged) {
-                        debugl(1, "found root rectangle in depth %2d: [%20.13E, %20.13E]x[%20.13E, %20.13E]. p(midpoint) = %20.13E, q(midpoint) = %20.13E\n",
+                        debugl(2, "found root rectangle in depth %2d: [%20.13E, %20.13E]x[%20.13E, %20.13E]. p(midpoint) = %20.13E, q(midpoint) = %20.13E\n",
                                 depth + 1, new_alpha0, new_alpha1, new_beta0, new_beta1,
                                 pinput.eval( (new_alpha0 + new_alpha1) / 2.0, (new_beta0 + new_beta1) / 2.0),
                                 qinput.eval( (new_alpha0 + new_alpha1) / 2.0, (new_beta0 + new_beta1) / 2.0)
@@ -1852,14 +1852,14 @@ BiLinClip_roots(
                         /* check shrink factor. not via diameter, but via reduction of area. for a
                          * square, halfing the diameter amounts to quartering the area, so, as a
                          * heuristic setting, take this condition */
-                        debugl(1, "area shrink factor: %f\n", (new_dalpha / dalpha) * (new_dbeta / dbeta));
+                        debugl(2, "area shrink factor: %f\n", (new_dalpha / dalpha) * (new_dbeta / dbeta));
                         if ( (new_dalpha / dalpha) * (new_dbeta / dbeta) > 0.9) {
-                            debugl(1, "rectangle area hasn't shrunk by a factor of at least four... subdividing.\n");
+                            debugl(2, "rectangle area hasn't shrunk by a factor of at least four... subdividing.\n");
                             subdivide = true;
                             break;
                         }
                         else {
-                            debugl(1, "rectangle area has shrunk by a factor of at least four... keep shrinking..\n");
+                            debugl(2, "rectangle area has shrunk by a factor of at least four... keep shrinking..\n");
                             depth++;
                         }
                     }
@@ -1879,7 +1879,7 @@ BiLinClip_roots(
 
                         /* both converged => got a root */
                         if (alpha_converged) {
-                            debugl(1, "found root rectangle in depth %2d: [%20.13E, %20.13E]x[%20.13E, %20.13E]. p(midpoint) = %20.13E, q(midpoint) = %20.13E\n",
+                            debugl(2, "found root rectangle in depth %2d: [%20.13E, %20.13E]x[%20.13E, %20.13E]. p(midpoint) = %20.13E, q(midpoint) = %20.13E\n",
                                     depth + 1, alpha0, alpha1, new_beta0, new_beta1,
                                     pinput.eval( (alpha0 + alpha1) / 2.0, (new_beta0 + new_beta1) / 2.0),
                                     qinput.eval( (alpha0 + alpha1) / 2.0, (new_beta0 + new_beta1) / 2.0)
@@ -1895,7 +1895,7 @@ BiLinClip_roots(
                          * interval values, including the restriction of p and q to the new, final
                          * values for beta */
                         else {
-                            debugl(1, "beta converged, alpha not converged but frozen => unfreezing alpha.\n");
+                            debugl(2, "beta converged, alpha not converged but frozen => unfreezing alpha.\n");
                             alpha_frozen    = false;
 
                             pinput.clipToInterval(alpha0, alpha1, new_beta0, new_beta1, p);
@@ -1920,12 +1920,12 @@ BiLinClip_roots(
                         /* check shrink factor. if beta interval has shrunk by a factor at least
                          * two, keep going, otherwise subdivide */
                         if ( new_dbeta / dbeta > 0.5) {
-                            debugl(1, "beta shrink factor: %f. alpha frozen and beta interval hasn't shrunk by a factor of at least two... subdividing.\n", new_dbeta / dbeta);
+                            debugl(2, "beta shrink factor: %f. alpha frozen and beta interval hasn't shrunk by a factor of at least two... subdividing.\n", new_dbeta / dbeta);
                             subdivide = true;
                             break;
                         }
                         else {
-                            debugl(1, "beta shrink factor: %f. alpha frozen and beta interval has shrunk by a factor at least two... keep shrinking.\n", new_dbeta / dbeta);
+                            debugl(2, "beta shrink factor: %f. alpha frozen and beta interval has shrunk by a factor at least two... keep shrinking.\n", new_dbeta / dbeta);
                             depth++;
                         }
                     }
@@ -1940,13 +1940,13 @@ BiLinClip_roots(
                     /* if alpha has converged, it MUST be frozen. check if beta interval has
                      * converged as well. if so, we got a root. if not, beta must be unfrozen */
                     if (new_dalpha < tol) {
-                        debugl(1, "alpha converged, new_dalpha = %20.13E\n", new_dalpha);
+                        debugl(2, "alpha converged, new_dalpha = %20.13E\n", new_dalpha);
                         alpha_converged  = true;
                         alpha_frozen     = true;
 
                         /* both converged => got a root */
                         if (beta_converged) {
-                            debugl(1, "found root rectangle in depth %2d: [%20.13E, %20.13E]x[%20.13E, %20.13E]. p(midpoint) = %20.13E, q(midpoint) = %20.13E\n",
+                            debugl(2, "found root rectangle in depth %2d: [%20.13E, %20.13E]x[%20.13E, %20.13E]. p(midpoint) = %20.13E, q(midpoint) = %20.13E\n",
                                     depth + 1, alpha0, alpha1, new_beta0, new_beta1,
                                     p->eval( (alpha0 + alpha1) / 2.0, (new_beta0 + new_beta1) / 2.0),
                                     q->eval( (alpha0 + alpha1) / 2.0, (new_beta0 + new_beta1) / 2.0)
@@ -1962,7 +1962,7 @@ BiLinClip_roots(
                          * interval values, including the restriction of p and q to the new, final
                          * values for alpha */
                         else {
-                            debugl(1, "alpha converged, yet beta not converged but frozen => unfreezing beta.\n");
+                            debugl(2, "alpha converged, yet beta not converged but frozen => unfreezing beta.\n");
 
                             beta_frozen     = false;
 
@@ -1988,12 +1988,12 @@ BiLinClip_roots(
                         /* check shrink factor. if alpha interval has shrunk by a factor at least
                          * two, keep going, otherwise subdivide */
                         if ( new_dalpha / dalpha > 0.5) {
-                            debugl(1, "alpha shrink factor: %f. beta frozen and alpha interval hasn't shrunk by a factor of at least two... subdividing.\n", new_dalpha / dalpha);
+                            debugl(2, "alpha shrink factor: %f. beta frozen and alpha interval hasn't shrunk by a factor of at least two... subdividing.\n", new_dalpha / dalpha);
                             subdivide = true;
                             break;
                         }
                         else {
-                            debugl(1, "alpha shrink factor: %f. beta frozen and alpha interval has shrunk by a factor at least two... keep shrinking.\n", new_dalpha / dalpha);
+                            debugl(2, "alpha shrink factor: %f. beta frozen and alpha interval has shrunk by a factor at least two... keep shrinking.\n", new_dalpha / dalpha);
                             depth++;
                         }
                     }
@@ -2008,7 +2008,7 @@ BiLinClip_roots(
             /* current rectangle irrelevant, break the loop. here, subdivide is still false, hence polynomials
              * p and q are deleted and this branch of the search tree is left */
             else {
-                debugl(1, "current rectangle [%f, %f]x[%f, %f] in depth %d irrelevant. moving along..\n", alpha0, alpha1, beta0, beta1, depth);
+                debugl(2, "current rectangle [%f, %f]x[%f, %f] in depth %d irrelevant. moving along..\n", alpha0, alpha1, beta0, beta1, depth);
                 break;
             }
         }
@@ -2045,9 +2045,9 @@ BiLinClip_roots(
                  * routine itself.. */
                 R pval = p->eval(0.5, 0.5);
                 R qval = q->eval(0.5, 0.5);
-                debugl(1, "subdividing: p(midpoint) = %f, q(midpoint) = %f\n", pval, qval);
+                debugl(2, "subdividing: p(midpoint) = %f, q(midpoint) = %f\n", pval, qval);
                 if ( std::abs(pval) < eps && std::abs(qval) < eps) {
-                    debugl(0, "found root at midpoint of rectangle [%f, %f]x[%f, %f] to be subdividied.\n", alpha0, alpha1, beta0, beta1);
+                    debugl(1, "found root at midpoint of rectangle [%f, %f]x[%f, %f] to be subdividied.\n", alpha0, alpha1, beta0, beta1);
                 }
 
                 /* split with deCasteljau at (0.5, 0.5) */

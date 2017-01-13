@@ -355,7 +355,7 @@ PowerPolynomial<F, R>::initPowerBasisInnerProducts(uint32_t max_dim)
         uint32_t alloc_dim = std::max(max_dim, POWERPOLY_BASIS_IP_DEFAULT_SIZE);
         power_basis_inner_products.resize( { alloc_dim + 1, alloc_dim + 1 } );
 
-        debugl(0, "(static) PowerPolynomial::initPowerBasisInnerProducts(): alloc_dim: %u\n", alloc_dim);
+        debugl(1, "(static) PowerPolynomial::initPowerBasisInnerProducts(): alloc_dim: %u\n", alloc_dim);
 
         for (uint32_t i = 0; i < alloc_dim + 1; i++) {
             for (uint32_t j = 0; j < alloc_dim + 1; j++) {
@@ -366,7 +366,7 @@ PowerPolynomial<F, R>::initPowerBasisInnerProducts(uint32_t max_dim)
         power_basis_inner_products_max_dim  = alloc_dim;
         recompute                           = false;
 
-        debugl(0, "(static) PowerPolynomial::initPowerBasisInnerProducts(): done..\n");
+        debugl(1, "(static) PowerPolynomial::initPowerBasisInnerProducts(): done..\n");
     }
 }
 
@@ -378,7 +378,7 @@ PowerPolynomial<F, R>::computePowerBasisInnerProduct(
     uint32_t i,  
     uint32_t j)
 {
-    debugl(4, "PowerPolynomial()::computePowerBasisInnerProduct(%d, %d)\n", i, j);
+    debugl(5, "PowerPolynomial()::computePowerBasisInnerProduct(%d, %d)\n", i, j);
 
     /* int_0^1{x^{i+j}dx}  = 1 / (i+j+1)*/
     return ( (F)1 / ((F)(i + j + 1)) );
@@ -840,7 +840,7 @@ BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(uint32_t max_dim)
         /* calculate allocation dimension, never less than default dimension */
         uint32_t alloc_dim = std::max(max_dim, BERNSTEINPOLY_BASIS_IP_DEFAULT_SIZE);
 
-        debugl(0, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): alloc_dim: %u\n", alloc_dim);
+        debugl(1, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): alloc_dim: %u\n", alloc_dim);
 
         /* resize 4d inner product tensor */
         BernsteinPolynomial<F, R>::bernstein_basis_inner_products.resize(
@@ -853,7 +853,7 @@ BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(uint32_t max_dim)
             for (uint32_t n = 0; n < alloc_dim + 1; n++) {
                 for (uint32_t i = 0; i < m + 1; i++) {
                     for (uint32_t j = 0; j < n + 1; j++) {
-                        debugl(4, "computing basis polynomial inner product element (%3d, %3d, %3d, %3d).\n", m, n, i, j);
+                        debugl(5, "computing basis polynomial inner product element (%3d, %3d, %3d, %3d).\n", m, n, i, j);
                         BernsteinPolynomial<F, R>::bernstein_basis_inner_products( {m, n, i, j} )
                             = BernsteinPolynomial<F, R>::computeBernsteinBasisInnerProduct(m, n, i, j);
                     }
@@ -865,7 +865,7 @@ BernsteinPolynomial<F, R>::initBernsteinBasisInnerProducts(uint32_t max_dim)
         /* write new allocated dimension back to caller */
         BernsteinPolynomial<F, R>::bernstein_basis_inner_products_max_dim = alloc_dim;
 
-        debugl(0, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): done..\n");
+        debugl(1, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): done..\n");
     }
 }
 
@@ -882,7 +882,7 @@ BernsteinPolynomial<F, R>::computeBernsteinBasisInnerProduct(
         uint32_t j)
 {
     using Aux::Numbers::bicof;
-    debugl(4, "BernsteinPolynomial()::computeBasisInnerProduct(%d, %d, %d, %d)\n", m, n, i, j);
+    debugl(5, "BernsteinPolynomial()::computeBasisInnerProduct(%d, %d, %d, %d)\n", m, n, i, j);
 
     /* instead of SFINAE, use this (in my humble opinion much more readable) way of distinguishing
      * between different types. this has the advantage that the method type signature or return type
@@ -1574,7 +1574,7 @@ Polynomial<degree, F, R>::PrintCoeffImpl<float, float, dummy>::PrintCoeffImpl
         strncat(s, tmp, 256);
     }
     strncat(s, "]\n", 2);
-    debugl(0, "%s", s);
+    debugl(1, "%s", s);
 }
 
 template <uint32_t degree, typename F, typename R>
@@ -1592,7 +1592,7 @@ Polynomial<degree, F, R>::PrintCoeffImpl<double, double, dummy>::PrintCoeffImpl
         strncat(s, tmp, 256);
     }
     strncat(s, "]\n", 2);
-    debugl(0, "%s", s);
+    debugl(1, "%s", s);
     printf("%s", s);
 }
 
@@ -1667,7 +1667,7 @@ PowerPolynomial<degree, F, R>::initPowerBasisInnerProducts()
 
     if (recompute)
     {
-        debugl(1, "(static) PowerPolynomial::initPowerBasisInnerProducts(): degree %u\n", degree);
+        debugl(2, "(static) PowerPolynomial::initPowerBasisInnerProducts(): degree %u\n", degree);
         debugTabInc();
 
         for (uint32_t i = 0; i < degree + 1; ++i)
@@ -1677,7 +1677,7 @@ PowerPolynomial<degree, F, R>::initPowerBasisInnerProducts()
         recompute = false;
 
         debugTabDec();
-        debugl(1, "(static) PowerPolynomial::initPowerBasisInnerProducts(): done..\n");
+        debugl(2, "(static) PowerPolynomial::initPowerBasisInnerProducts(): done..\n");
     }
 }
 
@@ -1687,7 +1687,7 @@ template <uint32_t degree, typename F, typename R>
 F
 PowerPolynomial<degree, F, R>::computePowerBasisInnerProduct(uint32_t i, uint32_t j)
 {
-    debugl(4, "PowerPolynomial()::computePowerBasisInnerProduct(%d, %d)\n", i, j);
+    debugl(5, "PowerPolynomial()::computePowerBasisInnerProduct(%d, %d)\n", i, j);
     return (F)1 / (F)(i + j + 1);
 }
 
@@ -1947,7 +1947,7 @@ BernsteinPolynomial<degree, F, R>::initBernsteinBasisInnerProducts()
     // initialize if necessary
     if (recompute)
     {
-        debugl(1, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): degree %u\n", degree);
+        debugl(2, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): degree %u\n", degree);
         debugTabInc();
 
         for (uint32_t i = 0; i < degree + 1; ++i)
@@ -1957,7 +1957,7 @@ BernsteinPolynomial<degree, F, R>::initBernsteinBasisInnerProducts()
         recompute = false;
 
         debugTabDec();
-        debugl(0, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): done..\n");
+        debugl(1, "(static) BernsteinPolynomial::initBernsteinBasisInnerProducts(): done..\n");
     }
 }
 
@@ -1970,7 +1970,7 @@ F
 BernsteinPolynomial<degree, F, R>::computeBernsteinBasisInnerProduct(uint32_t i, uint32_t j)
 {
     using Aux::Numbers::bicof;
-    debugl(4, "BernsteinPolynomial()::computeBasisInnerProduct(%d, %d, %d, %d)\n", degree, degree, i, j);
+    debugl(5, "BernsteinPolynomial()::computeBasisInnerProduct(%d, %d, %d, %d)\n", degree, degree, i, j);
 
     /* instead of SFINAE, use this (in my humble opinion much more readable) way of distinguishing
      * between different types. this has the advantage that the method type signature or return type

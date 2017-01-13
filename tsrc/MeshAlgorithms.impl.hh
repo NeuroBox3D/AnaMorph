@@ -374,7 +374,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
     using namespace Aux::Timing;
     tick(12);
 
-    debugl(1, "MeshAlg::getPotentialEdgeFacePairs(): max_components: %5d, max_recursion_depth: %5d.\n", max_components, max_recursion_depth);
+    debugl(2, "MeshAlg::getPotentialEdgeFacePairs(): max_components: %5d, max_recursion_depth: %5d.\n", max_components, max_recursion_depth);
     debugTabInc();
 
     /* get bounding box surrounding both X and Y */
@@ -393,7 +393,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
     std::vector<std::pair<FaceType*, FaceType*> > candidate_pairs;
 
     /* call recursive top-down spatial intersection algorithm */
-    debugl(0, "MeshAlg::getPotentialEdgeFacePairs(): calling Aux::Geometry::computeSpatialIntersectionCandidatePairs().\n");
+    debugl(1, "MeshAlg::getPotentialEdgeFacePairs(): calling Aux::Geometry::computeSpatialIntersectionCandidatePairs().\n");
     Aux::Timing::tick(16);
 
     Aux::Geometry::computeSpatialIntersectionCandidatePairs<FaceType*, FaceType*, R>
@@ -406,7 +406,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
         candidate_pairs
     );
 
-    debugl(0, "MeshAlg::getPotentialEdgeFacePairs(): done. time: %5.4f\n", Aux::Timing::tack(16));
+    debugl(1, "MeshAlg::getPotentialEdgeFacePairs(): done. time: %5.4f\n", Aux::Timing::tack(16));
 
     /* sort() and unique() candidate pairs. NOTE: comparison operators "<" and ">" are only well-defined for pointers if
      * certain criteria are met (see § 5.9 of the C++11 standard for further details), the cleanest and safest way is to
@@ -429,7 +429,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
     auto newPairEnd = std::unique(candidate_pairs.begin(), candidate_pairs.end());
     candidate_pairs.erase(newPairEnd, candidate_pairs.end());
 
-    debugl(1, "returned candidate pairs: %d\n", candidate_pairs.size());
+    debugl(2, "returned candidate pairs: %d\n", candidate_pairs.size());
 
     /* compute result from all pairs of potentially intersecting faces from X and Y */
     typename Mesh<Tm, Tv, Tf, R>::Face     *X_face, *Y_face;
@@ -485,7 +485,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
 
     debugTabDec();
 
-    debugl(1, "Mesh::getPotentialEdgeFacePairs(): time: %5.4f\n", tack(12));
+    debugl(2, "Mesh::getPotentialEdgeFacePairs(): time: %5.4f\n", tack(12));
 }
 
 
@@ -625,7 +625,7 @@ MeshAlg::RedBlueAlgorithm(
             typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator
         >                                                  *blue_update_its)
 {
-    debugl(1, "MeshAlg::RedBlueAlgorithm(): keep_red_outside_part: %d, keep_blue_outside_part: %d.\n",
+    debugl(2, "MeshAlg::RedBlueAlgorithm(): keep_red_outside_part: %d, keep_blue_outside_part: %d.\n",
             keep_red_outside_part, keep_blue_outside_part);
     debugTabInc();
 
@@ -643,27 +643,27 @@ MeshAlg::RedBlueAlgorithm(
      * straight-forward way form the comparison operators for the components. face pointers are
      * compared like every other integral type */
     Aux::Timing::tick(15);
-    debugl(0, "RedBlueAlgorithm(): getting pairs of potentially intersecting edges / faces.\n");
+    debugl(1, "RedBlueAlgorithm(): getting pairs of potentially intersecting edges / faces.\n");
 
     MeshAlg::getPotentiallyIntersectingEdgeFacePairs(R, B, R_edges_B_faces_candidates, B_edges_R_faces_candidates, 32, 8);
 
-    debugl(0, "RedBlueAlgorithm(): done getting pairs of potentially intersecting edges / faces. time: %5.4f\n\n", Aux::Timing::tack(15));
+    debugl(1, "RedBlueAlgorithm(): done getting pairs of potentially intersecting edges / faces. time: %5.4f\n\n", Aux::Timing::tack(15));
 
 #ifdef __DEBUG__
-    debugl(2, "returned candidate pairs RED edges / BLUE faces: \n");
+    debugl(3, "returned candidate pairs RED edges / BLUE faces: \n");
     debugTabInc();
     for (auto &R_B_cand : R_edges_B_faces_candidates) {
-        debugl(2, "red edge:  (%5d, %5d), blue face: %5d\n",
+        debugl(3, "red edge:  (%5d, %5d), blue face: %5d\n",
                 R_B_cand.vrt1->id(),
                 R_B_cand.vrt2->id(),
                 R_B_cand.f->id());
     }
     debugTabDec();
 
-    debugl(2, "returned candidate pairs BLUE edges / RED faces: \n");
+    debugl(3, "returned candidate pairs BLUE edges / RED faces: \n");
     debugTabInc();
     for (auto &B_R_cand : B_edges_R_faces_candidates) {
-        debugl(2, "blue edge: (%5d, %5d), red face:  %5d\n",
+        debugl(3, "blue edge: (%5d, %5d), red face:  %5d\n",
                 B_R_cand.vrt1->id(),
                 B_R_cand.vrt2->id(),
                 B_R_cand.f->id());
@@ -680,7 +680,7 @@ MeshAlg::RedBlueAlgorithm(
         RedBlue_generateRBTupleList<Tm, Tv, Tf, TR>(B, R, false, B_edges_R_faces_candidates, blue_tuples, complex_edge_info_list);
     }
     catch (RedBlue_Ex&) {debugTabDec(); throw;}
-    debugl(2, "tuple lists generated..\n");
+    debugl(3, "tuple lists generated..\n");
 
     /* if complex_edge_info_list is non-empty, there are complexly intersecting edges, maybe both red and blue
      * ones. throw exception to indicate this to the caller, which must split these edges or react with other
@@ -695,10 +695,10 @@ MeshAlg::RedBlueAlgorithm(
     }
 
 #ifdef __DEBUG__
-    debugl(2, "UNordered RED tuple list:\n");
+    debugl(3, "UNordered RED tuple list:\n");
     debugTabInc();
     for (auto &tuple : red_tuples) {
-        debugl(2, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
+        debugl(3, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
                 tuple.edge_out_it->id(), tuple.edge_in_it->id(),
                 tuple.face_it->id(),
                 tuple.backward_tri_it->id(), tuple.forward_tri_it->id());
@@ -707,10 +707,10 @@ MeshAlg::RedBlueAlgorithm(
 #endif
 
 #ifdef __DEBUG__
-    debugl(2, "UNordered BLUE tuple list:\n");
+    debugl(3, "UNordered BLUE tuple list:\n");
     debugTabInc();
     for (auto &tuple : blue_tuples) {
-        debugl(2, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
+        debugl(3, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
                 tuple.edge_out_it->id(), tuple.edge_in_it->id(),
                 tuple.face_it->id(),
                 tuple.backward_tri_it->id(), tuple.forward_tri_it->id());
@@ -720,7 +720,7 @@ MeshAlg::RedBlueAlgorithm(
 
     /* if both lists are empty, there can't be any intersection. throw exception. */
     if ( red_tuples.empty() && blue_tuples.empty() ) {
-        debugl(0, "redpoints and bluepoints both empty. nothing to do => returning.\n");
+        debugl(1, "redpoints and bluepoints both empty. nothing to do => returning.\n");
         debugTabDec();
         throw RedBlue_Ex_Disjoint("RedBlue_Algorithm(): no red edge intersect a blue face and vice versa => red and blue meshes disjoint.");
     }
@@ -729,7 +729,7 @@ MeshAlg::RedBlueAlgorithm(
      * the RedBlue (union) algorithm. throw exception to indicate this to the caller, who will have to react, e.g. by
      * splitting the red triangle properly. */
     else if ( red_tuples.empty() ) {
-        debugl(0, "redpoints empty..\n");
+        debugl(1, "redpoints empty..\n");
         debugTabDec();
         throw RedBlue_Ex_AffectedCircleTrivial(
                 "RedBlue_Algorithm(): red tuple list empty => affected circle of red triangles trivial, i.e. consisting of exactly one red face => split it.", 
@@ -740,7 +740,7 @@ MeshAlg::RedBlueAlgorithm(
     /* symmetric case: no blue tuples, yet at least one red tuple => trivial ''circle'' of blue
      * affected faces. throw exception */
     else if ( blue_tuples.empty() ) {
-        debugl(0, "bluepoints empty..\n");
+        debugl(1, "bluepoints empty..\n");
         debugTabDec();
         throw RedBlue_Ex_AffectedCircleTrivial(
                 "RedBlue_Algorithm(): blue tuple list empty => affected circle of blue triangles trivial, i.e. consisting of exactly one blue face => split it.", 
@@ -761,13 +761,13 @@ MeshAlg::RedBlueAlgorithm(
         RedBlue_cyclicallyOrderTupleList(B, false, blue_tuples);
     }
     catch (RedBlue_Ex&) {debugTabDec(); throw;}
-    debugl(2, "tuple lists cyclically ordered..\n");
+    debugl(3, "tuple lists cyclically ordered..\n");
 
 #ifdef __DEBUG__
-    debugl(2, "cyclically ordered RED tuple list:\n");
+    debugl(3, "cyclically ordered RED tuple list:\n");
     debugTabInc();
     for (auto &tuple : red_tuples) {
-        debugl(2, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
+        debugl(3, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
                 tuple.edge_out_it->id(), tuple.edge_in_it->id(),
                 tuple.face_it->id(),
                 tuple.backward_tri_it->id(), tuple.forward_tri_it->id());
@@ -776,10 +776,10 @@ MeshAlg::RedBlueAlgorithm(
 #endif
 
 #ifdef __DEBUG__
-    debugl(2, "cyclically ordered BLUE tuple list:\n");
+    debugl(3, "cyclically ordered BLUE tuple list:\n");
     debugTabInc();
     for (auto &tuple : blue_tuples) {
-        debugl(2, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
+        debugl(3, " edge: (out, in) = (%5d, %5d) | face: %5d, backward_tri: %5d, forward_tri: %5d\n",
                 tuple.edge_out_it->id(), tuple.edge_in_it->id(),
                 tuple.face_it->id(),
                 tuple.backward_tri_it->id(), tuple.forward_tri_it->id());
@@ -789,7 +789,7 @@ MeshAlg::RedBlueAlgorithm(
 
     /* zip them together to produce the tuple list isecpoly_tuples, which is the desired representation of the
      * intersection polygon */
-    debugl(2, "\"zipping\" together cyclically ordered red and blue tuple lists to produce cycically ordered tuple list representing the intersection polygon.\n");
+    debugl(3, "\"zipping\" together cyclically ordered red and blue tuple lists to produce cycically ordered tuple list representing the intersection polygon.\n");
 
     /* cycle through ordered red tuple list until front() is a red tuple whose intersected blue triangle is NOT the same
      * as intersected triangle of the next red tuple => for this front() tuple, there must be at least one blue tuple
@@ -842,11 +842,11 @@ MeshAlg::RedBlueAlgorithm(
     while (1) {
         current_blue_tri = red_tuples.front().face_it;
 
-        debugl(0, "current_blue_tri: %8d\n", current_blue_tri->id() );
+        debugl(1, "current_blue_tri: %8d\n", current_blue_tri->id() );
         debugTabInc();
         /* insert all red tuples that have that current_blue_tri as face id */
         while ( red_tuples.front().face_it == current_blue_tri) {
-            debugl(0, "red tuple has face_id %d == %d. pushing to final list.\n", red_tuples.front().face_it->id(), current_blue_tri->id() );
+            debugl(1, "red tuple has face_id %d == %d. pushing to final list.\n", red_tuples.front().face_it->id(), current_blue_tri->id() );
             isecpoly_tuples.push_back( red_tuples.front() );
             red_tuples.pop_front();
         }
@@ -854,10 +854,10 @@ MeshAlg::RedBlueAlgorithm(
 
         /* if red tuple list is empty, append rest of blue tuples and break the loop */
         if ( red_tuples.empty() ) {
-            debugl(0, "red tuple list empty => append rest of blue tuple list\n");
+            debugl(1, "red tuple list empty => append rest of blue tuple list\n");
             debugTabInc();
             while (!blue_tuples.empty()) {
-                debugl(0, "blue tuple: forward_tri_it: %8d | backward_tri_it: %8d\n", blue_tuples.front().forward_tri_it->id(), blue_tuples.front().backward_tri_it->id());
+                debugl(1, "blue tuple: forward_tri_it: %8d | backward_tri_it: %8d\n", blue_tuples.front().forward_tri_it->id(), blue_tuples.front().backward_tri_it->id());
                 isecpoly_tuples.push_back( blue_tuples.front() );
                 blue_tuples.pop_front();
             }
@@ -869,7 +869,7 @@ MeshAlg::RedBlueAlgorithm(
 
         /* now we got a red tuple with different face_id in front(). this is next_blue_tri */
         next_blue_tri = red_tuples.front().face_it;
-        debugl(0, "next_blue_tri: %8d\n", next_blue_tri->id() );
+        debugl(1, "next_blue_tri: %8d\n", next_blue_tri->id() );
 
         debugTabInc();
 
@@ -878,25 +878,25 @@ MeshAlg::RedBlueAlgorithm(
          * whose forward_tri_it is NOT next_blue_tri. while the first blue tuple is guaranteed to
          * exist, the list of intermediate blue tuples might well be empty. */
         while ( blue_tuples.front().forward_tri_it != next_blue_tri) {
-            debugl(0, "blue tuple: forward_tri_it: %8d | backward_tri_it: %8d\n", blue_tuples.front().forward_tri_it->id(), blue_tuples.front().backward_tri_it->id());
+            debugl(1, "blue tuple: forward_tri_it: %8d | backward_tri_it: %8d\n", blue_tuples.front().forward_tri_it->id(), blue_tuples.front().backward_tri_it->id());
             isecpoly_tuples.push_back( blue_tuples.front() );
             blue_tuples.pop_front();
         }
 
         /* and finally the last last blue tuple, whose forward_tri_it IS next_blue_tri */
         isecpoly_tuples.push_back( blue_tuples.front() );
-        debugl(0, "blue tuple: forward_tri_it: %8d | backward_tri_it: %8d\n", blue_tuples.front().forward_tri_it->id(), blue_tuples.front().backward_tri_it->id());
+        debugl(1, "blue tuple: forward_tri_it: %8d | backward_tri_it: %8d\n", blue_tuples.front().forward_tri_it->id(), blue_tuples.front().backward_tri_it->id());
         blue_tuples.pop_front();
 
         debugTabDec();
     }
     debugTabDec();
-    debugl(0, "zipping done: ordered intersection polygon list fully constructed.\n");
+    debugl(1, "zipping done: ordered intersection polygon list fully constructed.\n");
 
     /* ---------------- cut holes in B and R -------- */
 
     /* first, the the red mesh R: cycle the isec poly tuple list until a RED vertex is in front () */
-    debugl(2, "cutting hole in RED mesh R.\n");
+    debugl(3, "cutting hole in RED mesh R.\n");
     while (!isecpoly_tuples.front().red) {
         isecpoly_tuples.push_back( isecpoly_tuples.front() );
         isecpoly_tuples.pop_front();
@@ -906,10 +906,10 @@ MeshAlg::RedBlueAlgorithm(
     try {RedBlue_cutHole(R, true,  isecpoly_tuples, keep_red_outside_part);}
     catch (RedBlue_Ex&) {debugTabDec(); throw;}
 
-    debugl(2, "RED mesh cut.\n");
+    debugl(3, "RED mesh cut.\n");
 
     /* now the blue mesh B: cycle the isec poly tuple list until a BLUE vertex is in front () */
-    debugl(2, "cutting hole in BLUE mesh B.\n");
+    debugl(3, "cutting hole in BLUE mesh B.\n");
     while (isecpoly_tuples.front().red) {
         isecpoly_tuples.push_back( isecpoly_tuples.front() );
         isecpoly_tuples.pop_front();
@@ -926,7 +926,7 @@ MeshAlg::RedBlueAlgorithm(
     try {RedBlue_cutHole(B, false, isecpoly_tuples, keep_blue_outside_part, blue_update_its);}
     catch (RedBlue_Ex&) {debugTabDec(); throw;}
 
-    debugl(1, "BLUE mesh cut.\n");
+    debugl(2, "BLUE mesh cut.\n");
 
     /* convert list of to-be-updated iterators to a list of vertex pointers if necessary (that is, if blue iterator
      * update is desired by the caller) */
@@ -944,7 +944,7 @@ MeshAlg::RedBlueAlgorithm(
         }
     }
 
-    debugl(2, "BLUE mesh cut.\n");
+    debugl(3, "BLUE mesh cut.\n");
 
     /* new way of doing things: MOVE append B to R while storing a std::list<std::pair<typename Mesh<Tm, Tv, Tf>::Vertex
      * *, typename Mesh<Tm, Tv, Tf>::Vertex *>> of associated corner vertices of the intersection polygon. every pair
@@ -979,7 +979,7 @@ MeshAlg::RedBlueAlgorithm(
         it = isecpoly_tuples.erase(it);
     }
 
-    debugl(2, "moveAppend()ing BLUE mesh B to RED mesh R. B is empty afterwards.\n");
+    debugl(3, "moveAppend()ing BLUE mesh B to RED mesh R. B is empty afterwards.\n");
     R.moveAppend(B);
 
     /* merge all pairs of now "duplicate" intersection polygon corner vertices in R. */
@@ -1011,7 +1011,7 @@ MeshAlg::RedBlueAlgorithm(
     }
 
     debugTabDec();
-    debugl(1, "MeshAlg::RedBlueAlgorithm(): keep_red_outside_part: %d, keep_blue_outside_part: %d. done.\n",
+    debugl(2, "MeshAlg::RedBlueAlgorithm(): keep_red_outside_part: %d, keep_blue_outside_part: %d. done.\n",
             keep_red_outside_part, keep_blue_outside_part);
 
 }
@@ -1026,7 +1026,7 @@ MeshAlg::RedBlueUnion(
             typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator
         >                                              *blue_update_its)
 {
-    debugl(0, "MeshAlg::RedBlueUnion()\n");
+    debugl(1, "MeshAlg::RedBlueUnion()\n");
     debugTabInc();
 
     /* simple forward to RedBlueAlgorithm: keeping both OUTSIDE parts creates the union mesh */
@@ -1034,7 +1034,7 @@ MeshAlg::RedBlueUnion(
     catch (RedBlue_Ex&) {debugTabDec(); throw;}
     
     debugTabDec();
-    debugl(0, "MeshAlg::RedBlueUnion(): done.\n");
+    debugl(1, "MeshAlg::RedBlueUnion(): done.\n");
 }
 
 
@@ -1047,7 +1047,7 @@ MeshAlg::RedBlueRedMinusBlue(
             typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator
         >                                              *blue_update_its)
 {
-    debugl(0, "MeshAlg::RedBlueRedMinusBlue()\n");
+    debugl(1, "MeshAlg::RedBlueRedMinusBlue()\n");
     debugTabInc();
 
     /* simple forward to RedBlueAlgorithm: for set diffrence, keep outside part of R, keep inside
@@ -1056,7 +1056,7 @@ MeshAlg::RedBlueRedMinusBlue(
     catch (RedBlue_Ex&) {debugTabDec(); throw;}
 
     debugTabDec();
-    debugl(0, "MeshAlg::RedBlueRedMinusBlue(): done.\n");
+    debugl(1, "MeshAlg::RedBlueRedMinusBlue(): done.\n");
 }
 
 
@@ -1069,7 +1069,7 @@ MeshAlg::RedBlueIntersection(
             typename Mesh<Tm, Tv, Tf, TR>::vertex_iterator
         >                                              *blue_update_its)
 {
-    debugl(0, "MeshAlg::RedBlueIntersection()\n");
+    debugl(1, "MeshAlg::RedBlueIntersection()\n");
     debugTabInc();
 
     /* simple forward to RedBlueAlgorithm: keeping both INSIDE parts creates the intersection mesh.
@@ -1082,7 +1082,7 @@ MeshAlg::RedBlueIntersection(
     R.invertOrientation();
 
     debugTabDec();
-    debugl(0, "MeshAlg::RedBlueIntersection(): done.\n");
+    debugl(1, "MeshAlg::RedBlueIntersection(): done.\n");
 }
 
 
@@ -1099,7 +1099,7 @@ RedBlue_generateRBTupleList(
 {
     using namespace Aux::Geometry::IntersectionTestResults;
 
-    debugl(2, "RedBlue_generateRBTupleList()\n");
+    debugl(3, "RedBlue_generateRBTupleList()\n");
     debugTabInc();
 
     /* NOTE: the entire function is commented with the assumption that X_red == true, i.e. X is the
@@ -1152,10 +1152,10 @@ RedBlue_generateRBTupleList(
 
 #ifdef __DEBUG__
         /* pure debug: output candidate tris: */
-        debugl(2, "candidate faces for edge (%5d, %5d)\n", u_it->id(), v_it->id());
+        debugl(3, "candidate faces for edge (%5d, %5d)\n", u_it->id(), v_it->id());
         debugTabInc();
         for (auto &uv_cand_tri : e_Y_candidate_tris) {
-            debugl(2, "%5d.\n", uv_cand_tri->id());
+            debugl(3, "%5d.\n", uv_cand_tri->id());
         }
         debugTabDec();
 #endif
@@ -1170,7 +1170,7 @@ RedBlue_generateRBTupleList(
         /* check all blue candidate faces for e_r */
         debugTabInc();
         for (auto &candidate_tri : e_Y_candidate_tris) {
-            debugl(2, "checking edge (%5d, %5d) vs candidate face %5d for intersection..\n", u_it->id(), v_it->id(), candidate_tri->id());
+            debugl(3, "checking edge (%5d, %5d) vs candidate face %5d for intersection..\n", u_it->id(), v_it->id(), candidate_tri->id());
             if (candidate_tri->isQuad()) {
                 debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_InternalLogic("RedBlue_generateRBTupleList(): quad discovered. operatio on affected quads unsupported (and unsupportable) due to underlying mathematical structure.\n");
@@ -1180,7 +1180,7 @@ RedBlue_generateRBTupleList(
             candidate_tri->getTriPositions(f_0, f_1, f_2);
 
             if (Aux::Geometry::rayTriangle(u_it->pos(), v_it->pos(), f_0, f_1, f_2, x, x_s, x_t, x_lambda) == INTERSECTION) {
-                debugl(2, "intersection! => creating tuple for candidate face %5d.\n", candidate_tri->id());
+                debugl(3, "intersection! => creating tuple for candidate face %5d.\n", candidate_tri->id());
                 uv_nisec_faces++;
 
                 /* check which endpoint of the red edge {u, v} lies on the outside of the blue mesh.
@@ -1241,7 +1241,7 @@ RedBlue_generateRBTupleList(
          * the blue mesh is thrown by RedBlue_Algorithm if complex edges ever occur.  the caller must then split all
          * complex edge or react with other appropriate measures. */
         if (uv_nisec_faces > 1) {
-            debugl(0, "Mesh::RedBlue_generateRBTupleList(): red edge {%5d %5d} is complexely intersecting: %5d > 1 blue faces intersected. throwing exception..\n", v_it->id(), u_it->id(), uv_nisec_faces);
+            debugl(1, "Mesh::RedBlue_generateRBTupleList(): red edge {%5d %5d} is complexely intersecting: %5d > 1 blue faces intersected. throwing exception..\n", v_it->id(), u_it->id(), uv_nisec_faces);
             complex_edge_info_list.push_back(
                 RedBlue_EdgeIsecInfo<TR>(
                     /* red edge iff X_red == true */
@@ -1250,17 +1250,16 @@ RedBlue_generateRBTupleList(
                      * lambda depends on the order. original order is {v, u}, which is confusing, since in the struct
                      * its {u, v}, but well.. */
                     v_it->id(), u_it->id(),
-                    e_isec_tri_ids,
                     e_isec_lambdas)
                 );
         }
         /* red edge e = (u, v) intersects the blue mesh Y exactly once: okay */
         else if (uv_nisec_faces == 1) {
-            debugl(3, "edge (%5d %5d) from X intersects exactly one triangle from Y.. okay\n", v_it->id(), u_it->id() );
+            debugl(4, "edge (%5d %5d) from X intersects exactly one triangle from Y.. okay\n", v_it->id(), u_it->id() );
         }
         /* red edge e = (u, v) does not intersect the blue mesh Y at all. also ok */
         else {
-            debugl(3, "edge {%5d %5d} from X does not intersect Y at all.. okay\n", v_it->id(), u_it->id() );
+            debugl(4, "edge {%5d %5d} from X does not intersect Y at all.. okay\n", v_it->id(), u_it->id() );
         }
     }
     debugTabDec();
@@ -1270,7 +1269,7 @@ RedBlue_generateRBTupleList(
     X_colour_tuples.unique();
 
     debugTabDec();
-    debugl(2, "RedBlue_generateRBTupleList(): done.\n");
+    debugl(3, "RedBlue_generateRBTupleList(): done.\n");
 }
 
 
@@ -1283,7 +1282,7 @@ RedBlue_cyclicallyOrderTupleList(
 {
     /* NOTE: the entire function is commented with the assumption that M is the RED mesh.  If M is
      * the blue mesh, the roles of "red" and "blue" must be interchanged. */
-    debugl(2, "RedBlue_cyclicallyOrderTupleList()\n");
+    debugl(3, "RedBlue_cyclicallyOrderTupleList()\n");
     debugTabInc();
 
     /* create temporary "unordered" list and swap tuples into it */
@@ -1299,7 +1298,7 @@ RedBlue_cyclicallyOrderTupleList(
     RB_Tuple<Tm, Tv, Tf, TR>                               *d;
     typename std::list<RB_Tuple<Tm, Tv, Tf, TR>>::iterator  pit;
 
-    debugl(2, "sorting all tuples from unordere list into ordered list..\n");
+    debugl(3, "sorting all tuples from unordere list into ordered list..\n");
     /* while there are still red tuples left to be sorted .. */
     debugTabInc();
     while (!M_tuples_unordered.empty()) {
@@ -1307,11 +1306,11 @@ RedBlue_cyclicallyOrderTupleList(
         d           = &(M_tuples.back());
         found_nb    = false;
 
-        debugl(2, "searching for correct neighbour for currently last tuple d of (partially completed) ordered list: (out, in) = (%5d, %5d)\n", d->edge_out_it->id(), d->edge_in_it->id() );
+        debugl(3, "searching for correct neighbour for currently last tuple d of (partially completed) ordered list: (out, in) = (%5d, %5d)\n", d->edge_out_it->id(), d->edge_in_it->id() );
         /* find the neighbour nb of currently last added element d of ordered list */
         debugTabInc();
         for (pit = M_tuples_unordered.begin(); pit != M_tuples_unordered.end(); ++pit) {
-            debugl(2, "checking (out, in) = (%5d, %5d)\n", pit->edge_out_it->id(), pit->edge_in_it->id() );
+            debugl(3, "checking (out, in) = (%5d, %5d)\n", pit->edge_out_it->id(), pit->edge_in_it->id() );
             /* if the edges of (*pit) and d share a common vertex, then they are part of the same
              * triangle and hence they are neighbours in the cyclically ordered list. however, there
              * are two neighbours and we need the right orientation in the polygonal line loop
@@ -1345,7 +1344,7 @@ RedBlue_cyclicallyOrderTupleList(
                         )
                     )
                 {
-                    debugl(4, "got neighbour, correct orientation..\n");
+                    debugl(5, "got neighbour, correct orientation..\n");
 
                     /* found the neighbour.. */
                     found_nb = true;
@@ -1365,7 +1364,7 @@ RedBlue_cyclicallyOrderTupleList(
                     break;
                 }
                 else {
-                    debugl(4, "got neighbour, but wrong orientation..\n");
+                    debugl(5, "got neighbour, but wrong orientation..\n");
                 }
             }
         }
@@ -1393,7 +1392,7 @@ RedBlue_cyclicallyOrderTupleList(
     }
 
     debugTabDec();
-    debugl(2, "RedBlue_cyclicallyOrderTupleList(): done.\n");
+    debugl(3, "RedBlue_cyclicallyOrderTupleList(): done.\n");
 }
 
 
@@ -1423,7 +1422,7 @@ RedBlue_cutHole(
     using namespace Aux::Geometry;
     using namespace Aux::Geometry::IntersectionTestResults;
 
-    debugl(3, "RedBlue_cutHole(): red mesh: %d.\n", M_red);
+    debugl(4, "RedBlue_cutHole(): red mesh: %d.\n", M_red);
     debugTabInc();
 
     uint32_t                                        i, err;
@@ -1496,7 +1495,7 @@ RedBlue_cutHole(
         }
     }
 
-    debugl(0, "npoints: %d, n_total_inbetween_points: %d, size(): %d\n", npoints, n_total_inbetween_points, isecpoly_tuples.size());
+    debugl(1, "npoints: %d, n_total_inbetween_points: %d, size(): %d\n", npoints, n_total_inbetween_points, isecpoly_tuples.size());
 
     /* list to store red points between currently processed pair of points. if (M_red == false), this needs to be
      * REVERSED due to orientation after it is computed: the orientation of the intesection polygon was determined to
@@ -1531,13 +1530,13 @@ RedBlue_cutHole(
      * first point that is supposed to "survive" => cut the hole and delete the other region NOT containing v_out_id */
     p_vout_it = v_out_it;
 
-    debugl(0, "splitting shared triangles for all consecutive pairs of points..\n");
+    debugl(1, "splitting shared triangles for all consecutive pairs of points..\n");
 
     /* check pairs (i, i+1) of blue points for i = 0..(nblue - 1). note that we've appended a copy of the first point to
      * the end of the list to be able to scan linearly without wrap around. */
     debugTabInc();
     for (i = 0; i < npoints; i++) {
-        debugl(0, "pair (%5d, %5d) of points. npoints: %5d.\n", i, i+1, npoints);
+        debugl(1, "pair (%5d, %5d) of points. npoints: %5d.\n", i, i+1, npoints);
         debugTabInc();
 
         /* find next point, store in-between points */
@@ -1549,29 +1548,29 @@ RedBlue_cutHole(
         if (!M_red) {
             debugTabInc();
 
-            debugl(0, "cutting blue mesh => collecting in-between red points and reversing..\n");
+            debugl(1, "cutting blue mesh => collecting in-between red points and reversing..\n");
             while (pit->red) {
-                debugl(0, "skipping red point, adding to in_between_points.\n");
+                debugl(1, "skipping red point, adding to in_between_points.\n");
                 /* directly "reverse" by pushing at the front */
                 in_between_points.push_front(*pit);
                 ++pit;
             }
-            debugl(0, "got next blue point. red points inbetween: %d\n", in_between_points.size() );
+            debugl(1, "got next blue point. red points inbetween: %d\n", in_between_points.size() );
 
             debugTabDec();
         }
         /* if we're cutting the red mesh, skip the blue points. leave the orientation as is, see above */
         else {
-            debugl(0, "cutting red mesh => collecting in-between blue points WITHOUT reversing..\n");
+            debugl(1, "cutting red mesh => collecting in-between blue points WITHOUT reversing..\n");
 
             debugTabInc();
             while (!pit->red) {
-                debugl(0, "skipping blue point, adding to in_between_points.\n");
+                debugl(1, "skipping blue point, adding to in_between_points.\n");
                 /* push at back, keep orientation */
                 in_between_points.push_back(*pit);
                 ++pit;
             }
-            debugl(0, "got next red point. blue points inbetween: %d\n", in_between_points.size() );
+            debugl(1, "got next red point. blue points inbetween: %d\n", in_between_points.size() );
 
             debugTabDec();
         }
@@ -1598,10 +1597,10 @@ RedBlue_cutHole(
 
         shared_tri_it->getTriOrthonormalBase2d(shtri_x, shtri_y);
 
-        debugl(0, "shared triangle id: %5d\n", shared_tri_it->id() );
-        debugl(0, "triangle orthonormal basis..\n");
-        shtri_x.print_debugl(0);
-        shtri_y.print_debugl(0);
+        debugl(1, "shared triangle id: %5d\n", shared_tri_it->id() );
+        debugl(1, "triangle orthonormal basis..\n");
+        shtri_x.print_debugl(1);
+        shtri_y.print_debugl(1);
 
         /* determine the shared endpoint of the edges for b and bnext. two cases:
          *
@@ -1640,7 +1639,7 @@ RedBlue_cutHole(
                 shared_vertex_it, remaining_vertex_it
             );
 
-        debugl(0, "generating planar polygon..\n");
+        debugl(1, "generating planar polygon..\n");
 
         /* generate planar polygon for current shared triangle in A */
         planar_poly.clear();
@@ -1648,12 +1647,12 @@ RedBlue_cutHole(
 
         /* if we're cutting the blue mesh */
         if (!M_red) {
-            debugl(0, "cutting BLUE mesh.\n");
+            debugl(1, "cutting BLUE mesh.\n");
             debugTabInc();
 
             /* compute first 2d vertex by projecting the position of the outside vertex onto the triangle using the
              * computed 2s orthonormal base made up out of the two 3d vectors shtri_x and shtri_y */
-            debugl(0, "BLUE MESH: first, v_out_id..\n");
+            debugl(1, "BLUE MESH: first, v_out_id..\n");
             v3d     = p_vout_it->pos();
             v2d[0]  = v3d * shtri_x;
             v2d[1]  = v3d * shtri_y;
@@ -1661,7 +1660,7 @@ RedBlue_cutHole(
 
             /* insert remaining blue point if necessary, see comment above */
             if (shared_vertex_it == p_vin_it) {
-                debugl(0, "BLUE MESH: shared vertex is INSIDE vertex on edge of p => add remaining vertex\n");
+                debugl(1, "BLUE MESH: shared vertex is INSIDE vertex on edge of p => add remaining vertex\n");
                 /* remaining vertex */
                 v3d     = remaining_vertex_it->pos();
                 v2d[0]  = v3d * shtri_x;
@@ -1673,11 +1672,11 @@ RedBlue_cutHole(
             }
             else {
                 /* otherwise, the vertex p_vout_it is also the outside vertex on the edge of pnext */
-                debugl(0, "BLUE MESH: shared vertex is OUTSIDE vertex on edge of p => fine.\n");
+                debugl(1, "BLUE MESH: shared vertex is OUTSIDE vertex on edge of p => fine.\n");
                 pnext_vout_it = p_vout_it;
             }
 
-            debugl(0, "BLUE MESH: now, pnext..\n");
+            debugl(1, "BLUE MESH: now, pnext..\n");
            
             /* pnext. blue mesh! */
             v3d     = pnext->x;
@@ -1685,7 +1684,7 @@ RedBlue_cutHole(
             v2d[1]  = v3d * shtri_y;
             planar_poly.push_back( Vertex2d(pnext->B_new_it->id(), v2d) );
 
-            debugl(0, "BLUE MESH: now, %5d in-between red vertices..\n", in_between_points.size() );
+            debugl(1, "BLUE MESH: now, %5d in-between red vertices..\n", in_between_points.size() );
 
             /* now all red points, which are already reversed to be consistent with the orientation */
             for (auto &ibp : in_between_points) {
@@ -1698,7 +1697,7 @@ RedBlue_cutHole(
             }
 
             /* and finally p itself (blue mesh!) */
-            debugl(0, "BLUE MESH: finally p..\n");
+            debugl(1, "BLUE MESH: finally p..\n");
             v3d     = p->x;
             v2d[0]  = v3d * shtri_x;
             v2d[1]  = v3d * shtri_y;
@@ -1709,17 +1708,17 @@ RedBlue_cutHole(
         /* if we're cutting the red mesh */
         else {
             /* first v_out_id. red mesh! */
-            debugl(0, "cutting RED mesh..\n");
+            debugl(1, "cutting RED mesh..\n");
             debugTabInc();
 
-            debugl(0, "RED MESH: first, v_out_id..\n");
+            debugl(1, "RED MESH: first, v_out_id..\n");
             v3d     = p_vout_it->pos();
             v2d[0]  = v3d * shtri_x;
             v2d[1]  = v3d * shtri_y;
             planar_poly.push_back( Vertex2d(p_vout_it->id(), v2d) );
 
             /* then p. red mesh! */
-            debugl(0, "RED MESH: p..\n");
+            debugl(1, "RED MESH: p..\n");
             v3d     = p->x;
             v2d[0]  = v3d * shtri_x;
             v2d[1]  = v3d * shtri_y;
@@ -1727,7 +1726,7 @@ RedBlue_cutHole(
 
             /* then all blue points, which haven't been reversed to be consistent with the
              * orientation */
-            debugl(0, "RED MESH: now, %5d, in-between blue vertices..\n", in_between_points.size() );
+            debugl(1, "RED MESH: now, %5d, in-between blue vertices..\n", in_between_points.size() );
             /* in-between points, which are already sorted in the right order. if in-between points are
              * red, they have been reversed, otherwise not. mind the orientation .. :D */
             for (auto &ibp : in_between_points) {
@@ -1740,7 +1739,7 @@ RedBlue_cutHole(
             }
 
             /* pnext. red mesh! */
-            debugl(0, "RED MESH: pnext..\n");
+            debugl(1, "RED MESH: pnext..\n");
             v3d     = pnext->x;
             v2d[0]  = v3d * shtri_x;
             v2d[1]  = v3d * shtri_y;
@@ -1748,7 +1747,7 @@ RedBlue_cutHole(
 
             /* insert remaining blue point if necessary, see comment above */
             if (shared_vertex_it == p_vin_it) {
-                debugl(0, "RED MESH: shared vertex is INSIDE vertex on edge of p => add remaining vertex\n");
+                debugl(1, "RED MESH: shared vertex is INSIDE vertex on edge of p => add remaining vertex\n");
                 /* remaining vertex */
                 v3d     = remaining_vertex_it->pos();
                 v2d[0]  = v3d * shtri_x;
@@ -1760,16 +1759,16 @@ RedBlue_cutHole(
             }
             else {
                 /* otherwise, the vertex p_vout_it is also the outside vertex on the edge of bnext */
-                debugl(0, "RED MESH: shared vertex is OUTSIDE vertex on edge of p => fine.\n");
+                debugl(1, "RED MESH: shared vertex is OUTSIDE vertex on edge of p => fine.\n");
                 pnext_vout_it = p_vout_it;
             }
-            debugl(0, "done..\n");
+            debugl(1, "done..\n");
 
             debugTabDec();
         }
 
         /* call 2d triangulation method */
-        debugl(2, "calling 2d triangulation algorithm on projected polygon. planar_poly.size(): %ld\n", planar_poly.size());
+        debugl(3, "calling 2d triangulation algorithm on projected polygon. planar_poly.size(): %ld\n", planar_poly.size());
         err = Aux::Geometry::triangulateSimplePlanarPolygon(planar_poly, planar_poly_triangulation);
         switch (err) {
             case EDGE_CASE:
@@ -1801,9 +1800,9 @@ RedBlue_cutHole(
                 debugTabDec(); debugTabDec(); debugTabDec();
                 throw RedBlue_Ex_InternalLogic("RedBlue_cutHole(): Aux::Geometry::triangulateSimplePlanarPolygon retunred invalid result code.");
         }
-        debugl(2, "2d triangulation algorithm done.\n");
+        debugl(3, "2d triangulation algorithm done.\n");
 
-        debugl(2, "calling 2d delaunay on initial triangulation..\n");
+        debugl(3, "calling 2d delaunay on initial triangulation..\n");
 
         /* convert the returned triangulation to a map */
         std::map<uint32_t, Vertex2d>    poly_map;
@@ -1811,15 +1810,15 @@ RedBlue_cutHole(
             poly_map[v.id] = v;
         }
         delaunay2d(poly_map, planar_poly_triangulation);
-        debugl(2, "2d delaunay done.\n");
+        debugl(3, "2d delaunay done.\n");
 
         /* add all new triangles to the mesh and save them their ids return list new_tri_ids, if
          * present .. */
-        debugl(2, "adding faces of of triangulation for affected triangle to mesh..\n");
+        debugl(3, "adding faces of of triangulation for affected triangle to mesh..\n");
         typename Mesh<Tm, Tv, Tf, TR>::face_iterator tri_it;
         debugTabInc();
         for (auto &tri : planar_poly_triangulation) {
-            debugl(2, "triangle (%5d, %5d, %5d)\n", tri.v0_id, tri.v1_id, tri.v2_id);
+            debugl(3, "triangle (%5d, %5d, %5d)\n", tri.v0_id, tri.v1_id, tri.v2_id);
             tri_it = M.faces.insert(tri.v0_id, tri.v1_id, tri.v2_id);
 
             /* if desired by the caller (new_tri_ids != NULL), return new triangle ids */
@@ -1863,7 +1862,7 @@ RedBlue_cutHole(
      * triangle created during outside polygon triangulation is ever touched here.  */
 
 
-    debugl(2, "deleting \"%s\" connected component\" encircled by affected triangles (including the latter) with adapted traversal.\n", (keep_outside_part == true) ? "inside" : "outside");
+    debugl(3, "deleting \"%s\" connected component\" encircled by affected triangles (including the latter) with adapted traversal.\n", (keep_outside_part == true) ? "inside" : "outside");
 
     /* start traversal from inside vertex of an arbitrary tuple of matching colour, retrieve list of "reachable"
      * vertices with the above boundary condition and erase them from M, which also erases all faces containing any of
@@ -1875,7 +1874,7 @@ RedBlue_cutHole(
         debugTabInc();
         for (auto &p : isecpoly_tuples) {
             if (Aux::Logic::lequiv(M_red, p.red)) {
-                debugl(3, "setting traversal state of OUTSIDE vertex %5d to DONE.\n", p.edge_out_it->id());
+                debugl(4, "setting traversal state of OUTSIDE vertex %5d to DONE.\n", p.edge_out_it->id());
                 p.edge_out_it->setTraversalState(traversal_id, Mesh<Tm, Tv, Tf, TR>::TRAV_DONE);
             }
         }
@@ -1888,7 +1887,7 @@ RedBlue_cutHole(
         debugTabInc();
         for (auto &p : isecpoly_tuples) {
             if (Aux::Logic::lequiv(M_red, p.red)) {
-                debugl(3, "setting traversal state of INSIDE vertex %5d to DONE.\n", p.edge_out_it->id());
+                debugl(4, "setting traversal state of INSIDE vertex %5d to DONE.\n", p.edge_out_it->id());
                 p.edge_in_it->setTraversalState(traversal_id, Mesh<Tm, Tv, Tf, TR>::TRAV_DONE);
             }
         }
@@ -1904,7 +1903,7 @@ RedBlue_cutHole(
         debugTabInc();
         for (auto &p : isecpoly_tuples) {
             if (Aux::Logic::lequiv(M_red, p.red)) {
-                debugl(3, "resetting traversal state of INSIDE vertex %5d to UNSEEN.\n", p.edge_out_it->id());
+                debugl(4, "resetting traversal state of INSIDE vertex %5d to UNSEEN.\n", p.edge_out_it->id());
                 p.edge_in_it->setTraversalState(traversal_id, Mesh<Tm, Tv, Tf, TR>::TRAV_UNSEEN);
             }
         }
@@ -1914,14 +1913,14 @@ RedBlue_cutHole(
         M.getConnectedComponent(isecpoly_tuples.front().edge_in_it, traversal_id, NULL, &old_inside_faces);
 
         /* invert face orientation on old faces */
-        debugl(2, "keep_outside_part == false: inverting face orientation of all \"old\" inside faces.\n");
+        debugl(3, "keep_outside_part == false: inverting face orientation of all \"old\" inside faces.\n");
         debugTabInc();
         for (auto &f : old_inside_faces) {
-            debugl(3, "inverting orientation of \"old\" inside face %5d.\n", f->id());
+            debugl(4, "inverting orientation of \"old\" inside face %5d.\n", f->id());
             f->invertOrientation();
         }
         debugTabDec();
-        debugl(2, "orientation of \"old\" inside faces inverted.\n");
+        debugl(3, "orientation of \"old\" inside faces inverted.\n");
     }
 
     /* erase all "dead vertices walking". if desired by the caller, NULL all pointers of "dead vertices walking" in
@@ -1961,10 +1960,10 @@ RedBlue_cutHole(
         M.vertices.erase(v->iterator());
     }
 
-    debugl(2, "\"%s\" connected component\" deleted.\n", (keep_outside_part == true) ? "inside" : "outside");
+    debugl(3, "\"%s\" connected component\" deleted.\n", (keep_outside_part == true) ? "inside" : "outside");
 
     debugTabDec();
-    debugl(3, "RedBlue_cutHole(): done, red mesh: %d.\n", M_red);
+    debugl(4, "RedBlue_cutHole(): done, red mesh: %d.\n", M_red);
 }
 
 
@@ -1999,7 +1998,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
     using namespace Aux::Timing;
     using Aux::Numbers::inf;
 
-    debugl(0, "MeshAlg::greedyEdgeCollapsePostProcessing(): alpha: %f, lambda: %f, mu: %f, d: %d\n", alpha, lambda, mu, d);
+    debugl(1, "MeshAlg::greedyEdgeCollapsePostProcessing(): alpha: %f, lambda: %f, mu: %f, d: %d\n", alpha, lambda, mu, d);
     debugTabInc();
 
     /* triangulate quads, if there are any.. */
@@ -2023,7 +2022,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
      * an edge, two triangles get deleted => locate and delete them from the map. furthermore, the aspect ratios of all
      * faces incident to the new vertex will change => update them. */
 
-    debugl(1, "searching for \"poor\" triangles / computing average neighbourhood triangle areas. this may take some time..\n");
+    debugl(2, "searching for \"poor\" triangles / computing average neighbourhood triangle areas. this may take some time..\n");
 
     /* define processing predicate for convenience */
     #define proc(ar, area, avg_nbhd_area, alpha, lambda, mu) (area < mu * avg_nbhd_area && (ar >= alpha || area < lambda * avg_nbhd_area) )
@@ -2038,16 +2037,16 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
         tri_avg_surrounding_area    = GEC_getAvgAreaOfPermissibleSurroundingTriangles<Tm, Tv, Tf>(tri.iterator(), alpha, d);
         avg_surrounding_area.insert( {tri.id(), tri_avg_surrounding_area} );
 
-        debugl(3, "face %6d, ar: %10.5f, area: %10.5f, avg area in d-neighbourhood: %10.5f, d = %3d..\n", tri.id(), tri_ar, tri_area, tri_avg_surrounding_area, d);
+        debugl(4, "face %6d, ar: %10.5f, area: %10.5f, avg area in d-neighbourhood: %10.5f, d = %3d..\n", tri.id(), tri_ar, tri_area, tri_avg_surrounding_area, d);
 
         if ( proc(tri_ar, tri_area, tri_avg_surrounding_area, alpha, lambda, mu) ) {
-            debugl(1, "adding face %6d, ar: %10.5f to min-heap Q..\n", tri.id(), tri_ar);
+            debugl(2, "adding face %6d, ar: %10.5f to min-heap Q..\n", tri.id(), tri_ar);
             Q.insert( { -tri_ar, tri.id() } );
         }
 
     }
     debugTabDec();
-    debugl(1, "done. processing min-heap..\n");
+    debugl(2, "done. processing min-heap..\n");
 
     /* fix-point iteration: the queue might run out of elements but unsafe_tris is non-empty => reinsert them all and
      * rerun the algorithm until we reach a fixpoint, i.e. the unsafe-tri's before the run are equal to the unsafe tris
@@ -2070,7 +2069,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
     fixed_point = false;
     iter        = 0;
     while (!fixed_point) {
-        debugl(2, "no fixed point reached yet => performing iteration %2d\n", iter);
+        debugl(3, "no fixed point reached yet => performing iteration %2d\n", iter);
         unsafe_tris_prev_iter = unsafe_tris;
         unsafe_tris.clear();
 
@@ -2090,7 +2089,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
             tri_it = M.faces.find(tri_id);
             if (tri_it != M.faces.end()) {
                 if ( tri_ar != tri_it->getTriAspectRatio()) {
-                    debugl(0, "MeshAlg::greedyEdgeCollapsePostProcessing(): ar stored in top() element of Q (%10.5f) does not match return value of getTriAspectRatio() (%10.5f)\n", tri_ar, tri_it->getTriAspectRatio());
+                    debugl(1, "MeshAlg::greedyEdgeCollapsePostProcessing(): ar stored in top() element of Q (%10.5f) does not match return value of getTriAspectRatio() (%10.5f)\n", tri_ar, tri_it->getTriAspectRatio());
                     throw("tri_ar from Q doesn't match tri_ar from triangle..\n");
                 }
                 tri_area                    = tri_it->getTriArea();
@@ -2099,7 +2098,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                 /* skip T if it does not require processing */
                 if ( proc(tri_ar, tri_area, tri_avg_surrounding_area, alpha, lambda, mu) ) {
                 //if (tri_area < mu * tri_avg_surrounding_area && ( tri_ar >= alpha || tri_area < lambda * tri_avg_surrounding_area) )
-                    debugl(2, "triangle %d needs processing.. collapsing shortest edge..\n", tri_id);
+                    debugl(3, "triangle %d needs processing.. collapsing shortest edge..\n", tri_id);
 
                     /* get shortest edge e = {u, v} and the other face T' incident to the shortest edge {u, v} */
                     tri_it->getTriShortestEdge(u_it, v_it);
@@ -2114,7 +2113,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                     if (collapse_safe) {
 
                         /* update all faces incident to the new vertex w, since their AR has changed in general */
-                        debugl(2, "updating faces incident to new vertex %5d\n", w_it->id() );
+                        debugl(3, "updating faces incident to new vertex %5d\n", w_it->id() );
 
                         /* get face star of w and iterate over all incident faces */
                         w_it->getFaceStarIterators(w_fstar);
@@ -2123,14 +2122,14 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                             if (!w_inc_tri->isTri()) {
                                 throw ("MeshAlg::greedyEdgeCollapsePostProcessing(): discovered non-triangle face. only triangular meshes are supported.");
                             }
-                            debugl(2, "updating neighbour face %5d..\n", w_inc_tri->id() );
+                            debugl(3, "updating neighbour face %5d..\n", w_inc_tri->id() );
 
                             /* erase w_inc_tri->id() from Q if it is currently present */
                             debugTabInc();
                             if ( Q.changeKey(w_inc_tri->id(), -inf<R>()) == true) {
                                 /* changeKey() has returned true => R (ar) key of value w_inc_tri->id() has been set to
                                  * -INF and is therefore guaranteed to be the minimum element. */
-                                debugl(2, "neighbour triangle found in Q, key decreased to -INF. getting Q.top() and comparing ids..\n");
+                                debugl(3, "neighbour triangle found in Q, key decreased to -INF. getting Q.top() and comparing ids..\n");
                                 q_min = Q.top();
                                 if (q_min.second != w_inc_tri->id()) {
                                     throw MeshEx(MESH_LOGIC_ERROR, "MeshAlg::greedyEdgeCollapsePostProcessing(): after performing changeKey(value = id, new_key = -INF) on priority queue Q, element with value id is not top() element. internal logic error.");
@@ -2138,7 +2137,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                                 else Q.deleteMin();
                             }
                             else {
-                                debugl(2, "neighbour triangle NOT found in Q. checking if it needs reinsertion..\n");
+                                debugl(3, "neighbour triangle NOT found in Q. checking if it needs reinsertion..\n");
                             }
                             debugTabDec();
 
@@ -2149,16 +2148,16 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                             w_inc_tri_avg_surrounding_area  = avg_surrounding_area[w_inc_tri_id];
 
                             if ( proc(w_inc_tri_ar, w_inc_tri_area, w_inc_tri_avg_surrounding_area, alpha, lambda, mu) ) {
-                                debugl(2, "ar still too large, area ok => reinserting..\n");
+                                debugl(3, "ar still too large, area ok => reinserting..\n");
                                 Q.insert( { -w_inc_tri_ar, w_inc_tri->id() } );
                             }
                             else {
-                                debugl(2, "ar / area ok => not reinserting\n");
+                                debugl(3, "ar / area ok => not reinserting\n");
                             }
                         }
                         debugTabDec();
 
-                        debugl(2, "reinserting all \"unsafe\" triangles if still existent and necessary..\n");
+                        debugl(3, "reinserting all \"unsafe\" triangles if still existent and necessary..\n");
 
                         /* reinsert all "unsafe" triangles, should they still exist and require processing */
                         debugTabInc();
@@ -2171,7 +2170,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                             if ( Q.changeKey(us_tri_id, -inf<R>()) == true) {
                                 /* changeKey() has returned true => R (ar) key of value w_inc_tri->id() has been set to
                                  * -INF and is therefore guaranteed to be the minimum element. */
-                                debugl(3, "unsafe triangle found in Q, key decreased to -INF. getting Q.top() and comparing id to us_tri_id\n");
+                                debugl(4, "unsafe triangle found in Q, key decreased to -INF. getting Q.top() and comparing id to us_tri_id\n");
                                 q_min = Q.top();
                                 if (q_min.second != us_tri_id) {
                                     throw MeshEx(MESH_LOGIC_ERROR, "MeshAlg::greedyEdgeCollapsePostProcessing(): after performing changeKey(value = id, new_key = -INF) on priority queue Q, element with value id is not top() element. internal logic error.");
@@ -2179,7 +2178,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                                 else Q.deleteMin();
                             }
                             else {
-                                debugl(3, "unsafe triangle NOT found in Q. checking if it needs reinsertion..\n");
+                                debugl(4, "unsafe triangle NOT found in Q. checking if it needs reinsertion..\n");
                             }
 
                             /* reinsert if necessary */
@@ -2194,7 +2193,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                                 /* evaluate processing predicate */
                                 if ( proc(us_tri_ar, us_tri_area, us_tri_avg_surrounding_area, alpha, lambda, mu) ) {
                                 //if ( us_tri_area < mu * us_tri_avg_surrounding_area && (us_tri_ar >= alpha || us_tri_area < lambda * us_tri_avg_surrounding_area) )
-                                    debugl(3, "us_tri_ar: %5.4f, us_tri_area: %10.5f, us_tri_avg_surrounding_area: %10.5f\n", us_tri_ar, us_tri_area, us_tri_avg_surrounding_area);
+                                    debugl(4, "us_tri_ar: %5.4f, us_tri_area: %10.5f, us_tri_avg_surrounding_area: %10.5f\n", us_tri_ar, us_tri_area, us_tri_avg_surrounding_area);
                                     Q.insert( { -us_tri_ar, us_tri_id } );
                                 }
                             }
@@ -2204,7 +2203,7 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
                     /* collapse of edge {u, v} was topologically unsafe and has not been performed.  append tri_id to
                      * list of unsafe triangle ids */
                     else {
-                        debugl(2, "collapse unsafe, pushing triangle %5d to unsafe tri list..\n", tri_id);
+                        debugl(3, "collapse unsafe, pushing triangle %5d to unsafe tri list..\n", tri_id);
                         unsafe_tris.push_back(tri_id);
                     }
                 }
@@ -2237,10 +2236,10 @@ MeshAlg::greedyEdgeCollapsePostProcessing(
         }
         iter++;
     }
-    debugl(2, "fixed point reached. returning...\n");
+    debugl(3, "fixed point reached. returning...\n");
 
     debugTabDec();
-    debugl(0, "MeshAlg::greedyEdgeCollapsePostProcessing(): done.\n");
+    debugl(1, "MeshAlg::greedyEdgeCollapsePostProcessing(): done.\n");
 }
 
 
@@ -2251,7 +2250,7 @@ GEC_getAvgAreaOfPermissibleSurroundingTriangles(
     R const                                        &max_ar,
     uint32_t                                        depth)
 {
-    debugl(3, "GEC_getAvgAreaOfPermissibleSurroundingTriangles()\n");
+    debugl(4, "GEC_getAvgAreaOfPermissibleSurroundingTriangles()\n");
     debugTabInc();
 
     R           nbtri_ar, nbtri_area, avg_area;
@@ -2270,14 +2269,14 @@ GEC_getAvgAreaOfPermissibleSurroundingTriangles(
         nbtri_area  = nbtri->getTriArea();
 
         if (nbtri_ar < max_ar) {
-            debugl(4, "got permissible triangle %5d with ar: %10.5f and area: %10.5f\n", nbtri->id(), nbtri_ar, nbtri_area);
+            debugl(5, "got permissible triangle %5d with ar: %10.5f and area: %10.5f\n", nbtri->id(), nbtri_ar, nbtri_area);
             avg_area += nbtri_area;
             npermissible_triangles++;
         }
     }
 
     if (npermissible_triangles == 0) {
-        debugl(0, "MeshAlg::GEC_getAvgAreaOfPermissibleSurroundingTriangles(): WARNING: triangle %d: can't compute average, since no %5.4f-permissible triangle found in the %d-neighbour of %d. returning area %5.4f as \"average\"\n.",
+        debugl(1, "MeshAlg::GEC_getAvgAreaOfPermissibleSurroundingTriangles(): WARNING: triangle %d: can't compute average, since no %5.4f-permissible triangle found in the %d-neighbour of %d. returning area %5.4f as \"average\"\n.",
             tri_it->id(), max_ar, depth, tri_it->id(), tri_it->getTriArea());
 
         debugTabDec();
@@ -2285,7 +2284,7 @@ GEC_getAvgAreaOfPermissibleSurroundingTriangles(
     }
     else {
         debugTabDec();
-        debugl(3, "GEC_getAvgAreaOfPermissibleSurroundingTriangles(): done.\n");
+        debugl(4, "GEC_getAvgAreaOfPermissibleSurroundingTriangles(): done.\n");
         return ( avg_area / (R)npermissible_triangles );
     }
 }
@@ -2472,7 +2471,7 @@ MeshAlg::partialFlushToObjFile(
         >                                                      &out_boundary_vertices,
     uint32_t                                                   &out_last_flush_vertex_id)
 {
-    debugl(0, "MeshAlg::partialFlush().\n");
+    debugl(1, "MeshAlg::partialFlush().\n");
     debugTabInc();
     /* copy out information about all faces in face_list, the list of faces to be flushed, and subsequently delete them
      * in M. */
@@ -2490,19 +2489,19 @@ MeshAlg::partialFlushToObjFile(
             if (    (this->quad && v_ids.size() != 4) ||
                     (!this->quad && v_ids.size() != 3) )
             {
-                debugl(0, "ERROR: quad: %d. v_ids.size(): %d\n", quad, v_ids.size());
+                debugl(1, "ERROR: quad: %d. v_ids.size(): %d\n", quad, v_ids.size());
                 throw("MeshAlg::partialFlush(..)::IdFace::IdFace(): given vertex index vector has wrong size (neither tri / 3 nor quad / 4). internal logic error.");
             }
         }
     };
 
-    debugl(0, "in_boundary_vertices.size(): %zu. in_last_flush_vertex_id: %d, face_list.size(): %zu\n",
+    debugl(1, "in_boundary_vertices.size(): %zu. in_last_flush_vertex_id: %d, face_list.size(): %zu\n",
         in_boundary_vertices.size(), in_last_flush_vertex_id, face_list.size());
 
 #ifdef __DEBUG__
     debugTabInc();
     for (auto &vp : in_boundary_vertices) {
-        debugl(1, "in_boundary_vertices element: mesh id: %d, flush id: %d\n", vp.first->id(), vp.second);
+        debugl(2, "in_boundary_vertices element: mesh id: %d, flush id: %d\n", vp.first->id(), vp.second);
     }
     debugTabDec();
 #endif
@@ -2543,23 +2542,23 @@ MeshAlg::partialFlushToObjFile(
     for (auto &v : M.vertices) {
         std::list<typename Mesh<Tm, Tv, Tf, R>::Face *> v_fstar;
         v.getFaceStar(v_fstar);
-        debugl(1, "vertex %d. face star size: %d .. ", v.id(), v_fstar.size());
+        debugl(2, "vertex %d. face star size: %d .. ", v.id(), v_fstar.size());
 
         if (v.isIsolated()) {
             isolated_vertices.push_back({&v, 0});
-            debugl(1, "is isolated.\n");
+            debugl(2, "is isolated.\n");
         }
         else if (!v.isManifold()) {
             boundary_vertices.push_back({ &v, 0});
-            debugl(1, "is not isolated but non-manifold => boundary vertex.\n");
+            debugl(2, "is not isolated but non-manifold => boundary vertex.\n");
         }
         else {
-            debugl(1, "is regular.\n");
+            debugl(2, "is regular.\n");
         }
     }
     debugTabDec();
 
-    debugl(0, "isolated_vertices.size(): %zu, boundary_vertices.size(): %zu.\n", isolated_vertices.size(), boundary_vertices.size());
+    debugl(1, "isolated_vertices.size(): %zu, boundary_vertices.size(): %zu.\n", isolated_vertices.size(), boundary_vertices.size());
 
     /* sort all lists, unique input boundary vertex list for safety */
     auto cmp =
@@ -2586,7 +2585,7 @@ MeshAlg::partialFlushToObjFile(
     isolated_vertices.sort(cmp);
     boundary_vertices.sort(cmp);
 
-    debugl(0, "after sort: isolated_vertices.size(): %zu, boundary_vertices.size(): %zu.\n", isolated_vertices.size(), boundary_vertices.size());
+    debugl(1, "after sort: isolated_vertices.size(): %zu, boundary_vertices.size(): %zu.\n", isolated_vertices.size(), boundary_vertices.size());
 
     /* compute sef-differences: isolated_vertices \ in_boundary_vertices and boundary_vertices \ in_boundary_vertices */ 
     std::set_difference(
@@ -2600,7 +2599,7 @@ MeshAlg::partialFlushToObjFile(
         std::back_inserter(new_boundary_vertices), cmp);
 
 
-    debugl(0, "after sort: new_isolated_vertices.size(): %zu, new_boundary_vertices.size(): %zu.\n",
+    debugl(1, "after sort: new_isolated_vertices.size(): %zu, new_boundary_vertices.size(): %zu.\n",
             new_isolated_vertices.size(), new_boundary_vertices.size());
 
     /* consecutively number all new isolated vertices and new boundary vertices. compile id replacement map and update
@@ -2609,21 +2608,21 @@ MeshAlg::partialFlushToObjFile(
 
     /* initialize id replacement map. associate mesh ids of all in_boundary_vertices with flush ids. number all new
      * vertices consecutively and associate new ids in the process */
-    debugl(0, "initializing id replacement map.\n");
+    debugl(1, "initializing id replacement map.\n");
 
     std::map<uint32_t, uint32_t> id_replace_map;
     debugTabInc();
     for (auto vp : in_boundary_vertices) {
-        debugl(1, "old in boundary vertex: %5d -> %d.\n", vp.first->id(), vp.second);
+        debugl(2, "old in boundary vertex: %5d -> %d.\n", vp.first->id(), vp.second);
         id_replace_map[vp.first->id()] = vp.second;
     }
     for (auto it = new_isolated_vertices.begin(); it != new_isolated_vertices.end(); ++it) {
-        debugl(1, "new isolated vertex: %d -> assigning id %d.\n", it->first->id(), last_flush_vertex_id);
+        debugl(2, "new isolated vertex: %d -> assigning id %d.\n", it->first->id(), last_flush_vertex_id);
         it->second = last_flush_vertex_id++;
         id_replace_map[it->first->id()] = it->second;
     }
     for (auto it = new_boundary_vertices.begin(); it != new_boundary_vertices.end(); ++it) {
-        debugl(1, "new boundary vertex: %d -> assigning id %d.\n", it->first->id(), last_flush_vertex_id);
+        debugl(2, "new boundary vertex: %d -> assigning id %d.\n", it->first->id(), last_flush_vertex_id);
         it->second = last_flush_vertex_id++;
         id_replace_map[it->first->id()] = it->second;
     }
@@ -2633,10 +2632,10 @@ MeshAlg::partialFlushToObjFile(
     out_last_flush_vertex_id = last_flush_vertex_id;
 
     /* replace all indices in flush_face_list using the generated id map above. */
-    debugl(0, "replacing vertex indices in all flush faces with flush indices..\n"); 
+    debugl(1, "replacing vertex indices in all flush faces with flush indices..\n"); 
     debugTabInc();
     for (auto &f : flush_face_list) {
-        debugl(1, "replacing ids in face (%d, %d, %d)\n", f.v_ids[0], f.v_ids[1], f.v_ids[2]);
+        debugl(2, "replacing ids in face (%d, %d, %d)\n", f.v_ids[0], f.v_ids[1], f.v_ids[2]);
         for (auto &id : f.v_ids) {
             auto it = id_replace_map.find(id);
             if (it != id_replace_map.end()) {
@@ -2647,7 +2646,7 @@ MeshAlg::partialFlushToObjFile(
                 throw("MeshAlgorithms::partialFlush(): failed to locate vertex index in id_replace_map. internal logic error.");
             }
         }
-        debugl(1, "replaced ids: (%d, %d, %d)\n", f.v_ids[0], f.v_ids[1], f.v_ids[2]);
+        debugl(2, "replaced ids: (%d, %d, %d)\n", f.v_ids[0], f.v_ids[1], f.v_ids[2]);
     }
     debugTabDec();
 
@@ -2662,7 +2661,7 @@ MeshAlg::partialFlushToObjFile(
      * first, scan obj_file for the vertex block delimiter "# ____~V____". as long as it is not found, copy lines to
      * swap file. after delimiter has been found, insert new vertex lines into swap file, followed by the rest of
      * obj_file and finally the new faces. */
-    debugl(0, "writing new partial mesh to swap file..\n");
+    debugl(1, "writing new partial mesh to swap file..\n");
 
     /* get "original" obj file */
     FILE               *obj_file    = *(obj_file_info.first);
@@ -2681,7 +2680,7 @@ MeshAlg::partialFlushToObjFile(
 
     /* if orig file is empty, write new vertices / faces directly */
     if (Aux::File::isEmpty(obj_file)) {
-        debugl(0, "given obj file empty..\n");
+        debugl(1, "given obj file empty..\n");
 
         fprintf(swap_file, "# %5zu flushed vertices\n", new_isolated_vertices.size() + new_boundary_vertices.size());
         Vec3<R> vpos;
@@ -2697,20 +2696,20 @@ MeshAlg::partialFlushToObjFile(
         /* and write delimiter again */
         fprintf(swap_file, "%s\n", v_delim);
 
-        debugl(0, "done writing new vertices and delimiter.\n");
+        debugl(1, "done writing new vertices and delimiter.\n");
     }
     /* otherwise assemble swap_file from new information and obj_file */
     else {
-        debugl(0, "given obj file non-empty.. \"merging\" together old and new information into swap_file..\n");
+        debugl(1, "given obj file non-empty.. \"merging\" together old and new information into swap_file..\n");
         rewind(obj_file);
         debugTabInc();
         while ( fgets(line, sizeof(line), obj_file) == line) {
             if (line[strlen(line) - 1] == '\n') {
                 /* overwrite newline with zero-termination */
                 line[strlen(line) - 1] = '\0';
-                debugl(1, "line from original file: \"%s\".\n", line);
+                debugl(2, "line from original file: \"%s\".\n", line);
                 if (strncmp(line, v_delim, sizeof(v_delim)) == 0) {
-                    debugl(2, "writing new vertices and delimiter.\n");
+                    debugl(3, "writing new vertices and delimiter.\n");
 
                     /* delimiter found. write new vertices */
                     fprintf(swap_file, "# %5zu flushed vertices\n", new_isolated_vertices.size() + new_boundary_vertices.size());
@@ -2727,7 +2726,7 @@ MeshAlg::partialFlushToObjFile(
                     /* and write delimiter again */
                     fprintf(swap_file, "%s\n", v_delim);
 
-                    debugl(2, "done writing new vertices and delimiter.\n");
+                    debugl(3, "done writing new vertices and delimiter.\n");
                 }
                 /* copy line to swap_file */
                 else {
@@ -2767,7 +2766,7 @@ MeshAlg::partialFlushToObjFile(
         }
     }
 
-    debugl(1, "flushing / synching / closing obj_file\n");
+    debugl(2, "flushing / synching / closing obj_file\n");
 
     /* flush internal buffers, kernel buffers, close original file */
     fflush(obj_file);
@@ -2778,7 +2777,7 @@ MeshAlg::partialFlushToObjFile(
     fsync(fileno(swap_file));
     fclose(swap_file);
 
-    debugl(1, "removing original file, rename swap file to original file.\n");
+    debugl(2, "removing original file, rename swap file to original file.\n");
 
     /* remove original file, rename swap_file to original file, adjust FILE * reference in file_info */
     if ( remove( (filename + ".obj").c_str() ) != 0) {
@@ -2790,7 +2789,7 @@ MeshAlg::partialFlushToObjFile(
         throw("MeshAlg::partialFlush(): can't rename swap file to filename of obj file.");
     }
 
-    debugl(1, "assigning new FILE * to obj_file_info pair by reopening filename, which now contains moved swap file...\n");
+    debugl(2, "assigning new FILE * to obj_file_info pair by reopening filename, which now contains moved swap file...\n");
     /* update file pointer in obj_file_info: reopen new obj file (moved swap file) in append mode and rewind() */
     FILE *tmp = fopen( (filename + ".obj").c_str(), "r+");
     if (!tmp) {
@@ -2802,7 +2801,7 @@ MeshAlg::partialFlushToObjFile(
         *(obj_file_info).first = tmp;
     }
     
-    debugl(1, "finishing invariants ..\n");
+    debugl(2, "finishing invariants ..\n");
 
     /* write out_boundary_vertices for the caller: out_boundary_vertices is the union of new_boundary_vertices and all
      * old boundary vertices that have not become isolated. since a boundary vertex can either stay a boundary vertex or
@@ -2832,16 +2831,16 @@ MeshAlg::partialFlushToObjFile(
     /* delete all isolated vertices, old and new, from M. note that only old boundary vertices, which have become
      * isolated during the call, are thereby deleted. no other boundary vertex is deleted, but they have been written to
      * the obj file already to guarantee the invariant for the next flushing or the finalizing call. */
-    debugl(1, "deleting all new isolated vertices.\n");
+    debugl(2, "deleting all new isolated vertices.\n");
     debugTabInc();
     for (auto &vp : isolated_vertices) {
-        debugl(2, "deleting isolated vertex %d.\n", vp.first->id());
+        debugl(3, "deleting isolated vertex %d.\n", vp.first->id());
         M.vertices.erase(vp.first->iterator());
     }
     debugTabDec();
 
     debugTabDec();
-    debugl(0, "MeshAlg::partialFlush(): done.\n");
+    debugl(1, "MeshAlg::partialFlush(): done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>

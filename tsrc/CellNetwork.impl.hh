@@ -3850,7 +3850,7 @@ NeuriteRootEdgeAccessor::split(
             >
         > const                        &intermediate_vertex_data)
 {
-    debugl(1, "CellNetwork::NeuriteRootEdgeAccessor::split(). neurite root edge: e = (u, v): %d = (%d, %d).\n",
+    debugl(2, "CellNetwork::NeuriteRootEdgeAccessor::split(). neurite root edge: e = (u, v): %d = (%d, %d).\n",
             nr_it->id(),
             nr_it->getSourceVertex()->id(),
             nr_it->getDestinationVertex()->id());
@@ -3871,17 +3871,17 @@ NeuriteRootEdgeAccessor::split(
 
     /* depending on the type of neurite root edge (and equivalently, the type of v), insert Axon- or DendriteVertices
      * with default constructed instances for Tv and (Ta (x)or Td). */
-    debugl(2, "adding %d intermediate vertices..\n", n);
+    debugl(3, "adding %d intermediate vertices..\n", n);
     debugTabInc();
     if (v_it->getType() == this->C.AXON_VERTEX) {
-        debugl(2, "(s, v) was an axon root edge => inserting intermediate axon vertices.\n");
+        debugl(3, "(s, v) was an axon root edge => inserting intermediate axon vertices.\n");
         AxonVertex *v_downcast = dynamic_cast<AxonVertex *>(&(*v_it));
         if (v_downcast) {
             axon_iterator           p0a_it;
             axon_rootedge_iterator  s_p0a_it;
             Tar                     nra_data = (v_downcast->template getFilteredInEdges<AxonRootEdge>()).front()->axon_root_edge_data;
 
-            debugl(2, "erasing old neurite root edge e = (u, v) = %d\n", nr_it->id());
+            debugl(3, "erasing old neurite root edge e = (u, v) = %d\n", nr_it->id());
             this->C.neuron_edges.erase(nr_it);
 
             for (uint32_t i = 0; i < n; i++) {
@@ -3934,14 +3934,14 @@ NeuriteRootEdgeAccessor::split(
         }
     }
     else if (v_it->getType() == this->C.DENDRITE_VERTEX) {
-        debugl(2, "(s, v) was a dendrite root edge => inserting intermediate dendrite vertices.\n");
+        debugl(3, "(s, v) was a dendrite root edge => inserting intermediate dendrite vertices.\n");
         DendriteVertex *v_downcast = dynamic_cast<DendriteVertex *>(&(*v_it));
         if (v_downcast) {
             dendrite_iterator           p0d_it;
             dendrite_rootedge_iterator  s_p0d_it;
             Tdr                         nrd_data = (v_downcast->template getFilteredInEdges<DendriteRootEdge>()).front()->dendrite_root_edge_data;
 
-            debugl(2, "erasing old neurite root edge e = (u, v) = %d\n", nr_it->id());
+            debugl(3, "erasing old neurite root edge e = (u, v) = %d\n", nr_it->id());
             this->C.neuron_edges.erase(neuron_edge_iterator(nr_it));
 
             for (uint32_t i = 0; i < n; i++) {
@@ -4004,29 +4004,29 @@ NeuriteRootEdgeAccessor::split(
     debugTabDec();
 
     /* insert new neurite segments, on the neurite-segment abstraction level.. */
-    debugl(2, "inserting new neurite segments (p1, p_2), (p1, p2), .., (p_n, v)\n");
+    debugl(3, "inserting new neurite segments (p1, p_2), (p1, p2), .., (p_n, v)\n");
     debugTabInc();
 
     std::list<neurite_segment_iterator> ns_list;
     for (uint32_t i = 0; i < n - 1; i++) {
-        debugl(2, "inserting ns (%d, %d)\n",
+        debugl(3, "inserting ns (%d, %d)\n",
                 intermediate_vertices[i]->id(),
                 intermediate_vertices[i+1]->id()
             );
         ns_list.push_back( (this->C.neurite_segments.insert(intermediate_vertices[i], intermediate_vertices[i+1])).first );
     }
 
-    debugl(2, "inserting ns (%d, %d)\n", intermediate_vertices[n-1]->id(), v_it->id());
+    debugl(3, "inserting ns (%d, %d)\n", intermediate_vertices[n-1]->id(), v_it->id());
     ns_list.push_back( (this->C.neurite_segments.insert(intermediate_vertices[n-1], v_it)).first );
 
     debugTabDec();
-    debugl(2, "done inserting new neurite segments..\n");
+    debugl(3, "done inserting new neurite segments..\n");
 
     /* network info needs update, since neurite information has changed. */
     this->C.network_info_initialized = false;
 
     debugTabDec();
-    debugl(1, "CellNetwork::NeuriteRootEdgeAccessor::split(): done.\n");
+    debugl(2, "CellNetwork::NeuriteRootEdgeAccessor::split(): done.\n");
 
     return std::pair<
             neurite_rootedge_iterator,
@@ -4272,7 +4272,7 @@ NeuriteSegmentAccessor::split(
             >
         > const                        &intermediate_vertex_data)
 {
-    debugl(1, "CellNetwork::NeuriteSegmentAccessor::split(). neurite segment: e = (u, v): %d = (%d, %d).\n",
+    debugl(2, "CellNetwork::NeuriteSegmentAccessor::split(). neurite segment: e = (u, v): %d = (%d, %d).\n",
             ns_it->id(),
             ns_it->getSourceVertex()->id(),
             ns_it->getDestinationVertex()->id());
@@ -4290,15 +4290,15 @@ NeuriteSegmentAccessor::split(
     neurite_iterator                v = ns_it->getDestinationVertex();
     std::vector<neurite_iterator>   intermediate_vertices(n);
 
-    debugl(2, "erasing old edge e = (u, v) = %d\n", ns_it->id());
+    debugl(3, "erasing old edge e = (u, v) = %d\n", ns_it->id());
     this->C.neuron_edges.erase(neuron_edge_iterator(ns_it));
 
     /* depending on the type of ns (and equivalently, the types of u and v), insert Axon- or DendriteVertices with
      * default constructed instances for Tv and (Ta (x)or Td). */
-    debugl(2, "adding %d intermediate vertices..\n", n);
+    debugl(3, "adding %d intermediate vertices..\n", n);
     debugTabInc();
     if (u->getType() == this->C.AXON_VERTEX && v->getType() == this->C.AXON_VERTEX) {
-        debugl(2, "(u, v) was an axon segment => inserting intermediate axon vertices.\n");
+        debugl(3, "(u, v) was an axon segment => inserting intermediate axon vertices.\n");
         for (uint32_t i = 0; i < n; i++) {
             intermediate_vertices[i] = this->C.axon_vertices.insert(
                     /* FIXME: which value for compartment id? keep IdQueue for compartment ids.. */
@@ -4311,7 +4311,7 @@ NeuriteSegmentAccessor::split(
         }
     }
     else if (u->getType() == this->C.DENDRITE_VERTEX && v->getType() == this->C.DENDRITE_VERTEX) {
-        debugl(2, "(u, v) was a dendrite segment => inserting intermediate dendrite vertices.\n");
+        debugl(3, "(u, v) was a dendrite segment => inserting intermediate dendrite vertices.\n");
         DendriteVertex *u_downcast = dynamic_cast<DendriteVertex *>(&(*u));
         if (u_downcast) {
             for (uint32_t i = 0; i < n; i++) {
@@ -4339,33 +4339,33 @@ NeuriteSegmentAccessor::split(
     debugTabDec();
 
     /* set neurite and soma information inside newly added neurite vertices */
-    debugl(2, "setting soma / neurite information in intermediate vertices.\n");
+    debugl(3, "setting soma / neurite information in intermediate vertices.\n");
     for (uint32_t i = 0; i < n; i++) {
         intermediate_vertices[i]->soma      = u->getSoma();
         intermediate_vertices[i]->neurite   = u->getNeurite();
     }
 
     /* insert new neurite segments, on the neurite-segment abstraction level.. */
-    debugl(2, "inserting new neurite segments (u, p_1), (p1, p2), .., (p_n, v)\n");
+    debugl(3, "inserting new neurite segments (u, p_1), (p1, p2), .., (p_n, v)\n");
     debugTabInc();
 
     std::list<neurite_segment_iterator> ret;
-    debugl(2, "inserting ns (%d, %d)\n", u->id(), intermediate_vertices[0]->id());
+    debugl(3, "inserting ns (%d, %d)\n", u->id(), intermediate_vertices[0]->id());
     ret.push_back( (this->C.neurite_segments.insert(u, intermediate_vertices[0])).first );
 
     for (uint32_t i = 0; i < n - 1; i++) {
-        debugl(2, "inserting ns (%d, %d)\n",
+        debugl(3, "inserting ns (%d, %d)\n",
                 intermediate_vertices[i]->id(),
                 intermediate_vertices[i+1]->id()
             );
         ret.push_back( (this->C.neurite_segments.insert(intermediate_vertices[i], intermediate_vertices[i+1])).first );
     }
 
-    debugl(2, "inserting ns (%d, %d)\n", intermediate_vertices[n-1]->id(), v->id());
+    debugl(3, "inserting ns (%d, %d)\n", intermediate_vertices[n-1]->id(), v->id());
     ret.push_back( (this->C.neurite_segments.insert(intermediate_vertices[n-1], v)).first );
 
     debugTabDec();
-    debugl(2, "done inserting new neurite segments..\n");
+    debugl(3, "done inserting new neurite segments..\n");
 
     /* set neurite and soma information for all newly added neurite segments and return list of iterators */
     for (auto &ns : ret) {
@@ -4374,7 +4374,7 @@ NeuriteSegmentAccessor::split(
     }
 
     debugTabDec();
-    debugl(1, "CellNetwork::NeuriteSegmentAccessor::split(): done.\n");
+    debugl(2, "CellNetwork::NeuriteSegmentAccessor::split(): done.\n");
     return ret;
 }
 
@@ -4652,28 +4652,28 @@ CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
 initializeNetworkInfo()
 {
     if (!this->network_info_initialized) {
-        debugl(0, "CellNetwork::initializeNetworkInfo().\n");
+        debugl(1, "CellNetwork::initializeNetworkInfo().\n");
         debugTabInc();
         /* for all cells (i.e. somas), traverse each neurite individually and store iterators to soma and respective
          * neurite root edge in neurite vertices / neurite segment.  this makes later access much more efficient and
          * comfortable. */
-        debugl(1, "iterating over all cells (somas)..\n");
+        debugl(2, "iterating over all cells (somas)..\n");
         debugTabInc();
         for (auto &s : this->soma_vertices) {
-            debugl(1, "processing soma %d\n", s.id());
+            debugl(2, "processing soma %d\n", s.id());
             std::list<NeuriteRootEdge *>    s_neurite_root_edges;
 
             s.template getFilteredOutEdges<NeuriteRootEdge>(s_neurite_root_edges);
 
-            debugl(1, "processing all neurites connected to soma %d\n", s.id());
+            debugl(2, "processing all neurites connected to soma %d\n", s.id());
             debugTabInc();
             for (auto &nre : s_neurite_root_edges) {
-                debugl(2, "processing neurite root edge %d with neurite root vertex r %d. retrieving connected component..\n", nre->id(), nre->getDestinationVertex()->id());
+                debugl(3, "processing neurite root edge %d with neurite root vertex r %d. retrieving connected component..\n", nre->id(), nre->getDestinationVertex()->id());
 
                 /* extract neurite root vertex r of neurite starting with edge nre */
                 neurite_iterator r      = nre->getDestinationVertex();
 
-                debugl(2, "retrieving all neurite vertices / edges reachable from neurite roor vertex %d.\n", r->id());
+                debugl(3, "retrieving all neurite vertices / edges reachable from neurite roor vertex %d.\n", r->id());
                 /* get all neurite vertices / segments reachable from r */
                 std::list<NeuriteVertex *>  r_cc_nv;
                 std::list<NeuriteSegment *> r_cc_ns;
@@ -4681,36 +4681,36 @@ initializeNetworkInfo()
                 this->getNeuriteConnectedComponent(r, r_cc_nv, r_cc_ns);
 
                 /* store info inside all reachable neurite vertices */
-                debugl(2, "assigning soma / neurite information to all %d neurite vertices reachable from r(%d).\n", r_cc_nv.size(), r->id());
+                debugl(3, "assigning soma / neurite information to all %d neurite vertices reachable from r(%d).\n", r_cc_nv.size(), r->id());
                 debugTabInc();
                 for (auto &nv : r_cc_nv) {
-                    debugl(3, "processing neurite vertex %d.\n", nv->id());
+                    debugl(4, "processing neurite vertex %d.\n", nv->id());
                     nv->soma        = s.iterator();
                     nv->neurite     = nre->iterator();
                 }
                 debugTabDec();
-                debugl(2, "done assigning neurite vertex info.\n");
+                debugl(3, "done assigning neurite vertex info.\n");
 
                 /* store info inside all reachable neurite edges */
-                debugl(2, "assigning soma / neurite information to all %d neurite segments reachable from r(%d).\n", r_cc_ns.size(), r->id());
+                debugl(3, "assigning soma / neurite information to all %d neurite segments reachable from r(%d).\n", r_cc_ns.size(), r->id());
                 debugTabInc();
                 for (auto &ns : r_cc_ns) {
-                    debugl(3, "processing neurite segment %d.\n", ns->id());
+                    debugl(4, "processing neurite segment %d.\n", ns->id());
                     ns->soma    = s.iterator();
                     ns->neurite = nre->iterator();
                 }
                 debugTabDec();
             }
             debugTabDec();
-            debugl(1, "done with soma %d.\n", s.id());
+            debugl(2, "done with soma %d.\n", s.id());
         }
         debugTabDec();
-        debugl(0, "done processing somas.\n");
+        debugl(1, "done processing somas.\n");
 
         this->network_info_initialized = true;
 
         debugTabDec();
-        debugl(0, "CellNetwork::initializeNetworkInfo(): done.\n");
+        debugl(1, "CellNetwork::initializeNetworkInfo(): done.\n");
     }
 }
 
@@ -4813,7 +4813,7 @@ traverseBreadthFirst(
     std::function<bool(EdgeType const &e)> const       &edge_termination_pred,
     int32_t                                             tid_arg)
 {
-    debugl(0, "CellNetwork::getConnectedComponent(): starting %s traversal from node %2d.\n",
+    debugl(1, "CellNetwork::getConnectedComponent(): starting %s traversal from node %2d.\n",
         (directed) ? "directed" : "undirected", vstart_it->id());
     debugTabInc();
 
@@ -4991,7 +4991,7 @@ traverseBreadthFirst(
     }
 
     debugTabDec();
-    debugl(0, "CellNetwork::getConnectedComponent(): %s traversal from node %2d finished.\n",
+    debugl(1, "CellNetwork::getConnectedComponent(): %s traversal from node %2d finished.\n",
         (directed) ? "directed" : "undirected", vstart_it->id());
 }
 
@@ -5322,7 +5322,7 @@ R
 CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
 getMorphologicalDiameter(soma_iterator s_it)
 {
-    debugl(0, "CellNetwork::getMorphologicalDiameter(): called on soma s with id: %d\n", s_it->id());
+    debugl(1, "CellNetwork::getMorphologicalDiameter(): called on soma s with id: %d\n", s_it->id());
     debugTabInc();
 
     /* NOTE: this assumes that the CellNetwork::checkTopology() has been called to ensure that (this) CellNetwork forms
@@ -5397,8 +5397,8 @@ getMorphologicalDiameter(soma_iterator s_it)
         /* trivial termination predicates always returning false */
         neuron_vertex_false_pred, neuron_edge_false_pred);
 
-    debugl(0, "reachable_vertices_info.size(): %zu.\n", reachable_vertices_info.size());
-    debugl(0, "reachable_edges.size(): %zu.\n", reachable_edges.size());
+    debugl(1, "reachable_vertices_info.size(): %zu.\n", reachable_vertices_info.size());
+    debugl(1, "reachable_edges.size(): %zu.\n", reachable_edges.size());
 
     if (!reachable_vertices_info.empty()) {
         /* find vertex u of maximum distance to s */
@@ -5411,7 +5411,7 @@ getMorphologicalDiameter(soma_iterator s_it)
                 u_it    = std::get<0>(vi_tuple)->iterator();
             }
         }
-        debugl(0, "neuron vertex of maximum distance to soma s (%d): vertex u (%d) with d(s,u) %10.5f\n", s_it->id(), u_it->id(), su_dist);
+        debugl(1, "neuron vertex of maximum distance to soma s (%d): vertex u (%d) with d(s,u) %10.5f\n", s_it->id(), u_it->id(), su_dist);
 
         /* start traversal from u, find vertex v of maximum distance to u. d(u, v) is the diameter of the cell tree, i.e.
          * the morphological diameter of the cell rooted in s */
@@ -5441,11 +5441,11 @@ getMorphologicalDiameter(soma_iterator s_it)
                 v_it    = std::get<0>(vi_tuple)->iterator();
             }
         }
-        debugl(0, "neuron vertex of maximum distance to u (%d): vertex v(%d) with d(u, v) = %10.5f\n", u_it->id(), v_it->id(), uv_dist);
-        debugl(0, "<=> diameter of cell tree, i.e. the morphological diameter, is %10.5f\n", uv_dist);
+        debugl(1, "neuron vertex of maximum distance to u (%d): vertex v(%d) with d(u, v) = %10.5f\n", u_it->id(), v_it->id(), uv_dist);
+        debugl(1, "<=> diameter of cell tree, i.e. the morphological diameter, is %10.5f\n", uv_dist);
 
         debugTabDec();
-        debugl(0, "CellNetwork::getMorphologicalDiameter(): done.\n");
+        debugl(1, "CellNetwork::getMorphologicalDiameter(): done.\n");
 
         return uv_dist;
     }
@@ -5684,7 +5684,7 @@ transformToSomaSystem(soma_const_iterator const &s_it)
     /* compute centroid of all vertex positions */
     Vec3<R> d = s_it->getSinglePointPosition();
 
-    debugl(0, "soma position (displacement vector) : (%5.4f, %5.4f, %5.4f)\n", d[0], d[1], d[2]);
+    debugl(1, "soma position (displacement vector) : (%5.4f, %5.4f, %5.4f)\n", d[0], d[1], d[2]);
 
     /* apply displacement to all vertices */
     for (auto &v : this->neuron_vertices) {
@@ -5718,7 +5718,7 @@ readFromNeuroMorphoSWCFile(
     using Common::UnitType;
     using Aux::Alg::listContains;
 
-    debugl(0, "CellNetwork::readFromNeuroMorphoSWCFile():\n");
+    debugl(1, "CellNetwork::readFromNeuroMorphoSWCFile():\n");
     debugTabInc();
 
     /* define sorting function as lambda */
@@ -5739,20 +5739,20 @@ readFromNeuroMorphoSWCFile(
     int32_t                 parent_id;
     uint32_t                nmatch;
 
-    debugl(1, "trying to open input file \"%s\". \n", filename.c_str() );
+    debugl(2, "trying to open input file \"%s\". \n", filename.c_str() );
 
     f.open(filename, std::ifstream::in);
     if ( !f.is_open() ) {
         //printf("CellNetwork::readFromNeuroMorphoSWCFile(): cannot open SWC file \"%s\" for reading.\n", filename.c_str() );
         throw("CellNetwork::readFromNeuroMorphoSWCFile(): unable to open SWC file for reading.");
     }
-    debugl(1, "successfully opened. parsing input file one line at a time..\n");
+    debugl(2, "successfully opened. parsing input file one line at a time..\n");
 
     debugTabInc();
     while ( f.good() ) {
         std::getline(f, line_string);
         if (line_string.size() == 0) {
-            debugl(3, "empty line..\n");
+            debugl(4, "empty line..\n");
             continue;
         }
 
@@ -5766,12 +5766,12 @@ readFromNeuroMorphoSWCFile(
 
         /* skip comments */
         if (*linestart == '#') {
-            debugl(3, "comment found.. ignoring.\n");
+            debugl(4, "comment found.. ignoring.\n");
             delete[] line;
             continue;
         }
         else {
-            debugl(3, "line: \"%s\".\n", line);
+            debugl(4, "line: \"%s\".\n", line);
         }
 
         if (std::is_same<double, R>::value) {
@@ -5808,7 +5808,7 @@ readFromNeuroMorphoSWCFile(
         delete [] line;
     }
     debugTabDec();
-    debugl(1, "input file parsed into SWCNode array.\n");
+    debugl(2, "input file parsed into SWCNode array.\n");
     
     /* sort nodes by compartment id. */
     std::sort(swc_nodes.begin(), swc_nodes.end(), sort_id);
@@ -5816,7 +5816,7 @@ readFromNeuroMorphoSWCFile(
     /* resize and init traversal flag array */
     node_traversed.assign(swc_nodes.size(), false);
 
-    debugl(1, "checking for consecutive ids.\n");
+    debugl(2, "checking for consecutive ids.\n");
     /* check whether all ids are consecutive and hence also pairwise distinct */
     for (uint32_t i = 0; i < swc_nodes.size(); i++) {
         if (swc_nodes[i].compartment_id != i) {
@@ -5824,7 +5824,7 @@ readFromNeuroMorphoSWCFile(
         }
     }
 
-    debugl(1, "computing preliminary tree structure.\n");
+    debugl(2, "computing preliminary tree structure.\n");
     /* compute tree structure among nodes and get all soma nodes, that is: all nodes with parent_id -1. other nodes may
      * refer encode information for the same soma and will be merged below */
     // FIXME: The assertion "soma nodes are nodes with parent_id -1" is not true in general.
@@ -5846,7 +5846,7 @@ readFromNeuroMorphoSWCFile(
         node.child_ids.sort();
     }
 
-    debugl(1, "gathering soma information from sub-graphs of soma info nodes.\n");
+    debugl(2, "gathering soma information from sub-graphs of soma info nodes.\n");
 
     /* for all soma nodes, which should be the roots of all subtrees (topology will be checked in detail below), get all
      * descendants whose compartment type indicates soma as well. these nodes (including the root soma node) shall be
@@ -5880,7 +5880,7 @@ readFromNeuroMorphoSWCFile(
     /* traverse connected components of all soma root nodes */
     debugTabInc();
     for (auto &sid : soma_root_node_ids) {
-        debugl(2, "processing soma root node %2d.\n", sid);
+        debugl(3, "processing soma root node %2d.\n", sid);
         SWCNode &soma_root_node = swc_nodes[sid];
 
         /* reset data */
@@ -5904,7 +5904,7 @@ readFromNeuroMorphoSWCFile(
          * the root (or source) in soma_sectiongraph */
         soma_sectiongraph.data() = somagraph_sit->id();
 
-        debugl(2, "initializing traversal stack with all direct soma info node children of current soma root node %d.\n", soma_root_node.compartment_id);
+        debugl(3, "initializing traversal stack with all direct soma info node children of current soma root node %d.\n", soma_root_node.compartment_id);
         /* init stack to contain pairs (id, soma_sectiongraph iterator) for all non-root soma info nodes directly
          * connected to the root soma node. */
         S.clear();
@@ -5916,7 +5916,7 @@ readFromNeuroMorphoSWCFile(
                 auto somagraph_c_it = soma_sectiongraph.vertices.insert(c.sections.front());
                 auto rpair          = soma_sectiongraph.edges.insert(somagraph_sit, somagraph_c_it);
                 if (rpair.second) {
-                    debugl(2, "adding soma info node %d to _bottom_ of stack.\n", c.compartment_id);
+                    debugl(3, "adding soma info node %d to _bottom_ of stack.\n", c.compartment_id);
                     S.push_front( { c.compartment_id, somagraph_c_it } );
                     soma_info_node_ids.push_back(c.compartment_id);
                 }
@@ -5927,7 +5927,7 @@ readFromNeuroMorphoSWCFile(
             }
         }
         debugTabDec();
-        debugl(2, "traversal stack initialized. starting depth-first traversal..\n");
+        debugl(3, "traversal stack initialized. starting depth-first traversal..\n");
 
         /* stack has been initialized => depth-first traversal of all soma info node sub-trees for current
          * soma_root_node. */
@@ -5939,19 +5939,19 @@ readFromNeuroMorphoSWCFile(
 
             S.pop_back();
 
-            debugl(2, "stack top() current soma info node v: %2d. processing children..\n", v.compartment_id);
+            debugl(3, "stack top() current soma info node v: %2d. processing children..\n", v.compartment_id);
 
             /* scan through children of v */
             debugTabInc();
             for (auto child_it = v.child_ids.begin(); child_it != v.child_ids.end(); ) {
                 SWCNode c = swc_nodes[*child_it];
 
-                debugl(2, "current child c = %2d of v = %2d.\n", c.compartment_id, v.compartment_id);
+                debugl(3, "current child c = %2d of v = %2d.\n", c.compartment_id, v.compartment_id);
 
                 /* if child is a soma info node, handle it */
                 debugTabInc();
                 if (c.compartment_type == SOMA_COMPARTMENT) {
-                    debugl(2, "child is SOMA compartment => adding child c and edge (v,c) to soma graph.\n");
+                    debugl(3, "child is SOMA compartment => adding child c and edge (v,c) to soma graph.\n");
 
                     /* add vertex c and edge (v, c) to soma section graph */
                     auto somagraph_c_it     = soma_sectiongraph.vertices.insert(c.sections.front());
@@ -5961,7 +5961,7 @@ readFromNeuroMorphoSWCFile(
                      * little regularity in the data from NeuroMorpho.org. therefore check if child has already been
                      * traversed before pushing onto stack. */
                     if (!node_traversed[c.compartment_id]) {
-                        debugl(2, "child c not yet traversed. pushing onto stack..\n");
+                        debugl(3, "child c not yet traversed. pushing onto stack..\n");
                         S.push_back( { c.compartment_id, somagraph_c_it } );
 
                         /* append child node to soma info node list */
@@ -5972,7 +5972,7 @@ readFromNeuroMorphoSWCFile(
                 }
                 /* redirect all children with compartment type other than soma to the soma root node. */
                 else {
-                    debugl(2, "child is non-SOMA compartment => redirecting edge (v = %d, c = %d) to soma root node %d as edge (%d, c = %d).\n",
+                    debugl(3, "child is non-SOMA compartment => redirecting edge (v = %d, c = %d) to soma root node %d as edge (%d, c = %d).\n",
                         v.compartment_id, c.compartment_id, soma_root_node.compartment_id, soma_root_node.compartment_id, c.compartment_id);
 
                     soma_root_node.child_ids.push_back(*child_it); 
@@ -5988,7 +5988,7 @@ readFromNeuroMorphoSWCFile(
         }
         debugTabDec();
 
-        debugl(2, "marking all non-root soma info nodes as traversed.\n");
+        debugl(3, "marking all non-root soma info nodes as traversed.\n");
         /* all sub-trees of soma info vertices attached to root soma_node have been traversed. mark all info nodes as
          * traversed. */
         for (auto &vid : soma_info_node_ids) {
@@ -5996,11 +5996,11 @@ readFromNeuroMorphoSWCFile(
         }
 
         /* disconnect all non-root soma info nodes from root soma node */
-        debugl(2, "removing all (non-root) soma info node children of soma root node.\n");
+        debugl(3, "removing all (non-root) soma info node children of soma root node.\n");
         debugTabInc();
         for (auto child_it = soma_root_node.child_ids.begin(); child_it != soma_root_node.child_ids.end(); ) {
             if (swc_nodes[*child_it].compartment_type == SOMA_COMPARTMENT) {
-                debugl(2,"removing child node %2d of soma root node %2d\n", *child_it, soma_root_node.compartment_id);
+                debugl(3,"removing child node %2d of soma root node %2d\n", *child_it, soma_root_node.compartment_id);
                 child_it = soma_root_node.child_ids.erase(child_it);
             }
             else ++child_it;
@@ -6009,7 +6009,7 @@ readFromNeuroMorphoSWCFile(
     }
     debugTabDec();
 
-    debugl(1, "all soma root nodes processed. number of somas: %3zu\n", soma_root_node_ids.size());
+    debugl(2, "all soma root nodes processed. number of somas: %3zu\n", soma_root_node_ids.size());
 
     /* traverse the preliminary swc "tree" breadth first and insert all vertices / edges into (this) CellNetwork */
 
@@ -6038,10 +6038,10 @@ readFromNeuroMorphoSWCFile(
     axon_segment_iterator       asit;
     dendrite_segment_iterator   dsit;
 
-    debugl(1, "traversing preliminary forest breadth-first and constructing CellNetwork..\n");
+    debugl(2, "traversing preliminary forest breadth-first and constructing CellNetwork..\n");
     debugTabInc();
     for (auto &sid : soma_root_node_ids) {
-        debugl(2, "traversing connected component of soma %2d.\n", sid);
+        debugl(3, "traversing connected component of soma %2d.\n", sid);
 
         /* clear Q */
         Q.clear();
@@ -6066,17 +6066,17 @@ readFromNeuroMorphoSWCFile(
             nit         = Q.front().second;
             Q.pop_front();
 
-            debugl(2, "current node n: %d.\n", n.compartment_id);
+            debugl(3, "current node n: %d.\n", n.compartment_id);
 
             /* mark node as traversed */
             node_traversed[n.compartment_id] = true;
 
-            debugl(2, "inspecting all of n's neighbours and adding corresponding edges to CellNetwork..\n");
+            debugl(3, "inspecting all of n's neighbours and adding corresponding edges to CellNetwork..\n");
             /* examine all children of n, that is to say all out-going edge (n, c) */
             debugTabInc();
             for (auto &child_id : n.child_ids) {
                 SWCNode &c = swc_nodes[child_id];
-                debugl(2, "current neighbour c = %2d of n = %2d. adding c as vertex in CellNetwork..\n",
+                debugl(3, "current neighbour c = %2d of n = %2d. adding c as vertex in CellNetwork..\n",
                     c.compartment_id, n.compartment_id);
 
                 debugTabInc();
@@ -6090,7 +6090,7 @@ readFromNeuroMorphoSWCFile(
                 /* add child node node c as vertex */
                 switch (c.compartment_type) {
                     case SOMA_COMPARTMENT:
-                        debugl(2, "c is soma vertex => inserting..\n");
+                        debugl(3, "c is soma vertex => inserting..\n");
                         /* insert soma vertex, use default values for Tv and Ts, since SWC files do not provide any such
                          * additional information. information must be annotated to vertices later on. same for other vertex
                          * types below.
@@ -6111,7 +6111,7 @@ readFromNeuroMorphoSWCFile(
 
                     /* axon node */
                     case AXON_COMPARTMENT:
-                        debugl(2, "c is axon => inserting..\n");
+                        debugl(3, "c is axon => inserting..\n");
                         if (c.sections.size() == 1) {
                             c_ait = this->axon_vertices.insert(c.sections.front());
                         }
@@ -6123,7 +6123,7 @@ readFromNeuroMorphoSWCFile(
 
                     /* apical dendrite node */
                     case APICAL_DENDRITE_COMPARTMENT:
-                        debugl(2, "c is apical dendrite => inserting..\n");
+                        debugl(3, "c is apical dendrite => inserting..\n");
                         if (c.sections.size() == 1) {
                             c_dit = this->dendrite_vertices.insert(c.sections.front(), true);
                         }
@@ -6135,7 +6135,7 @@ readFromNeuroMorphoSWCFile(
 
                     /* basal dendrite node */
                     case BASAL_DENDRITE_COMPARTMENT:
-                        debugl(2, "c is basal dendrite => inserting..\n");
+                        debugl(3, "c is basal dendrite => inserting..\n");
                         if (c.sections.size() == 1) {
                             c_dit = this->dendrite_vertices.insert(c.sections.front(), false);
                         }
@@ -6146,7 +6146,7 @@ readFromNeuroMorphoSWCFile(
                         break;
 
                     default:
-                        debugl(2, "c has unsupported section type. skipping n and its sub-tree.\n");
+                        debugl(3, "c has unsupported section type. skipping n and its sub-tree.\n");
                         /* unsupported compartment type. skip node with continue, i.e. don't examine out-going edges */
                         printf("CellNetwork::readFromNeuroMorphoSWCFile(): WARNING: SWC node with unsupported compartment"\
                                " type %2u: skipping node's sub-tree.\n", c.compartment_type);
@@ -6156,14 +6156,14 @@ readFromNeuroMorphoSWCFile(
 
                 /* insert edge (n, c) into CellNetwork, the type of which depends on the compartment types of n and c.
                  * "down" convert neuron_iterator for n as needed. */
-                debugl(2, "inserting edge (n, c) into CellNetwork..\n");
+                debugl(3, "inserting edge (n, c) into CellNetwork..\n");
 
                 debugTabInc();
                 /* axon root edge */
                 if      (n.compartment_type == SOMA_COMPARTMENT &&
                         c.compartment_type == AXON_COMPARTMENT)
                 {
-                    debugl(2, "edge (n, c) is axon root edge => adding..\n");
+                    debugl(3, "edge (n, c) is axon root edge => adding..\n");
 
                     /* "down"-convert neuron iterator for n to soma_iterator and insert edge.. analogous for other types
                      * below. */
@@ -6174,7 +6174,7 @@ readFromNeuroMorphoSWCFile(
                 else if (n.compartment_type == SOMA_COMPARTMENT &&
                         c.compartment_type == APICAL_DENDRITE_COMPARTMENT)
                 {
-                    debugl(2, "edge (n, c) is apical dendrite root edge => adding..\n");
+                    debugl(3, "edge (n, c) is apical dendrite root edge => adding..\n");
 
                     n_sit = soma_iterator(nit.network, nit.int_it);
                     this->dendrite_root_edges.insert(n_sit, c_dit);
@@ -6183,7 +6183,7 @@ readFromNeuroMorphoSWCFile(
                 else if (n.compartment_type == SOMA_COMPARTMENT &&
                         c.compartment_type == BASAL_DENDRITE_COMPARTMENT)
                 {
-                    debugl(2, "edge (n, c) is basal dendrite root edge => adding..\n");
+                    debugl(3, "edge (n, c) is basal dendrite root edge => adding..\n");
 
                     n_sit = soma_iterator(nit.network, nit.int_it);
                     this->dendrite_root_edges.insert(n_sit, c_dit);
@@ -6192,7 +6192,7 @@ readFromNeuroMorphoSWCFile(
                 else if (n.compartment_type == AXON_COMPARTMENT &&
                         c.compartment_type == AXON_COMPARTMENT)
                 {
-                    debugl(2, "edge (n, c) is axon segment => adding..\n");
+                    debugl(3, "edge (n, c) is axon segment => adding..\n");
 
                     n_ait = axon_iterator(nit.network, nit.int_it);
                     this->axon_segments.insert(n_ait, c_ait);
@@ -6201,7 +6201,7 @@ readFromNeuroMorphoSWCFile(
                 else if (n.compartment_type == APICAL_DENDRITE_COMPARTMENT &&
                         c.compartment_type == APICAL_DENDRITE_COMPARTMENT)
                 {
-                    debugl(2, "edge (n, c) is apical dendrite segment => adding..\n");
+                    debugl(3, "edge (n, c) is apical dendrite segment => adding..\n");
 
                     n_dit = dendrite_iterator(nit.network, nit.int_it);
                     this->dendrite_segments.insert(n_dit, c_dit);
@@ -6210,14 +6210,14 @@ readFromNeuroMorphoSWCFile(
                 else if (n.compartment_type == BASAL_DENDRITE_COMPARTMENT &&
                         c.compartment_type == BASAL_DENDRITE_COMPARTMENT)
                 {
-                    debugl(2, "edge (n, c) is basal dendrite segment => adding..\n");
+                    debugl(3, "edge (n, c) is basal dendrite segment => adding..\n");
 
                     n_dit = dendrite_iterator(nit.network, nit.int_it);
                     this->dendrite_segments.insert(n_dit, c_dit);
                 }
                 /* (yet) unsupported edge type (not contained in NeuroMorpho SWC files as of 01/2014). throw exception.. */
                 else {
-                    debugl(2, "edge (n, c) is unsupported. throwing..\n");
+                    debugl(3, "edge (n, c) is unsupported. throwing..\n");
                     throw("CellNetwork::readFromNeuroMorphoSWCFile(): discovered unsupported edge type during "\
                         "traversal of preliminary swc tree and construction of CellNetwork.");
                 }
@@ -6226,7 +6226,7 @@ readFromNeuroMorphoSWCFile(
                  * should never be found here. for file types containing synapses, this is not necessarily true.
                  * following the general scheme: enqueue child only if it has not been traversed yet. issue warning: */
                 if (!node_traversed[child_id]) {
-                    debugl(2, "current neighbour c = %2d of n = %2d. enqueueing c.. \n", c.compartment_id, n.compartment_id);
+                    debugl(3, "current neighbour c = %2d of n = %2d. enqueueing c.. \n", c.compartment_id, n.compartment_id);
 
                     /* enqueue pair (c.compartment_id, "up"-converted neuron_iterator) in Q. the iterator to be used
                      * depends on the compartment type of c, as above when n was "down"-converted */
@@ -6263,10 +6263,10 @@ readFromNeuroMorphoSWCFile(
         debugTabDec();
     }
     debugTabDec();
-    debugl(1, "tree (or a subset of it in case of unsupported compartment types) converted to CellNetwork. "\
+    debugl(2, "tree (or a subset of it in case of unsupported compartment types) converted to CellNetwork. "\
         "NOTE: topology remains to be checked.\n");
 
-    debugl(1, "checking whether all nodes of supported compartment type have been traversed.\n");
+    debugl(2, "checking whether all nodes of supported compartment type have been traversed.\n");
     std::list<uint32_t> supported_compartment_types = {
             SOMA_COMPARTMENT,
             AXON_COMPARTMENT,
@@ -6287,7 +6287,7 @@ readFromNeuroMorphoSWCFile(
     /* check for coincident positions in all cell sections. */
     bool coincident_positions = false;
     if (check_coincident_positions) {
-        debugl(1, "checking for coincident vertices.\n");
+        debugl(2, "checking for coincident vertices.\n");
         for (auto vit = this->neuron_vertices.begin(); vit != this->neuron_vertices.end(); ++vit) {
             auto vit_next = vit;
             ++vit_next;
@@ -6309,7 +6309,7 @@ readFromNeuroMorphoSWCFile(
         }
     }
 
-    debugl(1, "checking for zero radii.\n");
+    debugl(2, "checking for zero radii.\n");
     /* check for zero radii */
     R r_vs;
     bool zero_radii = false;
@@ -6325,7 +6325,7 @@ readFromNeuroMorphoSWCFile(
         }
     }
 
-    debugl(1, "checking topology of created CellNetwork.\n");
+    debugl(2, "checking topology of created CellNetwork.\n");
     this->checkTopology();
      
     if (coincident_positions) {
@@ -6339,5 +6339,5 @@ readFromNeuroMorphoSWCFile(
     this->initializeNetworkInfo();
 
     debugTabDec();
-    debugl(0, "CellNetwork::readFromNeuroMorphoSWCFile(): done.\n");
+    debugl(1, "CellNetwork::readFromNeuroMorphoSWCFile(): done.\n");
 }

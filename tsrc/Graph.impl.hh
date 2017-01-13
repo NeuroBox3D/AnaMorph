@@ -69,7 +69,7 @@ template <typename Tg, typename Tv, typename Te>
 std::pair<typename std::map<uint32_t, typename Graph<Tg, Tv, Te>::VertexPointerType>::iterator, bool>
 Graph<Tg, Tv, Te>::protectedVertexInsert(Vertex *v)
 {
-    debugl(2, "Graph::protectedVertexInsert()\n");
+    debugl(3, "Graph::protectedVertexInsert()\n");
     debugTabInc();
 
     /* erase all topological information from v */
@@ -102,7 +102,7 @@ Graph<Tg, Tv, Te>::protectedVertexInsert(Vertex *v)
         ret.second  = true;
 
         debugTabDec();
-        debugl(2, "Graph::protectedVertexInsert(): done.\n");
+        debugl(3, "Graph::protectedVertexInsert(): done.\n");
 
         return ret;
     }
@@ -115,7 +115,7 @@ Graph<Tg, Tv, Te>::protectedEdgeInsert(
     uint32_t    v_src_id,
     uint32_t    v_dst_id)  
 {
-    debugl(2, "Graph::protectedEdgeInsert()\n");
+    debugl(3, "Graph::protectedEdgeInsert()\n");
     debugTabInc();
 
     /* locate two vertices by id and check if they match with the ones stored in e */
@@ -159,7 +159,7 @@ Graph<Tg, Tv, Te>::protectedEdgeInsert(
                     ret.second  = true;
 
                     debugTabDec();
-                    debugl(2, "Graph::protectedEdgeInsert(): done.\n");
+                    debugl(3, "Graph::protectedEdgeInsert(): done.\n");
 
                     return ret;
                 }
@@ -955,7 +955,7 @@ Graph<Tg, Tv, Te>::renumberConsecutively(
     uint32_t vertex_start_id,
     uint32_t edge_start_id)
 {
-    debugl(1, "Graph::renumberConsecutively(): vertex_start_id: %5d, edge_start_id: %5d.\n", vertex_start_id, edge_start_id);
+    debugl(2, "Graph::renumberConsecutively(): vertex_start_id: %5d, edge_start_id: %5d.\n", vertex_start_id, edge_start_id);
     debugTabInc();
 
     /* renumber indices of vertices and edges in a consecutive fashion. since the internal maps
@@ -1025,7 +1025,7 @@ Graph<Tg, Tv, Te>::renumberConsecutively(
     }
 
     debugTabDec();
-    debugl(1, "Graph::renumberConsecutively(). done.\n");
+    debugl(2, "Graph::renumberConsecutively(). done.\n");
 }
 
 template <typename Tg, typename Tv, typename Te>
@@ -1067,7 +1067,7 @@ Graph<Tg, Tv, Te>::copyAppend(const Graph<Tg, Tv, Te>&B)
     typename std::map<uint32_t, vertex_iterator>::iterator  idit;
     vertex_iterator                                         new_it;
 
-    debugl(1, "Graph::appendCopy()\n");
+    debugl(2, "Graph::appendCopy()\n");
     debugTabInc();
 
     /* add all vertices of B to (this) graph, store iterators to new vertices */
@@ -1079,7 +1079,7 @@ Graph<Tg, Tv, Te>::copyAppend(const Graph<Tg, Tv, Te>&B)
         }
         new_vertex_its[B_v.id()] = new_it;  
 
-        debugl(1, "added vertex %5d from b under new id %5d.\n", B_v.id(), new_it->id() );
+        debugl(2, "added vertex %5d from b under new id %5d.\n", B_v.id(), new_it->id() );
     }
 
     /* add all edges of B to (this) graph while taking care to replace old vertex ids from B with the
@@ -1099,7 +1099,7 @@ Graph<Tg, Tv, Te>::moveAppend(
     Graph<Tg, Tv, Te>              &B,
     std::list<vertex_iterator>     *update_vits)
 {
-    debugl(2, "Graph::moveAppend()\n");
+    debugl(3, "Graph::moveAppend()\n");
     debugTabInc();
 
     uint32_t                            new_id;
@@ -1197,7 +1197,7 @@ Graph<Tg, Tv, Te>::moveAppend(
         }
     }
     debugTabDec();
-    debugl(2, "Graph::moveAppend(): done.\n");
+    debugl(3, "Graph::moveAppend(): done.\n");
 
 }
 
@@ -1205,7 +1205,7 @@ template <typename Tg, typename Tv, typename Te>
 void
 Graph<Tg, Tv, Te>::deleteConnectedComponent(vertex_iterator vstart_it)
 {
-    debugl(1, "Graph::deleteConnectedComponent(). start vertex: %5d\n", vstart_it->id());
+    debugl(2, "Graph::deleteConnectedComponent(). start vertex: %5d\n", vstart_it->id());
     debugTabInc();
 
     Vertex                 *v;
@@ -1219,13 +1219,13 @@ Graph<Tg, Tv, Te>::deleteConnectedComponent(vertex_iterator vstart_it)
     Q.push( &(*vstart_it) );
     vstart_it->setTraversalState(traversal_id, TRAV_ENQUEUED);
 
-    debugl(2, "finding all vertices of connected component.\n");
+    debugl(3, "finding all vertices of connected component.\n");
     debugTabInc();
     while (!Q.empty()) {
         v = Q.front();
         Q.pop();
 
-        debugl(3, "current vertex %5d\n", v->id() );
+        debugl(4, "current vertex %5d\n", v->id() );
 
         /* get out neighbours of v */
         v->getOutNeighbours(v_nbs);
@@ -1234,7 +1234,7 @@ Graph<Tg, Tv, Te>::deleteConnectedComponent(vertex_iterator vstart_it)
         /* iterator over all neighbours u and enqueue them if they haven't been seen yet */
         for (auto &u : v_nbs) {
             if (u->getTraversalState(traversal_id) == TRAV_UNSEEN) {
-                debugl(3, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
+                debugl(4, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
                 Q.push(u);
                 u->setTraversalState(traversal_id, TRAV_ENQUEUED);
             }
@@ -1242,25 +1242,25 @@ Graph<Tg, Tv, Te>::deleteConnectedComponent(vertex_iterator vstart_it)
         debugTabDec();
 
         /* v is done */
-        debugl(3, "vertex %5d done.\n", v->id() );
+        debugl(4, "vertex %5d done.\n", v->id() );
         v->setTraversalState(traversal_id, TRAV_DONE);
         cc_vertices.push_back(v);
     }
     debugTabDec();
 
-    debugl(2, "traversal of connected component completed. deleting..\n");
+    debugl(3, "traversal of connected component completed. deleting..\n");
 
     debugTabInc();
     /* delete all vertices of cc, which in turn deletes all edges containing any such vertex. */
     for (auto &v : cc_vertices) {
-        debugl(3, "deleting vertex %5d\n", v->id() );
+        debugl(4, "deleting vertex %5d\n", v->id() );
         this->vertices.erase(v->iterator()) ;
-        debugl(3, "vertex deleted.\n");
+        debugl(4, "vertex deleted.\n");
     }
     debugTabDec();
 
     debugTabDec();
-    debugl(1, "Graph::deleteConnectedComponent(). done.\n");
+    debugl(2, "Graph::deleteConnectedComponent(). done.\n");
 }
 
 template <typename Tg, typename Tv, typename Te>
@@ -1275,7 +1275,7 @@ Graph<Tg, Tv, Te>::getConnectedComponentBreadthFirst(
         throw("Graph::getConnectedComponent(): invalid start vertex iterator.");
     }
 
-    debugl(1, "Graph::getConnectedComponent(). start vertex: %5d\n", vstart_it->id());
+    debugl(2, "Graph::getConnectedComponent(). start vertex: %5d\n", vstart_it->id());
     debugTabInc();
 
     /* only process if one of the given list pointers isn't NULL and the start vertex's traversal
@@ -1291,13 +1291,13 @@ Graph<Tg, Tv, Te>::getConnectedComponentBreadthFirst(
         Q.push( &(*vstart_it) );
         vstart_it->setTraversalState(traversal_id, TRAV_ENQUEUED);
 
-        debugl(2, "traversing connected component of start vertex %5d.\n", Q.front()->id());
+        debugl(3, "traversing connected component of start vertex %5d.\n", Q.front()->id());
         debugTabInc();
         while (!Q.empty()) {
             v = Q.front();
             Q.pop();
 
-            debugl(3, "current vertex %5d\n", v->id() );
+            debugl(4, "current vertex %5d\n", v->id() );
 
             /* add v and all its incident edges to the result lists if desired by the caller */
             if (cc_vertices) {
@@ -1316,7 +1316,7 @@ Graph<Tg, Tv, Te>::getConnectedComponentBreadthFirst(
             /* iterate over all vertex neighbours u and enqueue them if they haven't been seen yet. */
             for (auto &u : v_out_neighbours) {
                 if (u->getTraversalState(traversal_id) == TRAV_UNSEEN) {
-                    debugl(3, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
+                    debugl(4, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
                     Q.push(u);
                     u->setTraversalState(traversal_id, TRAV_ENQUEUED);
                 }
@@ -1324,15 +1324,15 @@ Graph<Tg, Tv, Te>::getConnectedComponentBreadthFirst(
             debugTabDec();
 
             /* v is done. */
-            debugl(3, "vertex %5d done.\n", v->id() );
+            debugl(4, "vertex %5d done.\n", v->id() );
             v->setTraversalState(traversal_id, TRAV_DONE);
         }
         debugTabDec();
-        debugl(2, "traversal of connected component completed.\n");
+        debugl(3, "traversal of connected component completed.\n");
     }
 
     debugTabDec();
-    debugl(1, "Graph::getConnectedComponent(). done.\n");
+    debugl(2, "Graph::getConnectedComponent(). done.\n");
 }
 
 template <typename Tg, typename Tv, typename Te>
@@ -1365,13 +1365,13 @@ template <typename Tg, typename Tv, typename Te>
 void
 Graph<Tg, Tv, Te>::checkInternalConsistency() const
 {
-    debugl(0, "Graph::checkInternalConsistency()\n");
+    debugl(1, "Graph::checkInternalConsistency()\n");
     debugTabInc();
 
     /* FIXME: adapt this to graph */
 
     debugTabDec();
-    debugl(0, "Graph::checkInternalConsistency(): graph internally consistent.\n");
+    debugl(1, "Graph::checkInternalConsistency(): graph internally consistent.\n");
 }
 
 template <typename Tg, typename Tv, typename Te>
@@ -1446,7 +1446,7 @@ template <typename Tg, typename Tv, typename Te>
 typename Graph<Tg, Tv, Te>::vertex_iterator
 Graph<Tg, Tv, Te>::VertexAccessor::insert(Tv const &data)
 {
-    debugl(2, "Graph::VertexAccessor::insert().\n");
+    debugl(3, "Graph::VertexAccessor::insert().\n");
     debugTabInc();
 
     std::pair<typename std::map<uint32_t, VertexPointerType >::iterator, bool> pair;
@@ -1465,7 +1465,7 @@ Graph<Tg, Tv, Te>::VertexAccessor::insert(Tv const &data)
         v->g_vit    = pair.first;
 
         debugTabDec();
-        debugl(2, "Graph::VertexAccessor::insert(). done.\n");
+        debugl(3, "Graph::VertexAccessor::insert(). done.\n");
 
         return (v->iterator());
     }
@@ -1475,7 +1475,7 @@ template <typename Tg, typename Tv, typename Te>
 typename Graph<Tg, Tv, Te>::vertex_iterator
 Graph<Tg, Tv, Te>::VertexAccessor::erase(vertex_iterator it)
 {
-    debugl(2, "Graph::VertexAccessor::erase(vertex_iterator it): vertex id: %6d. deleting %2zu and %2zu incident out and in edges, respectively.\n", it->id(), it->in_edges.size(), it->out_edges.size() );
+    debugl(3, "Graph::VertexAccessor::erase(vertex_iterator it): vertex id: %6d. deleting %2zu and %2zu incident out and in edges, respectively.\n", it->id(), it->in_edges.size(), it->out_edges.size() );
     debugTabInc();
 
     if (!it.checkContainer( this->graph)) {
@@ -1492,17 +1492,17 @@ Graph<Tg, Tv, Te>::VertexAccessor::erase(vertex_iterator it)
         this->graph.edges.erase( (it->out_edges.front())->iterator() );
     }
 
-    debugl(3, "freeing id and erasing vertex from internal vertex map..\n");
+    debugl(4, "freeing id and erasing vertex from internal vertex map..\n");
 
     /* free id */
     this->graph.V_idq.freeId(it->id());
 
-    debugl(3, "deleting (deallocating) vertex object..\n");
+    debugl(4, "deleting (deallocating) vertex object..\n");
     /* delete allocated vertex object */
     delete &(*it);
 
     debugTabDec();
-    debugl(2, "Graph::VertexAccessor::erase(). erase()ing and returning vertex_iterator to next vertex.\n");
+    debugl(3, "Graph::VertexAccessor::erase(). erase()ing and returning vertex_iterator to next vertex.\n");
 
     /* erase vertex from internal map this->graph.V and return vertex_iterator to the next element
      * (by wrapping the result of std::map::erae in the vertex_iterator constructor). */
@@ -1691,7 +1691,7 @@ Graph<Tg, Tv, Te>::EdgeAccessor::insert(
     vertex_iterator     v_dst_it,
     Te const           &data)
 {
-    debugl(2, "Graph::EdgeAccessor::insert().\n");
+    debugl(3, "Graph::EdgeAccessor::insert().\n");
     debugTabInc();
 
     std::pair<
@@ -1726,7 +1726,7 @@ Graph<Tg, Tv, Te>::EdgeAccessor::insert(
             ret.second  = true;
 
             debugTabDec();
-            debugl(2, "Graph::EdgeAccessor::insert().\n");
+            debugl(3, "Graph::EdgeAccessor::insert().\n");
 
             return ret;
         }
@@ -1769,7 +1769,7 @@ template <typename Tg, typename Tv, typename Te>
 typename Graph<Tg, Tv, Te>::edge_iterator
 Graph<Tg, Tv, Te>::EdgeAccessor::erase(edge_iterator it)
 {
-    debugl(2, "Graph::EdgeAccessor::erase(): erasing edge (%5d, %5d) with id %5d\n", it->v_src->id(), it->v_dst->id(), it->id());
+    debugl(3, "Graph::EdgeAccessor::erase(): erasing edge (%5d, %5d) with id %5d\n", it->v_src->id(), it->v_dst->id(), it->id());
     debugTabInc();
 
     /* check if edge belongs to (this) graph */
@@ -1804,7 +1804,7 @@ Graph<Tg, Tv, Te>::EdgeAccessor::erase(edge_iterator it)
     delete &(*it);
 
     debugTabDec();
-    debugl(2, "Graph::EdgeAccessor::erase(): done.\n");
+    debugl(3, "Graph::EdgeAccessor::erase(): done.\n");
 
     /* return edge_iterator to next element by wrapping return iterator of map::erase inside a edge_iterator */
     return Graph::edge_iterator( &(this->graph), this->graph.E.erase(it.int_it));
@@ -1830,7 +1830,7 @@ template <typename Tg, typename Tv, typename Te>
 typename Graph<Tg, Tv, Te>::vertex_iterator
 Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
 {
-    debugl(0, "Graph::EdgeAccessor::collapse(): edge e = (u, v) | %d = (%d, %d).\n",
+    debugl(1, "Graph::EdgeAccessor::collapse(): edge e = (u, v) | %d = (%d, %d).\n",
         it->id(),
         it->getSourceVertex()->id(),
         it->getDestinationVertex()->id());
@@ -1839,11 +1839,11 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
     vertex_iterator u_it = it->getSourceVertex();
     vertex_iterator v_it = it->getDestinationVertex();
 
-    debugl(1, "erasing e..\n");
+    debugl(2, "erasing e..\n");
     /* delete edge it */
     this->graph.edges.erase(it);
 
-    debugl(1, "remaining edge-neighbours of u: \n");
+    debugl(2, "remaining edge-neighbours of u: \n");
     debugTabInc();
     std::list<Edge *> nbs, tmp;
 
@@ -1853,13 +1853,13 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
 
 #ifdef __DEBUG__
     for (auto &nb : nbs) {
-        debugl(0, "%d = (%d, %d)\n", nb->id(), nb->getSourceVertex()->id(), nb->getDestinationVertex()->id());
+        debugl(1, "%d = (%d, %d)\n", nb->id(), nb->getSourceVertex()->id(), nb->getDestinationVertex()->id());
     }
 #endif
 
     debugTabDec();
 
-    debugl(0, "remaining edge-neighbours of v: \n");
+    debugl(1, "remaining edge-neighbours of v: \n");
     debugTabInc();
 
     nbs.clear(), tmp.clear();
@@ -1869,7 +1869,7 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
 
 #ifdef __DEBUG__
     for (auto &nb : nbs) {
-        debugl(0, "%d = (%d, %d)\n", nb->id(), nb->getSourceVertex()->id(), nb->getDestinationVertex()->id());
+        debugl(1, "%d = (%d, %d)\n", nb->id(), nb->getSourceVertex()->id(), nb->getDestinationVertex()->id());
     }
 #endif
 
@@ -1901,7 +1901,7 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
     u_it->in_edges.sort(sort_fct);
     u_it->out_edges.sort(sort_fct);
 
-    debugl(0, "neighbours of collapsed vertex: \n");
+    debugl(1, "neighbours of collapsed vertex: \n");
     debugTabInc();
     u_it->getInEdges(nbs);
     u_it->getOutEdges(tmp);
@@ -1909,14 +1909,14 @@ Graph<Tg, Tv, Te>::EdgeAccessor::collapse(edge_iterator it)
 
 #ifdef __DEBUG__
     for (auto &nb : nbs) {
-        debugl(0, "%d = (%d, %d)\n", nb->id(), nb->getSourceVertex()->id(), nb->getDestinationVertex()->id());
+        debugl(1, "%d = (%d, %d)\n", nb->id(), nb->getSourceVertex()->id(), nb->getDestinationVertex()->id());
     }
 #endif
 
     debugTabDec();
 
     debugTabDec();
-    debugl(0, "Graph::EdgeAccessor::collapse(). done\n");
+    debugl(1, "Graph::EdgeAccessor::collapse(). done\n");
 
     /* return iterator */
     return u_it;

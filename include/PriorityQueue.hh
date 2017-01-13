@@ -133,30 +133,30 @@ PriorityQueue<Tkey, Tvalue>::changeKey(
 
     auto it = value_key_map.find(value);
     if ( it != value_key_map.end()) {
-        debugl(0, "PriorityQueue()::changeKey(): value found => changing key..\n");
+        debugl(1, "PriorityQueue()::changeKey(): value found => changing key..\n");
         debugTabInc();
 
         id          = it->second->first.second;
-        debugl(0, "id: %d\n", id);
+        debugl(1, "id: %d\n", id);
 
         /* erase old entry from q with obtained iterator. insert new entry into Q and save iterator */
-        debugl(0, "erasing iterator from key_value_map Q.\n");
+        debugl(1, "erasing iterator from key_value_map Q.\n");
         Q.erase(it->second);
 
-        debugl(0, "re-inserting into Q with correct key.\n");
+        debugl(1, "re-inserting into Q with correct key.\n");
         auto qpair  = Q.insert( { {new_key, id}, value } );
 
-        debugl(0, "updating key in value_key_map.\n");
+        debugl(1, "updating key in value_key_map.\n");
         /* only key has changed, value is unaffected => use iterator it to update entry in value_key_map: overwrite the
          * currently stored old iterator with qpair.first, which has been returned by the Q.insert(..) call above */
         it->second  = qpair.first;
 
-        debugl(0, "done. returning..\n");
+        debugl(1, "done. returning..\n");
         debugTabDec();
         return true;
     }
     else {
-        debugl(0, "PriorityQueue()::changeKey(): value not found..\n");
+        debugl(1, "PriorityQueue()::changeKey(): value not found..\n");
         return false;
     }
 }

@@ -234,12 +234,12 @@ namespace Aux {
                 x_mu        = mu_isec;
 
                 if (lambda_isec < 0 || lambda_isec > 1.0 || mu_isec < 0 || mu_isec > 1.0) {
-                    debugl(0, "lambda_isec: %5.4f, mu_isec: %5.4f for inifinite lines out of range.\n", lambda_isec, mu_isec);
+                    debugl(1, "lambda_isec: %5.4f, mu_isec: %5.4f for inifinite lines out of range.\n", lambda_isec, mu_isec);
                     debugTabDec();
                     return DISJOINT;
                 }
                 else {
-                    debugl(0, "lambda_isec: %5.4f, mu_isec: %5.4f within range of finite segments => interseciton.\n", lambda_isec, mu_isec);
+                    debugl(1, "lambda_isec: %5.4f, mu_isec: %5.4f within range of finite segments => interseciton.\n", lambda_isec, mu_isec);
                     debugTabDec();
                     return INTERSECTION;
                 }
@@ -276,13 +276,13 @@ namespace Aux {
                 x_mu     = (u[0]*w[1] - u[1]*w[0]) / denom;
 
                 if (x_mu < -eps || x_mu > 1.0 + eps) {
-                    debugl(0, "rayLineSegment2d(): x_lambda: %5.4f (ray), x_mu: %5.4f (line segment) out of range.\n", x_lambda, x_mu);
+                    debugl(1, "rayLineSegment2d(): x_lambda: %5.4f (ray), x_mu: %5.4f (line segment) out of range.\n", x_lambda, x_mu);
 
                     debugTabDec();
                     return DISJOINT;
                 }
                 else {
-                    debugl(0, "x_lambda: %5.4f (ray), x_mu: %5.4f (line segment) within range => interseciton.\n", x_lambda, x_mu);
+                    debugl(1, "x_lambda: %5.4f (ray), x_mu: %5.4f (line segment) within range => interseciton.\n", x_lambda, x_mu);
                     x           = p + u*x_lambda;
                     
                     debugTabDec();
@@ -309,13 +309,13 @@ namespace Aux {
             /* append first vertex to vertex list to avoid wrap around case */
             vertices.push_back(vertices.front());
 
-            debugl(0, "pointInSimplePolygon().\n");
+            debugl(1, "pointInSimplePolygon().\n");
 
             attempts    = 0;
 
             debugTabInc();
             while (attempts <= 1024) {
-                debugl(0, "another attempt..");
+                debugl(1, "another attempt..");
                 bool retry = false;
 
                 /* fresh attempt */
@@ -349,7 +349,7 @@ namespace Aux {
                         /* edge i = (v_i, v_{i+1}) is intersected with positive lambda (edge case caught
                          * above) */
                         else if (x_lambda > 0.0) {
-                            debugl(0, "got one..\n");
+                            debugl(1, "got one..\n");
                             isec_edges.push_back(i);
                         }
                     }
@@ -424,7 +424,7 @@ namespace Aux {
                  * triangle remains */
                 debugTabInc();
                 while ( (n = vertices.size()) > 3) {
-                    debugl(0, "triangulateSimplePlanarPolygon(): %ld vertices remaining.\n", n);
+                    debugl(1, "triangulateSimplePlanarPolygon(): %ld vertices remaining.\n", n);
 
                     /* check all vertices 0..n-1 for principal property. to make the wrap-around issue
                      * easier, insert vertex 0 and 1 at the end, which results in vector of size n + 1.
@@ -447,7 +447,7 @@ namespace Aux {
                         v_id    = vertices[k+1].id;
                         v       = vertices[k+1].pos;
 
-                        debugl(0, "checking vertex %5d for principal property by examining edge (%5d, %5d) of triangle (%5d, %5d, %5d) for intersections.\n",
+                        debugl(1, "checking vertex %5d for principal property by examining edge (%5d, %5d) of triangle (%5d, %5d, %5d) for intersections.\n",
                                 w_id, u_id, v_id, u_id, w_id, v_id);
 
                         /* default to principal, if there's an intersection, this will be set to false.
@@ -484,7 +484,7 @@ namespace Aux {
                          * edge (k-1, k+1) doesn't intersect any other edge, only one point must be checked,
                          * which is chosen randomly to avoid edge cases. */
                         if (k_principal) {
-                            debugl(0, "got principal vertex %5d..\n", w_id);
+                            debugl(1, "got principal vertex %5d..\n", w_id);
                             /* if k is an ear, pop_back twice to get rid of copies, erase vertex k, insert
                              * triangle (k-1, k, k+1) into triangle return vector. note that vertices[0] is
                              * checked when k == n => catch that special case */
@@ -492,14 +492,14 @@ namespace Aux {
                             uint32_t iter = 0;
                             debugTabInc();
                             while (++iter < maxiter) {
-                                debugl(0, "checking whether principal vertex is mouth or ear..\n");
+                                debugl(1, "checking whether principal vertex is mouth or ear..\n");
                                 u_v_edgepoint       = u + (v - u) * Aux::Numbers::frand(0.1, 0.9);
                                 pointcheck_result   = pointInSimplePolygon(vertices_copy, u_v_edgepoint);
 
                                 /* point is in => w is an ear => add triangle (u, w, v) to triangulation and
                                  * delete vertex for w from vertices array */
                                 if (pointcheck_result == POINT_IN) {
-                                    debugl(0, "got an ear!\n");
+                                    debugl(1, "got an ear!\n");
                                     got_ear     = true;
 
                                     /* copy vertices from backup */
@@ -519,16 +519,16 @@ namespace Aux {
                                 }
                                 /* mouth => keep on going */
                                 else if (pointcheck_result == POINT_OUT) {
-                                    debugl(0, "got a mouth.. :()\n");
+                                    debugl(1, "got a mouth.. :()\n");
                                     break;
                                 }
                                 /* edge case => this should not happen, but retry.. */
                                 else if (pointcheck_result == EDGE_CASE) {
-                                    debugl(0, "WARNING: triangulateSimplePlanarPolygon(): edge case during point containment check.\n");
+                                    debugl(1, "WARNING: triangulateSimplePlanarPolygon(): edge case during point containment check.\n");
                                 }
                                 /* inconclusive test, retry.. */
                                 else if (pointcheck_result == TEST_INCONCLUSIVE) {
-                                    debugl(0, "point containment check inconclusive => retrying..\n");
+                                    debugl(1, "point containment check inconclusive => retrying..\n");
                                 }
                                 else {
                                     throw("Aux::Geometry::triangulateSimplePlanarPolygon(): point containment check returned invalid result. internal logic error.");
@@ -544,7 +544,7 @@ namespace Aux {
                             }
                         }
                         else {
-                            debugl(0, "not principal..\n");
+                            debugl(1, "not principal..\n");
                         }
 
                         debugTabDec();
@@ -563,7 +563,7 @@ namespace Aux {
                 debugTabDec();
 
                 /* vertex.size() == 3 now. add the remaining triangle */
-                debugl(0, "3 vertices remaining. adding final triangle..\n");
+                debugl(1, "3 vertices remaining. adding final triangle..\n");
                 triangulation.push_back( Tri2d(vertices[0].id, vertices[1].id, vertices[2].id) );
                 return SUCCESS;
             }
@@ -711,7 +711,7 @@ namespace Aux {
                 Tri2d                          &B,
                 std::map<uint32_t, Vertex2d>   &vertices)
         {
-            debugl(4, "delaunayTryFlip(): triangles (%5d, %5d, %5d) - (%5d, %5d, %5d).\n", 
+            debugl(5, "delaunayTryFlip(): triangles (%5d, %5d, %5d) - (%5d, %5d, %5d).\n", 
                     A.v0_id, A.v1_id, A.v2_id,
                     B.v0_id, B.v1_id, B.v2_id);
             debugTabInc();
@@ -731,7 +731,7 @@ namespace Aux {
 
             /* if both triangles are "edge" neighbours, try to flip */
             if (neighbours) {
-                debugl(4, "neighbours => checking local delaunay condition..\n");
+                debugl(5, "neighbours => checking local delaunay condition..\n");
                 /* check if local delaunay condition is violated by numerically evaluating the determinant
                  * expression given in the paper cited in the thesis */
                 if (vertexInCircumCircle(
@@ -740,7 +740,7 @@ namespace Aux {
                         vertices[A.v2_id].pos,
                         vertices[B_rem_vertex].pos))
                 {
-                    debugl(4, "local delaunay condition not satisifed => flipping\n");
+                    debugl(5, "local delaunay condition not satisifed => flipping\n");
                     /* get orientation of shared edge in A, this, together with the indices of the remaining
                      * vertices, uniquely defined the two "new" triangles and their orientation in case of a
                      * successful delaunay flip */
@@ -781,14 +781,14 @@ namespace Aux {
                 } 
                 /* two triangles are neighbours, but locally delaunay, don't flip */
                 else {
-                    debugl(4, "local delaunay condition satisifed. not flipping.\n");
+                    debugl(5, "local delaunay condition satisifed. not flipping.\n");
                     debugTabDec();
                     return false;
                 }
             }
             /* no neighbours, no flip is possible */
             else {
-                debugl(4, "triangles are not neighbours => no flip possible.\n");
+                debugl(5, "triangles are not neighbours => no flip possible.\n");
                 debugTabDec();
                 return false;
             }
@@ -808,7 +808,7 @@ namespace Aux {
             uint32_t                        iter;
             std::vector<Tri2d>::iterator    ta_it, tb_it;
 
-            debugl(3, "delaunay2d(): flipping given triangulation until convergence..\n");
+            debugl(4, "delaunay2d(): flipping given triangulation until convergence..\n");
             debugTabInc();
             again   = true;
             iter    = 0;
@@ -816,7 +816,7 @@ namespace Aux {
                 again = false;
                 iter++;
 
-                debugl(4, "no convergence yet => another flipping iteration..\n");
+                debugl(5, "no convergence yet => another flipping iteration..\n");
                 debugTabInc();
                 for (ta_it = triangles.begin(); ta_it != triangles.end(); ++ta_it) {
                     tb_it = ta_it;
@@ -830,11 +830,11 @@ namespace Aux {
                 debugTabDec();
             }
             if (iter == max_iter) {
-                debugl(0, "delaunay2d() WARNING: returning due to maximum iteration limit, not due to convergence..\n");
+                debugl(1, "delaunay2d() WARNING: returning due to maximum iteration limit, not due to convergence..\n");
                 printf("delaunay2d() WARNING: returning due to maximum iteration limit, not due to convergence..\n");
             }
             debugTabDec();
-            debugl(3, "delaunay2d(): done.\n");
+            debugl(4, "delaunay2d(): done.\n");
         }
 
 

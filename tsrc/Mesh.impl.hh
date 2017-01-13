@@ -355,7 +355,7 @@ Mesh<Tm, Tv, Tf, R>::Vertex::isManifold() const
             if ( (this->mesh->getTriCommonEdge(last_on_circle->iterator(), (*ifit)->iterator(), e_x, e_y)) == true) {
                 /* one of e_x and e_y must be v itself */
                 if (e_x->id() != this->id() && e_y->id() != this->id() ) {
-                    debugl(0, "Mesh::Vertex::isManifold(): face in face star of vertex %d shares common edge with other face from face star, but vertex %d is not contained in in.\n", this->id(), this->id() );
+                    debugl(1, "Mesh::Vertex::isManifold(): face in face star of vertex %d shares common edge with other face from face star, but vertex %d is not contained in in.\n", this->id(), this->id() );
                     throw("Mesh::Vertex::isManifold(): face in face star of vertex shares common edge with other face from face star, but vertex v is not contained in in.\n");
                 }
 
@@ -1757,9 +1757,8 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 Mesh<Tm, Tv, Tf, R> &
 Mesh<Tm, Tv, Tf, R>::operator=(const Mesh &X)
 {
-	static int calls = 0;
-    std::cout << "Mesh::operator= call " << ++calls << std::endl;
-    //std::cout << "current random number: " << std::rand() << std::endl;
+	//static int calls = 0;
+    //std::cout << "Mesh::operator= call " << ++calls << std::endl;
 
     /* clear all data */
     this->clear();
@@ -1916,7 +1915,7 @@ Mesh<Tm, Tv, Tf, R>::renumberConsecutively(
     uint32_t vertex_start_id,
     uint32_t face_start_id)
 {
-    debugl(1, "Mesh::renumberConsecutively(): vertex_start_id: %5d, face_start_id: %5d.\n", vertex_start_id, face_start_id);
+    debugl(2, "Mesh::renumberConsecutively(): vertex_start_id: %5d, face_start_id: %5d.\n", vertex_start_id, face_start_id);
     debugTabInc();
 
     /* renumber indices of vertices and faces in a consecutive fashion. since the internal maps
@@ -1975,7 +1974,7 @@ Mesh<Tm, Tv, Tf, R>::renumberConsecutively(
     }
 
     debugTabDec();
-    debugl(1, "Mesh::renumberConsecutively(). done.\n");
+    debugl(2, "Mesh::renumberConsecutively(). done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2127,7 +2126,7 @@ Mesh<Tm, Tv, Tf, R>::copyAppend(const Mesh &B)
     typename std::map<uint32_t, vertex_iterator>::iterator  idit;
     vertex_iterator                                         new_it;
 
-    debugl(3, "Mesh::appendCopy()\n");
+    debugl(4, "Mesh::appendCopy()\n");
     debugTabInc();
     /* add all vertices of B to (this) mesh, store iterators to new vertices */
     for (auto &B_v : B.vertices) {
@@ -2138,8 +2137,8 @@ Mesh<Tm, Tv, Tf, R>::copyAppend(const Mesh &B)
         }
         new_vertex_its[B_v.id()] = new_it;  
 
-        debugl(4, "added vertex %5d from b under new id %5d. position: \n", B_v.id(), new_it->id() );
-        B_v.pos().print_debugl(4);
+        debugl(5, "added vertex %5d from b under new id %5d. position: \n", B_v.id(), new_it->id() );
+        B_v.pos().print_debugl(5);
     }
 
     /* add all faces of B to (this) mesh while taking care to replace old vertex ids from B with the
@@ -2167,7 +2166,7 @@ Mesh<Tm, Tv, Tf, R>::copyAppend(const Mesh &B)
     this->octree_updated    = false;
 
     debugTabDec();
-    debugl(3, "Mesh::appendCopy(): done.\n");
+    debugl(4, "Mesh::appendCopy(): done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2190,7 +2189,7 @@ Mesh<Tm, Tv, Tf, R>::moveAppend(
     bool                                inserted;
         
 
-    debugl(1, "Mesh::moveAppend()\n");
+    debugl(2, "Mesh::moveAppend()\n");
     debugTabInc();
 
     /* if update_vits != NULL, generate the list of vertex pointers from the given iterators.
@@ -2296,7 +2295,7 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::deleteConnectedComponent(vertex_iterator vstart_it)
 {
-    debugl(1, "Mesh::deleteConnectedComponent(). start vertex: %5d\n", vstart_it->id());
+    debugl(2, "Mesh::deleteConnectedComponent(). start vertex: %5d\n", vstart_it->id());
     debugTabInc();
 
     Vertex                 *v;
@@ -2309,13 +2308,13 @@ Mesh<Tm, Tv, Tf, R>::deleteConnectedComponent(vertex_iterator vstart_it)
     /* traverse cc of vstart_it, burning it down as we go.. */
     Q.push( &(*vstart_it) );
 
-    debugl(2, "finding all vertices of connected component.\n");
+    debugl(3, "finding all vertices of connected component.\n");
     debugTabInc();
     while (!Q.empty()) {
         v = Q.front();
         Q.pop();
 
-        debugl(3, "current vertex %5d\n", v->id() );
+        debugl(4, "current vertex %5d\n", v->id() );
 
         /* get vertex star of v */
         v->getVertexStar(v_nbs);
@@ -2324,7 +2323,7 @@ Mesh<Tm, Tv, Tf, R>::deleteConnectedComponent(vertex_iterator vstart_it)
         /* iterator over all neighbours u and enqueue them if they haven't been seen yet */
         for (auto &u : v_nbs) {
             if (u->getTraversalState(traversal_id) == TRAV_UNSEEN) {
-                debugl(3, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
+                debugl(4, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
                 Q.push(u);
                 u->setTraversalState(traversal_id, TRAV_ENQUEUED);
             }
@@ -2332,27 +2331,27 @@ Mesh<Tm, Tv, Tf, R>::deleteConnectedComponent(vertex_iterator vstart_it)
         debugTabDec();
 
         /* v is done */
-        debugl(3, "vertex %5d done.\n", v->id() );
+        debugl(4, "vertex %5d done.\n", v->id() );
         v->setTraversalState(traversal_id, TRAV_DONE);
         cc_vertices.push_back(v);
     }
     debugTabDec();
 
-    debugl(2, "traversal of connected component completed. deleting..\n");
+    debugl(3, "traversal of connected component completed. deleting..\n");
 
     debugTabInc();
     /* delete all vertices of cc, which in turn deletes all faces containing any such vertex. */
     for (auto &v : cc_vertices) {
-        debugl(3, "deleting vertex %5d\n", v->id() );
+        debugl(4, "deleting vertex %5d\n", v->id() );
         this->vertices.erase(v->iterator()) ;
-        debugl(3, "vertex deleted.\n");
+        debugl(4, "vertex deleted.\n");
     }
     debugTabDec();
 
     this->octree_updated = false;
 
     debugTabDec();
-    debugl(1, "Mesh::deleteConnectedComponent(). done.\n");
+    debugl(2, "Mesh::deleteConnectedComponent(). done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2363,7 +2362,7 @@ Mesh<Tm, Tv, Tf, R>::getConnectedComponent(
     std::list<Vertex *>    *cc_vertices,
     std::list<Face *>      *cc_faces)
 {
-    debugl(1, "Mesh::getConnectedComponent(). start vertex: %5d\n", vstart_it->id());
+    debugl(2, "Mesh::getConnectedComponent(). start vertex: %5d\n", vstart_it->id());
     debugTabInc();
 
     if (!vstart_it.checkContainer(*this) || vstart_it == this->vertices.end()) {
@@ -2382,13 +2381,13 @@ Mesh<Tm, Tv, Tf, R>::getConnectedComponent(
         /* traverse cc of vstart_it, burning it down as we go.. */
         Q.push( &(*vstart_it) );
 
-        debugl(2, "traversing connected component of start vertex %5d.\n", Q.front()->id());
+        debugl(3, "traversing connected component of start vertex %5d.\n", Q.front()->id());
         debugTabInc();
         while (!Q.empty()) {
             v = Q.front();
             Q.pop();
 
-            debugl(3, "current vertex %5d\n", v->id() );
+            debugl(4, "current vertex %5d\n", v->id() );
 
             /* add v and all its incident faces to the result lists if desired by the caller */
             if (cc_vertices) {
@@ -2416,7 +2415,7 @@ Mesh<Tm, Tv, Tf, R>::getConnectedComponent(
             /* iterate over all vertex neighbours u and enqueue them if they haven't been seen yet. */
             for (auto &u : v_vstar) {
                 if (u->getTraversalState(traversal_id) == TRAV_UNSEEN) {
-                    debugl(3, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
+                    debugl(4, "yet unseen neighbour %5d => enqueueing..\n", u->id() );
                     Q.push(u);
                     u->setTraversalState(traversal_id, TRAV_ENQUEUED);
                 }
@@ -2424,29 +2423,29 @@ Mesh<Tm, Tv, Tf, R>::getConnectedComponent(
             debugTabDec();
 
             /* v is done. */
-            debugl(3, "vertex %5d done.\n", v->id() );
+            debugl(4, "vertex %5d done.\n", v->id() );
             v->setTraversalState(traversal_id, TRAV_DONE);
         }
         debugTabDec();
-        debugl(2, "traversal of connected component completed.\n");
+        debugl(3, "traversal of connected component completed.\n");
     }
 
     debugTabDec();
-    debugl(1, "Mesh::getConnectedComponent(). done.\n");
+    debugl(2, "Mesh::getConnectedComponent(). done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::deleteBorderCCsAndIsolatedVertices()
 {
-    debugl(1, "Mesh::deleteBorderCCsAndIsolatedVertices()\n");
+    debugl(2, "Mesh::deleteBorderCCsAndIsolatedVertices()\n");
     debugTabInc();
 
     bool done = false;
 
 restart_loop:
     while (!done) {
-        debugl(2, "(re)entering loop..\n");
+        debugl(3, "(re)entering loop..\n");
         done = true;
 
         Vertex                 *s, *v;
@@ -2461,7 +2460,7 @@ restart_loop:
         const uint32_t          traversal_id = this->getFreshTraversalId();
 
         ccs         = 0;
-        debugl(2, "deleting all isolated vertices..\n");
+        debugl(3, "deleting all isolated vertices..\n");
 
         debugTabInc();
 
@@ -2473,10 +2472,10 @@ restart_loop:
             if (v_vstar.empty()) {
                 v.getFaceStar(v_fstar);
 #ifdef __DEBUG__
-                debugl(2, "found isolated vertex: %d. vertex_star.size(): %d, face_star.size(): %d: incident faces..:\n", v.id(), v_vstar.size(), v_fstar.size());
+                debugl(3, "found isolated vertex: %d. vertex_star.size(): %d, face_star.size(): %d: incident faces..:\n", v.id(), v_vstar.size(), v_fstar.size());
                 debugTabInc();
                 for (auto &f : v_fstar) {
-                    debugl(2, "%5d : (%5d, %5d, %5d)\n", f->id(), f->vertices[0]->id(), f->vertices[1]->id(), f->vertices[2]->id());
+                    debugl(3, "%5d : (%5d, %5d, %5d)\n", f->id(), f->vertices[0]->id(), f->vertices[1]->id(), f->vertices[2]->id());
                 }
                 debugTabDec();
 #endif
@@ -2486,14 +2485,14 @@ restart_loop:
 
         /* delete all isolated vertices */
         for (auto &v : isolated_vertices) {
-            debugl(2, "deleting isolated vertex: %d\n", v->id());
+            debugl(3, "deleting isolated vertex: %d\n", v->id());
             this->vertices.erase(v->iterator());
         }
 
         debugTabDec();
 
         /* traverse all remaining connected components */
-        debugl(2, "analysing all connected components.\n");
+        debugl(3, "analysing all connected components.\n");
 
         debugTabInc();
         for (Vertex &vref : this->vertices) {
@@ -2503,7 +2502,7 @@ restart_loop:
                 cc_size = 0;
                 ccs++;
 
-                debugl(3, "new connected component with root vertex %5d\n", s->id() );
+                debugl(4, "new connected component with root vertex %5d\n", s->id() );
 
                 /* traverse cc */
                 Q.push(s);
@@ -2541,7 +2540,7 @@ restart_loop:
                             }
                             /* isolated edge, this should be impossible */
                             else if (nIF == 0) {
-                                debugl(0, "Mesh::deleteBorderCCsAndIsolatedVertices(): isolated edge (%d, %d) found.\n", v->id(), u->id());
+                                debugl(1, "Mesh::deleteBorderCCsAndIsolatedVertices(): isolated edge (%d, %d) found.\n", v->id(), u->id());
                                 throw MeshEx(MESH_LOGIC_ERROR, "Mesh::deleteBorderCCsAndIsolatedVertices(): isolated edge found. this should never happen due to internal invariants => internal logic error.");
                             }
                             /* two or more faces, case irrelevant here */
@@ -2558,7 +2557,7 @@ restart_loop:
                     v->setTraversalState(traversal_id, TRAV_DONE);
                 }
 
-                debugl(3, "finished traversal of connected component with root vertex %5d. size: %5d\n", s, cc_size);
+                debugl(4, "finished traversal of connected component with root vertex %5d. size: %5d\n", s, cc_size);
             }
         }
         debugTabDec();
@@ -2568,7 +2567,7 @@ restart_loop:
     this->octree_updated = false;
 
     debugTabDec();
-    debugl(1, "Mesh::deleteBorderCCsAndIsolatedVertices(): done.\n");
+    debugl(2, "Mesh::deleteBorderCCsAndIsolatedVertices(): done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2581,7 +2580,7 @@ Mesh<Tm, Tv, Tf, R>::updateOctree()
     using Aux::VecMat::maxVec3;
     using Aux::VecMat::fabsVec3;
 
-    debugl(0, "Mesh::updateOctree():..\n");
+    debugl(1, "Mesh::updateOctree():..\n");
     debugTabInc();
 
     if (!this->octree_updated) {
@@ -2606,7 +2605,7 @@ Mesh<Tm, Tv, Tf, R>::updateOctree()
         Vec3<R> aabb_min = this->bb.min();
         Vec3<R> aabb_max = this->bb.max();
 
-        debugl(0, "bounding box for entire mesh: (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)\n", 
+        debugl(1, "bounding box for entire mesh: (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)\n", 
                 aabb_min[0], aabb_min[1], aabb_min[2],
                 aabb_max[0], aabb_max[1], aabb_max[2]);
 
@@ -2623,7 +2622,7 @@ Mesh<Tm, Tv, Tf, R>::updateOctree()
         root_info.cube_max[1]   = aabb_min[1] + rootcube_len;
         root_info.cube_max[2]   = aabb_min[2] + rootcube_len;
 
-        debugl(0, "root cube:: (%5.4f, %5.4f, %5.4f) len: (%5.4f, %5.4f, %5.4f)\n", 
+        debugl(1, "root cube:: (%5.4f, %5.4f, %5.4f) len: (%5.4f, %5.4f, %5.4f)\n", 
                 root_info.cube_min[0], root_info.cube_min[1], root_info.cube_min[2],
                 root_info.cube_max[0], root_info.cube_max[1], root_info.cube_max[2]);
 
@@ -2646,17 +2645,17 @@ Mesh<Tm, Tv, Tf, R>::updateOctree()
                 rootcube_len);
 
         /* call recursive partitioning algorithm */
-        debugl(1, "calling recursive partitioning / construction algorithm.\n", time);
+        debugl(2, "calling recursive partitioning / construction algorithm.\n", time);
         Mesh::partitionOctree(*O, (*this), &(O->root), root_face_list, root_vertex_list, 0, 64, 9);
 
-        debugl(1, "recursive octree construction done. time: %10.5f\n", tack(15));
+        debugl(2, "recursive octree construction done. time: %10.5f\n", tack(15));
 
         /* octree has been updated */
         this->octree_updated = true;
     }
 
     debugTabDec();
-    debugl(0, "Mesh::updateOctree(). done.\n");
+    debugl(1, "Mesh::updateOctree(). done.\n");
 }
 
 /* locate vertices in or very nearly in bounding box (octree is not fully constructed due to massive
@@ -2671,7 +2670,7 @@ Mesh<Tm, Tv, Tf, R>::findVertices(
 
     Vec3<R> aabb_min = search_box.min(), aabb_max = search_box.max();
 
-    debugl(1, "Mesh::findVertices(): input bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)(\n",
+    debugl(2, "Mesh::findVertices(): input bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)(\n",
             aabb_min[0], aabb_min[1], aabb_min[2],
             aabb_max[0], aabb_max[1], aabb_max[2]);
     debugTabInc();
@@ -2699,7 +2698,7 @@ Mesh<Tm, Tv, Tf, R>::findVertices(
     }
 
     debugTabDec();
-    debugl(1, "Mesh::findVertices(): done. %d vertices found.\n", vertex_list.size() );
+    debugl(2, "Mesh::findVertices(): done. %d vertices found.\n", vertex_list.size() );
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2712,13 +2711,13 @@ Mesh<Tm, Tv, Tf, R>::findFaces(
 
     Vec3<R> aabb_min = search_box.min(), aabb_max = search_box.max();
 
-    debugl(1, "Mesh::findFaces(): input bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)(\n",
+    debugl(2, "Mesh::findFaces(): input bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)(\n",
             aabb_min[0], aabb_min[1], aabb_min[2],
             aabb_max[0], aabb_max[1], aabb_max[2]);
     debugTabInc();
 
     if (aabb_min >= aabb_max) {
-        debugl(0, "Mesh::findFaces(): invalid bounding box: (%5.4f, %5.4f, %20.10e) - (%5.4f, %5.4f, %20.10e)\n",
+        debugl(1, "Mesh::findFaces(): invalid bounding box: (%5.4f, %5.4f, %20.10e) - (%5.4f, %5.4f, %20.10e)\n",
                 aabb_min[0], aabb_min[1], aabb_min[2],
                 aabb_max[0], aabb_max[1], aabb_max[2]);
 
@@ -2751,7 +2750,7 @@ Mesh<Tm, Tv, Tf, R>::findFaces(
     }
 
     debugTabDec();
-    debugl(1, "Mesh::findFaces(): done. %d faces found.\n", face_list.size() );
+    debugl(2, "Mesh::findFaces(): done. %d faces found.\n", face_list.size() );
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -2765,13 +2764,13 @@ Mesh<Tm, Tv, Tf, R>::find(
 
     Vec3<R> aabb_min = search_box.min(), aabb_max = search_box.max();
 
-    debugl(1, "Mesh::findFaces(): input bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)(\n",
+    debugl(2, "Mesh::findFaces(): input bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)(\n",
             aabb_min[0], aabb_min[1], aabb_min[2],
             aabb_max[0], aabb_max[1], aabb_max[2]);
     debugTabInc();
 
     if (aabb_min >= aabb_max) {
-        debugl(0, "Mesh::findFaces(): invalid bounding box: (%5.4f, %5.4f, %20.10e) - (%5.4f, %5.4f, %20.10e)\n",
+        debugl(1, "Mesh::findFaces(): invalid bounding box: (%5.4f, %5.4f, %20.10e) - (%5.4f, %5.4f, %20.10e)\n",
                 aabb_min[0], aabb_min[1], aabb_min[2],
                 aabb_max[0], aabb_max[1], aabb_max[2]);
 
@@ -2821,7 +2820,7 @@ Mesh<Tm, Tv, Tf, R>::find(
     }
 
     debugTabDec();
-    debugl(1, "Mesh::findFaces(): done. %d faces found.\n", face_list->size() );
+    debugl(2, "Mesh::findFaces(): done. %d faces found.\n", face_list->size() );
 }
 
 /* static recursive partitioning function for Octree construction */
@@ -2839,21 +2838,21 @@ Mesh<Tm, Tv, Tf, R>::partitionOctree(
 {
     using namespace Aux::Geometry::IntersectionTestResults;
 
-    debugl(4, "Mesh::partitionOctree() (recursive)\n");
+    debugl(5, "Mesh::partitionOctree() (recursive)\n");
     debugTabInc();
 
-    debugl(4, "depth %4d. facelist.size(): %6ld\n", rec_depth, rec_facelist.size() );
+    debugl(5, "depth %4d. facelist.size(): %6ld\n", rec_depth, rec_facelist.size() );
     /* leaf reached. save face_list */
     if (rec_depth >= max_rec_depth) {
         n->data.face_list   = rec_facelist;
         n->data.vertex_list = rec_vertexlist;
-        debugl(4, "max depth reached => creating leaf.\n");
+        debugl(5, "max depth reached => creating leaf.\n");
     }
     /* partition face list with current cube, recursive call */
     else {
         /* if rec_facelist contains more than max_faces, process it */
         if (rec_facelist.size() + rec_vertexlist.size() > max_elements) {
-            debugl(4, "max depth not yet reached => partitioning %8ld faces and %8ld vertices among children..\n", rec_facelist.size(), rec_vertexlist.size() );
+            debugl(5, "max depth not yet reached => partitioning %8ld faces and %8ld vertices among children..\n", rec_facelist.size(), rec_vertexlist.size() );
             uint32_t                            i;
             Vec3<R>                             nc_min, nc_max, nc_m;
             Vec3<R>                             xdisp, ydisp, zdisp;
@@ -2961,14 +2960,14 @@ Mesh<Tm, Tv, Tf, R>::partitionOctree(
 
             /* issue recursive calls */
             for (i = 0; i < 8; i++) {
-                debugl(4, "recursive call for child %02d..\n", i);
+                debugl(5, "recursive call for child %02d..\n", i);
 
                 debugTabInc();
                 /* here we go.. */
                 partitionOctree(O, m, children[i], *(children_facelists[i]), *(children_vertexlists[i]), rec_depth + 1, max_elements, max_rec_depth);
                 debugTabDec();
 
-                debugl(4, "finished recursive call for child %02d..\n", i);
+                debugl(5, "finished recursive call for child %02d..\n", i);
 
                 /* delete child lists allocated above */
                 delete children_facelists[i];
@@ -2977,14 +2976,14 @@ Mesh<Tm, Tv, Tf, R>::partitionOctree(
         }
         /* otherwise, facelist contains <= max_faces faces and will be turned into a leaf */
         else {
-            debugl(4, "numer of vertices and faces small enough => creating leaf. \n");
+            debugl(5, "numer of vertices and faces small enough => creating leaf. \n");
             n->data.face_list   = rec_facelist;
             n->data.vertex_list = rec_vertexlist;
         }
     }
 
     debugTabDec();
-    debugl(4, "Mesh::partitionOctree() (recursive): done.\n");
+    debugl(5, "Mesh::partitionOctree() (recursive): done.\n");
 }
 
 
@@ -3002,12 +3001,12 @@ Mesh<Tm, Tv, Tf, R>::findOctreeRecursive(
 {
     using namespace Aux::Geometry::IntersectionTestResults;
 
-    debugl(4, "Mesh::findOctreeRecursive() (recursive)\n");
+    debugl(5, "Mesh::findOctreeRecursive() (recursive)\n");
     debugTabInc();
 
     /* n is a leaf, append n's facelist to argument face_list */
     if (n->isLeaf()) {
-        debugl(4, "given bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f), n->bb: (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f): leaf => appending %5d faces and / or %d vertices.\n",
+        debugl(5, "given bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f), n->bb: (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f): leaf => appending %5d faces and / or %d vertices.\n",
                 aabb_min[0], aabb_min[1], aabb_min[2], 
                 aabb_max[0], aabb_max[1], aabb_max[2], 
                 n->data.cube_min[0], n->data.cube_min[1], n->data.cube_min[2],
@@ -3020,7 +3019,7 @@ Mesh<Tm, Tv, Tf, R>::findOctreeRecursive(
     /* otherwise, get all children of n, and call recursively if given bounding box and cube
      * intersect */
     else {
-        debugl(4, "given bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f), n->bb: (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f): no leaf => recursive calls..\n",
+        debugl(5, "given bb (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f), n->bb: (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f): no leaf => recursive calls..\n",
                 aabb_min[0], aabb_min[1], aabb_min[2], 
                 aabb_max[0], aabb_max[1], aabb_max[2], 
                 n->data.cube_min[0], n->data.cube_min[1], n->data.cube_min[2],
@@ -3036,19 +3035,19 @@ Mesh<Tm, Tv, Tf, R>::findOctreeRecursive(
                         aabb_min,
                         aabb_max) == INTERSECTION)
             {
-                debugl(4, "child %2d's bb intersects => calling.\n", i);
+                debugl(5, "child %2d's bb intersects => calling.\n", i);
 
                 debugTabInc();
                 Mesh::findOctreeRecursive(O, child, aabb_min, aabb_max, vertex_list, face_list);
                 debugTabDec();
 
-                debugl(4, "child %2d's call done.\n", i);
+                debugl(5, "child %2d's call done.\n", i);
             }
         }
     }
 
     debugTabDec();
-    debugl(4, "Mesh::findOctreeRecursive() (recursive): done.\n");
+    debugl(5, "Mesh::findOctreeRecursive() (recursive): done.\n");
 }
 
 /* DEBUG: for debugging, output cubes of all leafs */
@@ -3059,12 +3058,12 @@ Mesh<Tm, Tv, Tf, R>::getOctreeLeafCubes(
     OctreeNode<Mesh_OctreeNodeInfo>                    *n,
     std::list<std::pair<Vec3<R>, Vec3<R>>>             *cube_list)
 {
-    debugl(4, "Mesh::getOctreeLeafCubes() (recursive)\n");
+    debugl(5, "Mesh::getOctreeLeafCubes() (recursive)\n");
     debugTabInc();
 
     /* n is a leaf, append n's facelist to argument face_list */
     if (n->isLeaf()) {
-        debugl(4, "get_leaf_cubes: leaf => appending cube to list.\n");
+        debugl(5, "get_leaf_cubes: leaf => appending cube to list.\n");
         cube_list->push_back( {n->data.cube_min, n->data.cube_max} );
     }
     /* otherwise, get all children of n, and call recursively if given bounding box and cube
@@ -3072,21 +3071,21 @@ Mesh<Tm, Tv, Tf, R>::getOctreeLeafCubes(
     else {
         OctreeNode<Mesh_OctreeNodeInfo>    *child;
         uint32_t                            i;
-        debugl(4, "get_leaf_cubes: no leaf => recursive calls for children\n");
+        debugl(5, "get_leaf_cubes: no leaf => recursive calls for children\n");
         for (i = 0; i < 8; i++) {
             child = n->getChild(i);
-            debugl(4, "child %2d's bb intersects => calling.\n", i);
+            debugl(5, "child %2d's bb intersects => calling.\n", i);
 
             debugTabInc();
             Mesh::getOctreeLeafCubes(O, child, cube_list);
             debugTabDec();
 
-            debugl(4, "child %2d's call done.\n", i);
+            debugl(5, "child %2d's call done.\n", i);
         }
     }
 
     debugTabDec();
-    debugl(4, "Mesh::getOctreeLeafCubes() (recursive): done.\n");
+    debugl(5, "Mesh::getOctreeLeafCubes() (recursive): done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -3462,7 +3461,7 @@ Mesh<Tm, Tv, Tf, R>::getEdgeBoundingBox(
     Vec3<R>                     u, v, offset;
     std::list<uint32_t>         u_nbs;
 
-    debugl(2, "Mesh::getEdgeBoundingBox(): ..\n");
+    debugl(3, "Mesh::getEdgeBoundingBox(): ..\n");
 
     uit = this->vertices.find(u_id);
     vit = this->vertices.find(v_id);
@@ -3484,7 +3483,7 @@ Mesh<Tm, Tv, Tf, R>::getEdgeBoundingBox(
     aabb_min   -= offset;
     aabb_max   += offset;
 
-    debugl(2, "Mesh::getEdgeBoundingBox(): done.\n");
+    debugl(3, "Mesh::getEdgeBoundingBox(): done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -3522,7 +3521,7 @@ Mesh<Tm, Tv, Tf, R>::getSharedTri(
 
     /* must contain exactly one triangle */
     if (commonFaces != 1) {
-        debugl(0, "Mesh::getSharedTri(): edges (%5d, %5d) / (%5d, %5d) share %du faces, not exactly one.\n",
+        debugl(1, "Mesh::getSharedTri(): edges (%5d, %5d) / (%5d, %5d) share %du faces, not exactly one.\n",
            u1_it->id(), v1_it->id(), u2_it->id(), v2_it->id(), commonFaces);
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getSharedTri(): given two edges are not contained in exactly one face.");
     }
@@ -3629,7 +3628,7 @@ Mesh<Tm, Tv, Tf, R>::splitEdge(
     vertex_iterator         v_it,
     std::vector<R> const   &lambda_values)
 {
-    debugl(0, "Mesh::splitEdge(): e = (%d, %d)\n", u_it->id(), v_it->id() );
+    debugl(1, "Mesh::splitEdge(): e = (%d, %d)\n", u_it->id(), v_it->id() );
     debugTabInc();
 
     uint32_t const n = lambda_values.size();
@@ -3715,7 +3714,7 @@ Mesh<Tm, Tv, Tf, R>::splitEdge(
     this->faces.insert(v_it, new_vertex_its[n-1], snd_rem_vertex);
 
     debugTabDec();
-    debugl(0, "Mesh::splitEdge(): done.\n");
+    debugl(1, "Mesh::splitEdge(): done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -3744,7 +3743,7 @@ Mesh<Tm, Tv, Tf, R>::splitQuadIntoTwoTris(face_iterator quad)
     using Aux::Numbers::fmin3; 
     using Aux::Numbers::fmax3; 
 
-    debugl(2, "Mesh::splitQuadIntoTwoTris().\n");
+    debugl(3, "Mesh::splitQuadIntoTwoTris().\n");
 
     if (!quad.checkContainer( *this )) {
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::splitQuadIntoTwoTris(): given face_iterator does not refer to (this) mesh.");
@@ -3804,7 +3803,7 @@ Mesh<Tm, Tv, Tf, R>::splitQuadIntoTwoTrisShorterDiagonal(face_iterator quad)
     using Aux::Numbers::fmin3; 
     using Aux::Numbers::fmax3; 
 
-    debugl(2, "Mesh::splitQuadIntoTwoTrisShorterDiagonal().\n");
+    debugl(3, "Mesh::splitQuadIntoTwoTrisShorterDiagonal().\n");
 
     if (!quad.checkContainer( *this )) {
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::splitQuadIntoTwoTrisShorterDiagonal(): given face_iterator does not refer to (this) mesh.");
@@ -3870,7 +3869,7 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
 {
     using namespace Aux;
 
-    debugl(0, "Mesh::collapseTriEdge(): u_id: %5d, v_id: %5d\n", u_it->id(), v_it->id());
+    debugl(1, "Mesh::collapseTriEdge(): u_id: %5d, v_id: %5d\n", u_it->id(), v_it->id());
     debugTabInc();
 
     Vec3<R>             w_pos;
@@ -3895,13 +3894,13 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
 
     /* collapse topologically safe => proceed */
     if (Aux::Alg::listIntersection<uint32_t>(u_nbs, v_nbs, shared_nbs) == 2) {
-        debugl(1, "collapse topologically safe. proceeding.\n");
+        debugl(2, "collapse topologically safe. proceeding.\n");
         uint32_t fst_v0, fst_v1, fst_v2, snd_v0, snd_v1, snd_v2;
 
         uv_fst_tri_it->getTriIndices(fst_v0, fst_v1, fst_v2);
         uv_snd_tri_it->getTriIndices(snd_v0, snd_v1, snd_v2);
 
-        debugl(2, "deleting common faces: %5d = (%5d, %5d, %5d), %5d = (%5d, %5d, %5d)\n", 
+        debugl(3, "deleting common faces: %5d = (%5d, %5d, %5d), %5d = (%5d, %5d, %5d)\n", 
                 uv_fst_tri_it->id(), fst_v0, fst_v1, fst_v2,
                 uv_snd_tri_it->id(), snd_v0, snd_v1, snd_v2);
 
@@ -3924,7 +3923,7 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
             *vnew_it = w_it;
         }
 
-        debugl(2, "created new vertex w with id %5d and pos (%5.4f, %5.4f, %5.4f)\n",
+        debugl(3, "created new vertex w with id %5d and pos (%5.4f, %5.4f, %5.4f)\n",
                 w_it->id(), w_pos[0], w_pos[1], w_pos[2]);
 
         /* the new vertex w is incident to all faces that u and v were incident to, excluding the
@@ -3941,7 +3940,7 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
         std::map<Vertex *, Vertex *> replace_map = { {u_vertex, w_vertex}, {v_vertex, w_vertex} };
 
         /* w's incident faces is the union of u's and v's. */
-        debugl(2, "getting incident faces of u and v and computing union as new incident faces of w.\n");
+        debugl(3, "getting incident faces of u and v and computing union as new incident faces of w.\n");
         w_vertex->incident_faces = u_vertex->incident_faces;
         w_vertex->incident_faces.insert(
                 w_vertex->incident_faces.end(),
@@ -3952,39 +3951,39 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
         w_vertex->incident_faces.unique([] (const Face* x, const Face* y) -> bool {return (x->id() == y->id());});
 
         /* replace vertex pointers to u and v with pointers to v in all incident faces */
-        debugl(2, "new vertex w's incident faces: replacing vertex pointers to u/v with pointers to w.\n");
-        debugl(3, "union of faces with old ids:\n");
+        debugl(3, "new vertex w's incident faces: replacing vertex pointers to u/v with pointers to w.\n");
+        debugl(4, "union of faces with old ids:\n");
         debugTabInc();
         for (Face *f : w_vertex->incident_faces) {
-            debugl(0, "%5d = (%5d, %5d, %5d)\n", f->id(), f->vertices[0]->id(), f->vertices[1]->id(), f->vertices[2]->id() );
+            debugl(1, "%5d = (%5d, %5d, %5d)\n", f->id(), f->vertices[0]->id(), f->vertices[1]->id(), f->vertices[2]->id() );
             f->replaceVertices(replace_map);
         } 
         debugTabDec();
 
 #ifdef __DEBUG__
-        debugl(3, "union of faces with new ids:\n");
+        debugl(4, "union of faces with new ids:\n");
         debugTabInc();
         for (Face *f : w_vertex->incident_faces) {
-            debugl(0, "%5d = (%5d, %5d, %5d)\n", f->id(), f->vertices[0]->id(), f->vertices[1]->id(), f->vertices[2]->id() );
+            debugl(1, "%5d = (%5d, %5d, %5d)\n", f->id(), f->vertices[0]->id(), f->vertices[1]->id(), f->vertices[2]->id() );
         } 
         debugTabDec();
 #endif
 
         /* w's adjacent vertices are the union of all vertices that were incident to u and v */
-        debugl(2, "merging lists of incident vertices of u and v.. updating pointers.\n");
+        debugl(3, "merging lists of incident vertices of u and v.. updating pointers.\n");
         w_vertex->adjacent_vertices = u_vertex->adjacent_vertices;
         w_vertex->adjacent_vertices.insert(w_vertex->adjacent_vertices.end(), v_vertex->adjacent_vertices.begin(), v_vertex->adjacent_vertices.end());
         w_vertex->adjacent_vertices.sort([] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());});
 
         /* replace pointers to u/v with pointers to w in all adjacent vertices */
-        debugl(2, "new vertex w's adjacent vertices: replacing vertex pointers to u/v with pointers to w.\n");
+        debugl(3, "new vertex w's adjacent vertices: replacing vertex pointers to u/v with pointers to w.\n");
         std::list<Vertex *> w_adj_vertices;
         w_vertex->getVertexStar(w_adj_vertices);
         for (Vertex *w_nb : w_adj_vertices) {
             w_nb->replaceAdjacentVertices(replace_map);
         }
 
-        debugl(2, "manually clear()ing topological information in u/v and erase()ing u and v from mesh.\n");
+        debugl(3, "manually clear()ing topological information in u/v and erase()ing u and v from mesh.\n");
         /* finally, delete the vertices u and v, which have now been entirely replaced by w.
          * manually reset adjacency / incidence data to prevent VertexAccessor::erase() from erasing
          * the faces u and v are (were) contained in */
@@ -3998,13 +3997,13 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
 
         /* done */
         debugTabDec();
-        debugl(0, "Mesh::collapseTriEdge(): done. edge collapsed.\n");
+        debugl(1, "Mesh::collapseTriEdge(): done. edge collapsed.\n");
 
         return true;
     }
     /* collapse topologically unsafe. don't proceed, return false. */
     else {
-        debugl(1, "collapse topologically unsafe => not going to proceeed.\n");
+        debugl(2, "collapse topologically unsafe => not going to proceeed.\n");
         debugTabDec();
         return false;
     }
@@ -4019,7 +4018,7 @@ Mesh<Tm, Tv, Tf, R>::mergeUnrelatedVertices(
 {
     using namespace Aux::Alg::Functional;
 
-    debugl(2, "Mesh::mergeUnrelatedVertices(): u = %5d, v = %5d.\n", u_it->id(), v_it->id() );
+    debugl(3, "Mesh::mergeUnrelatedVertices(): u = %5d, v = %5d.\n", u_it->id(), v_it->id() );
     debugTabInc();
 
     /* firstly, verify that u and v satisfy the condition of being toplogically "unrelated" */
@@ -4102,7 +4101,7 @@ Mesh<Tm, Tv, Tf, R>::mergeUnrelatedVertices(
     this->vertices.erase(v_it);
 
     debugTabDec();
-    debugl(2, "Mesh::mergeUnrelatedVertices(): done.\n");
+    debugl(3, "Mesh::mergeUnrelatedVertices(): done.\n");
 
     /* return iterator to new vertex w. */
     return w_it;
@@ -4114,7 +4113,7 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::checkTopology()
 {
-    debugl(0, "Mesh::checkTopology()\n");
+    debugl(1, "Mesh::checkTopology()\n");
     debugTabInc();
 
     Vertex                 *s, *v;
@@ -4129,7 +4128,7 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
     const uint32_t          traversal_id = this->getFreshTraversalId();
 
     ccs         = 0;
-    debugl(1, "checking for orphaned vertices..\n");
+    debugl(2, "checking for orphaned vertices..\n");
 
     debugTabInc();
     for (auto &v : this->vertices) {
@@ -4137,25 +4136,25 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
         v.getFaceStar(v_fstar);
 
         if (v_vstar.empty() || v_fstar.empty()) {
-            debugl(0, "vertex %d: incident_faces: %2d, adjacent_vertices: %2d\n",
+            debugl(1, "vertex %d: incident_faces: %2d, adjacent_vertices: %2d\n",
                 v.id(), v_fstar.size(), v_vstar.size());
         }
     }
     debugTabDec();
 
-    debugl(1, "checking if mesh is triangular..\n");
+    debugl(2, "checking if mesh is triangular..\n");
     debugTabInc();
     /* checking if all faces are triangles */
     for (auto &f : this->faces) {
         if (!f.isTri()) {
-            debugl(0, "Mesh::checkTopology(): quad with id %d found.\n", f.id());
+            debugl(1, "Mesh::checkTopology(): quad with id %d found.\n", f.id());
             throw("Mesh::checkTopology(): quad found.");
         }
     }
     debugTabDec();
 
     /* traverse all connected components, check manifold property for edges */
-    debugl(1, "checking for non-manifold edges by traversing all connected components.\n");
+    debugl(2, "checking for non-manifold edges by traversing all connected components.\n");
     debugTabInc();
     for (Vertex &vref : this->vertices) {
         if (vref.getTraversalState(traversal_id) == TRAV_UNSEEN) {
@@ -4167,7 +4166,7 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
             /* traverse cc */
             Q.push(s);
 
-            debugl(0, "traversing new connected component with root vertex %5d\n", s->id() );
+            debugl(1, "traversing new connected component with root vertex %5d\n", s->id() );
             debugTabInc();
             while (!Q.empty()) {
                 v = Q.front();
@@ -4191,15 +4190,15 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
                         /* get faces containing edge {v, u} */
                         this->getFacesIncidentToEdge(v->iterator(), u->iterator(), vu_incident_faces, nIF);
                         if (nIF > 2) {
-                            debugl(0, "Mesh::checkTopology(): FATAL: non-manifold edge (%d, %d) found. faces: \n", v->id() , u->id() );
+                            debugl(1, "Mesh::checkTopology(): FATAL: non-manifold edge (%d, %d) found. faces: \n", v->id() , u->id() );
                             throw("Mesh::checkTopology(): FATAL: non-manifold edge found.");
                         }
                         else if (nIF == 1) {
-                            debugl(0, "Mesh::checkTopology(): FATAL: border edge (%d, %d) found!\n", v->id(), u->id() );
+                            debugl(1, "Mesh::checkTopology(): FATAL: border edge (%d, %d) found!\n", v->id(), u->id() );
                             throw("Mesh::checkTopology(): FATAL: border edge found.");
                         }
                         else if (nIF == 0) {
-                            debugl(0, "Mesh::checkTopology(): FATAL: isolated edge (%d, %d) found.\n", v->id(), u->id());
+                            debugl(1, "Mesh::checkTopology(): FATAL: isolated edge (%d, %d) found.\n", v->id(), u->id());
                             throw("Mesh::checkTopology(): FATAL: isolated edge found.");
                         }
 
@@ -4215,7 +4214,7 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
                             t2_uv_orient = t2->getTriEdgeOrientation(u->id(), v->id() );
 
                             if (t1_uv_orient == t2_uv_orient) {
-                                debugl(0, "Mesh::checkTopology(): triangels %d / %d sharing edge (%d, %d) not compatible in orientation!\n", t1->id(), t2->id(), u->id(), v->id());
+                                debugl(1, "Mesh::checkTopology(): triangels %d / %d sharing edge (%d, %d) not compatible in orientation!\n", t1->id(), t2->id(), u->id(), v->id());
                                 throw("Mesh::checkTopology(): triangles with incompatible orientation found.");
                             }
 
@@ -4237,13 +4236,13 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
             }
             debugTabDec();
 
-            debugl(0, "finished traversal of connected component with root vertex %5d. size: %5d\n", s->id(), cc_size);
+            debugl(1, "finished traversal of connected component with root vertex %5d. size: %5d\n", s->id(), cc_size);
         }
     }
     debugTabDec();
 
     if (ccs > 1) {
-        debugl(1, "WARNING: mesh has %d > 1 connected components.\n", ccs);
+        debugl(2, "WARNING: mesh has %d > 1 connected components.\n", ccs);
     }
 
     std::list<Face *>                       v_dual_circle;
@@ -4252,7 +4251,7 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
     bool                                    got_neighbour;
 
     /* check manifold property for vertices */
-    debugl(1, "checking for non-manifold vertices.\n");
+    debugl(2, "checking for non-manifold vertices.\n");
     debugTabInc();
     for (auto &v : this->vertices) {
         /* clear and get all incident faces */
@@ -4261,7 +4260,7 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
 
         /* must be at least three elements */
         if (v_fstar.size() < 3) {
-            debugl(0, "Mesh::checkTopology(): vertex %d got < 3 incident triangles.\n", v.id() );
+            debugl(1, "Mesh::checkTopology(): vertex %d got < 3 incident triangles.\n", v.id() );
             throw("Mesh::checkTopology(); vertex with < 3 incident triangles faces found.");
         }
 
@@ -4283,7 +4282,7 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
                 if ( (this->getTriCommonEdge(last_on_circle->iterator(), (*ifit)->iterator(), e_x, e_y)) == true) {
                     /* one of e_x and e_y must be v itself */
                     if (e_x->id() != v.id() && e_y->id() != v.id() ) {
-                        debugl(0, "Mesh::checkTopology(): face in face star of vertex %d shares common edge with other face from face star, but vertex %d is not contained in in.\n", v.id(), v.id() );
+                        debugl(1, "Mesh::checkTopology(): face in face star of vertex %d shares common edge with other face from face star, but vertex %d is not contained in in.\n", v.id(), v.id() );
                         throw("Mesh::checkTopology(): face in face star of vertex shares common edge with other face from face star, but vertex v is not contained in in.\n");
                     }
 
@@ -4298,20 +4297,20 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
 
             /* incident_faces non-empty and no closed cycle => non-manifold vertex. */
             if (!got_neighbour) {
-                debugl(0, "Mesh::checkTopology(): non-manifold vertex %d found.\n", v.id() );
+                debugl(1, "Mesh::checkTopology(): non-manifold vertex %d found.\n", v.id() );
                 throw("Mesh::checkTopology(): non-manifold vertex found.");
             }
         }
 
         /* check if last element of v_dual_circle shares edge with first element of v_dual_circle */
         if (!this->getTriCommonEdge(v_dual_circle.front()->iterator(), v_dual_circle.back()->iterator(), e_x, e_y)) {
-            debugl(0, "Mesh::checkTopology(): non-manifold vertex %d found. first and last face in v_dual_circle not neighbours => open path.\n", v.id() );
+            debugl(1, "Mesh::checkTopology(): non-manifold vertex %d found. first and last face in v_dual_circle not neighbours => open path.\n", v.id() );
             throw("Mesh::checkTopology(): non-manifold vertex found. first and last face in v_dual_circle not neighbours => open path.\n");
         }
 
         /* we're getting paranoid here.. */
         if (v_dual_circle.front() == v_dual_circle.back()) {
-            debugl(0, "Mesh::checkTopology(): front() and back() of dual circle identical. must not be.\n");
+            debugl(1, "Mesh::checkTopology(): front() and back() of dual circle identical. must not be.\n");
             throw("Mesh::checkTopology(): front() and back() of dual circle identical. must not be.");
         }
         /* the currently analysed vertex v is regular or "manifold" */
@@ -4319,7 +4318,7 @@ Mesh<Tm, Tv, Tf, R>::checkTopology()
     debugTabDec();
 
     debugTabDec();
-    debugl(0, "Mesh::checkTopology(): done. mesh topology ok.\n");
+    debugl(1, "Mesh::checkTopology(): done. mesh topology ok.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -4328,7 +4327,7 @@ Mesh<Tm, Tv, Tf, R>::checkGeometry(
     R const &eps_v,
     R const &eps_T)
 {
-    debugl(0, "Mesh::checkGeometry(): updating Octree..\n");
+    debugl(1, "Mesh::checkGeometry(): updating Octree..\n");
     debugTabInc();
 
     /* update octree if necessary */
@@ -4515,7 +4514,7 @@ Mesh<Tm, Tv, Tf, R>::checkGeometry(
 
     /* geometry ok */
     debugTabDec();
-    debugl(0, "Mesh::checkGeometry(): geometry ok => no coincident vertices within threshold, no self-intersections.\n");
+    debugl(1, "Mesh::checkGeometry(): geometry ok => no coincident vertices within threshold, no self-intersections.\n");
 }
 
 /* I/O */
@@ -4565,7 +4564,7 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::readFromObjFile(const char *filename)
 {
-    debugl(0, "Mesh::readFromObjFile()");
+    debugl(1, "Mesh::readFromObjFile()");
     debugTabInc();
 
     /* clear mesh */
@@ -4592,7 +4591,7 @@ Mesh<Tm, Tv, Tf, R>::readFromObjFile(const char *filename)
         /* get line, convert to c string */
         std::getline(f, line_string);
         if (line_string.size() == 0) {
-            debugl(2, "empty line..\n");
+            debugl(3, "empty line..\n");
             continue;
         }
 
@@ -4647,14 +4646,14 @@ Mesh<Tm, Tv, Tf, R>::readFromObjFile(const char *filename)
     /* try to add all vertices and faces. */
     try {
         /* NOTE: this relies upon the fact that adding n vertices to an empty mesh will number them 0...(n-1) */
-        debugl(1, "Adding %5d vertices\n", (uint32_t)vertices.size());
+        debugl(2, "Adding %5d vertices\n", (uint32_t)vertices.size());
         while (!vertices.empty()) {
             this->vertices.insert(vertices.front());
             vertices.pop_front();
         }
-        debugl(1, "done adding vertices.\n");
+        debugl(2, "done adding vertices.\n");
 
-        debugl(1, "adding %5d faces..\n", (uint32_t)faces.size());
+        debugl(2, "adding %5d faces..\n", (uint32_t)faces.size());
         obj_face *f;
         while (!faces.empty()) {
             f = &(faces.front());
@@ -4678,21 +4677,21 @@ Mesh<Tm, Tv, Tf, R>::readFromObjFile(const char *filename)
             /* pop_front added face */
             faces.pop_front();
         }
-        debugl(1, "done adding faces.\n");
+        debugl(2, "done adding faces.\n");
     }
     catch (MeshEx& err) {
         printf("caught exception: \"%s\".\n", err.error_msg.c_str() );
     }
 
     debugTabDec();
-    debugl(0, "Mesh::readFromObjFile(): done reading mesh from obj: numVertices(): %d, numFaces(): %d, numEdges(): %d\n", this->numVertices(), this->numFaces(), this->numEdges() );
+    debugl(1, "Mesh::readFromObjFile(): done reading mesh from obj: numVertices(): %d, numFaces(): %d, numEdges(): %d\n", this->numVertices(), this->numFaces(), this->numEdges() );
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
 {
-    debugl(3, "Mesh::writeObjFile(): writing mesh as obj to outfile \"%s\".\n", jobname);
+    debugl(4, "Mesh::writeObjFile(): writing mesh as obj to outfile \"%s\".\n", jobname);
     debugTabInc();
 
     /* renumber vertices */
@@ -4703,7 +4702,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
     FILE *outfile = fopen(obj_filename, "w");
 
     if (!outfile) {
-        debugl(0, "Mesh::writeObjFile(): can't open file \'%s\' for writing.\n", obj_filename);
+        debugl(1, "Mesh::writeObjFile(): can't open file \'%s\' for writing.\n", obj_filename);
         throw("Mesh::writeObjFile(): can't open output file for writing.");
     }
 
@@ -4713,14 +4712,14 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
     /* write in all the vertices, preceeded by a comment */
     fprintf(outfile, "\n# %15ld vertices.\n", this->V.size());
 
-    debugl(3, "writing %15ld vertices..\n", this->vertices.size());
+    debugl(4, "writing %15ld vertices..\n", this->vertices.size());
     debugTabInc();
 
     Vec3<R> vpos;
     for (auto &v : this->vertices) {
         vpos = v.pos();
-        debugl(4, "writing vertex %5d..\n", v.id());
-        vpos.print_debugl(4);
+        debugl(5, "writing vertex %5d..\n", v.id());
+        vpos.print_debugl(5);
         fprintf(outfile, "v %+.10e %+.10e %+.10e\n", vpos[0], vpos[1], vpos[2]);
     }
 
@@ -4734,12 +4733,12 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
     /* write in all the face normals, preceeded by a comment */
     fprintf(outfile, "\n# %15ld face normals.\n", this->faces.size());
 
-    debugl(3, "writing %15ld face normals..\n", this->faces.size());
+    debugl(4, "writing %15ld face normals..\n", this->faces.size());
     debugTabInc();
 
     Vec3<R> n;
     for (auto &f : this->faces) {
-        debugl(4, "writing face normal %5d..\n", f.id());
+        debugl(5, "writing face normal %5d..\n", f.id());
         n = f.getNormal();
         fprintf(outfile, "vn %+.10e %+.10e %+.10e\n", n[0], n[1], n[2]);
     }
@@ -4749,7 +4748,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
     /* newline, comment and then all faces */
     fprintf(outfile, "\n# %15ld faces.\n", this->F.size() );
 
-    debugl(3, "writing %15ld faces..\n", this->faces.size());
+    debugl(4, "writing %15ld faces..\n", this->faces.size());
     debugTabInc();
 
     uint32_t v0_id, v1_id, v2_id, v3_id;
@@ -4766,7 +4765,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
                     v3_id + 1,
                     v3_id + 1);
 
-            debugl(4, "quad  %u/%u/%u/%u\n",
+            debugl(5, "quad  %u/%u/%u/%u\n",
                     v0_id, 
                     v1_id,
                     v2_id,
@@ -4782,7 +4781,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
                     v2_id + 1,
                     v2_id + 1);
 
-            debugl(4, "tri  %u/%u/%u/\n",
+            debugl(5, "tri  %u/%u/%u/\n",
                     v0_id, 
                     v1_id,
                     v2_id);
@@ -4797,7 +4796,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
     fclose(outfile);
 
     debugTabDec();
-    debugl(3, "Mesh::writeObjFile(): done.\n");
+    debugl(4, "Mesh::writeObjFile(): done.\n");
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -4905,7 +4904,7 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
 Mesh<Tm, Tv, Tf, R>::VertexAccessor::erase(vertex_iterator it)
 {
-    debugl(2, "Mesh::VertexAccessor::erase(vertex_iterator it): vertex id: %6d. deleting %2d incident faces..\n", it->id(), it->incident_faces.size() );
+    debugl(3, "Mesh::VertexAccessor::erase(vertex_iterator it): vertex id: %6d. deleting %2d incident faces..\n", it->id(), it->incident_faces.size() );
     debugTabInc();
 
     if (!it.checkContainer( this->mesh)) {
@@ -4926,12 +4925,12 @@ Mesh<Tm, Tv, Tf, R>::VertexAccessor::erase(vertex_iterator it)
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::deleteVertex(): vertex still got incident faces or adjacent vertices after deleteing all incident faces.. o_O");
     }
 
-    debugl(3, "freeing id and erasing vertex from internal vertex map..\n");
+    debugl(4, "freeing id and erasing vertex from internal vertex map..\n");
 
     /* free id */
     this->mesh.V_idq.freeId(it->id());
 
-    debugl(3, "deleting (deallocating) vertex object..\n");
+    debugl(4, "deleting (deallocating) vertex object..\n");
     /* delete allocated vertex object */
     delete &(*it);
 
@@ -4939,7 +4938,7 @@ Mesh<Tm, Tv, Tf, R>::VertexAccessor::erase(vertex_iterator it)
     this->mesh.octree_updated = false;
 
     debugTabDec();
-    debugl(2, "Mesh::VertexAccessor::erase(). erase()ing and returning vertex_iterator to next vertex.\n");
+    debugl(3, "Mesh::VertexAccessor::erase(). erase()ing and returning vertex_iterator to next vertex.\n");
 
     /* erase vertex from internal map this->mesh.V and return vertex_iterator to the next element
      * (by wrapping the result of std::map::erae in the vertex_iterator constructor). */
@@ -5267,7 +5266,7 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::erase(face_iterator it)
 {
     using Aux::Alg::removeFirstOccurrenceFromList;
 
-    debugl(2, "Mesh::FaceAccessor::erase(): erasing face with it: %6d\n", it->id());
+    debugl(3, "Mesh::FaceAccessor::erase(): erasing face with it: %6d\n", it->id());
     debugTabInc();
     bool all_erased;
 
@@ -5428,7 +5427,7 @@ template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::checkInternalConsistency() const
 {
-    debugl(0, "Mesh::checkInternalConsistency()\n");
+    debugl(1, "Mesh::checkInternalConsistency()\n");
     /* iterate over internal vertex / face maps, check if mesh pointers and iterators inside the
      * objects are consistent. if shared pointers are used, check if the reference counter for each
      * shared_ptr is exactly one */
@@ -5445,7 +5444,7 @@ Mesh<Tm, Tv, Tf, R>::checkInternalConsistency() const
         if (vit->second.use_count() != 1) {
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::checkInternalConsistency(): found vertex whose shared_ptr in internal vertex map has use_count != 1. internal logic error.");
         }
-        debugl(1, "vertex id %d smart ptr use count: %d\n", v->id(), vit->second.use_count());
+        debugl(2, "vertex id %d smart ptr use count: %d\n", v->id(), vit->second.use_count());
         */
         vptr_list.push_back(v);
     }
@@ -5468,7 +5467,7 @@ Mesh<Tm, Tv, Tf, R>::checkInternalConsistency() const
         if (fit->second.use_count() != 1) {
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::checkInternalConsistency(): found face whose shared_ptr in internal face map has use_count != 1. internal logic error.");
         }
-        debugl(1, "face id %d smart ptr use count: %d\n", f->id(), fit->second.use_count());
+        debugl(2, "face id %d smart ptr use count: %d\n", f->id(), fit->second.use_count());
         */
         fptr_list.push_back(f);
     }
@@ -5480,5 +5479,5 @@ Mesh<Tm, Tv, Tf, R>::checkInternalConsistency() const
         throw MeshEx(MESH_LOGIC_ERROR, "Mesh::checkInternalConsistency(): at least one face (pointer) stored under two differend ids..\n");
     }
     debugTabDec();
-    debugl(0, "Mesh::checkInternalConsistency(): mesh internally consistent.\n");
+    debugl(1, "Mesh::checkInternalConsistency(): mesh internally consistent.\n");
 }

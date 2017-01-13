@@ -70,7 +70,7 @@ IdQueue::getId()
 {
     uint32_t    id;
 
-    debugl(4, "IdQueue::getID()\n");
+    debugl(5, "IdQueue::getID()\n");
 
     debugTabInc();
     /* if q is empty, refill it with larger ids. note that next_id == last_id here.. */
@@ -112,7 +112,7 @@ IdQueue::getId()
 void
 IdQueue::freeId(uint32_t id)
 {
-    debugl(4, "IdQueue::freeId()\n");
+    debugl(5, "IdQueue::freeId()\n");
     if (id >= this->smallest_id) {
         /* if id < next_id, push next_id and set next_id = id */
         if (id < next_id) {
@@ -123,6 +123,6 @@ IdQueue::freeId(uint32_t id)
         else this->q.push(id);
     }
     else {
-        debugl(0, "IdQueue::freeId(): WARNING: attempting to free id (%5d), which is smaller than this->smallest_id (%5d). ignoring..\n", id, this->smallest_id);
+        debugl(1, "IdQueue::freeId(): WARNING: attempting to free id (%5d), which is smaller than this->smallest_id (%5d). ignoring..\n", id, this->smallest_id);
     }
 }

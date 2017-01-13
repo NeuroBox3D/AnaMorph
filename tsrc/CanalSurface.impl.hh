@@ -266,7 +266,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
 	bool                                                    preserve_crease_edges,
 	R														triangle_height_factor) const
 {
-    debugl(0, "CanalSurface::generateMesh().\n");
+    debugl(1, "CanalSurface::generateMesh().\n");
     debugTabInc();
 
     uint32_t    i, j, ntsegments;
@@ -356,7 +356,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
          * quads get twisted then.. */
         //this->getFrenetFrame(this->t0, px, py, pz);
 
-        debugl(0, "start_circle_its == NULL => generating initial circle.\n"); 
+        debugl(1, "start_circle_its == NULL => generating initial circle.\n"); 
 
         Vec3<R>                                         start_closing_vertex_pos;
         typename Mesh<Tm, Tv, Tf, R>::vertex_iterator   start_closing_vertex_it;
@@ -391,7 +391,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
         /* NOTE: n_phi_segments has to match along the whole path for this to work properly.. */
         if (start_circle_its->size() == n_phi_segments) {
             current_circle = *start_circle_its;
-            debugl(0, "start_circle_its != NULL => deleting closing vertex and taking given initial circle vertex ids..\n"); 
+            debugl(1, "start_circle_its != NULL => deleting closing vertex and taking given initial circle vertex ids..\n"); 
         }
         else {
             throw("CanalSurface::generateMesh(): supplied start_circle_its does not consist of exactly n_phi_segments vertices => invalid arguments supplied by the caller.");
@@ -401,7 +401,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
     /* now the last two circles will, in general, have a distance that is too small compared to the
      * radii => compute the difference to the approximate good value and distribute this difference
      * equally among all the other segments */
-    debugl(0, "rendering inner circles..\n");
+    debugl(1, "rendering inner circles..\n");
     for (i = 1; i < ntsegments; i++) {
         /* if start is offset, then even values for i are not offset, odd values are offset.
          * otherwise, vice versa */
@@ -448,7 +448,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
         M.faces.insert(last_circle[n_phi_segments - 1], last_circle[0], current_circle[0], current_circle[n_phi_segments - 1]);
     }
 
-    debugl(0, "rendering last circle..\n");
+    debugl(1, "rendering last circle..\n");
     /* and the same procedure for the endpoint, i.e. t = t1 */
     last_circle = current_circle;
     last_p      = p;
@@ -477,9 +477,9 @@ CanalSurface<C2F, RadF, R>::generateMesh(
             phi_offset = phi_0 + dphi / 2.0;
     }
 
-    px.print_debugl(0);
-    py.print_debugl(0);
-    pz.print_debugl(0);
+    px.print_debugl(1);
+    py.print_debugl(1);
+    pz.print_debugl(1);
     debugTabInc();
     for (j = 0; j < n_phi_segments; j++) {
         phi                     = ( (R)j * Common::twopi) / (R)n_phi_segments;
@@ -524,7 +524,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
     }
 
     debugTabDec();
-    debugl(0, "CanalSurface::generateMesh(): done.\n");
+    debugl(1, "CanalSurface::generateMesh(): done.\n");
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ *
@@ -684,7 +684,7 @@ template <uint32_t degree, typename RadF, typename R>
 R
 BezierCanalSurface<degree, RadF, R>::checkRenderVector(Vec3<R> const &r) const
 {
-    debugl(2, "BezierCanalSurface::checkRenderVector():\n");
+    debugl(3, "BezierCanalSurface::checkRenderVector():\n");
     debugTabInc();
 
     BezierCurve<degree, R> const       &gamma   = this->spine_curve;
@@ -716,22 +716,19 @@ BezierCanalSurface<degree, RadF, R>::checkRenderVector(Vec3<R> const &r) const
 
 
     /* check all all roots in zroots */
-    R root; size_t nr = 0;
+    R root;
     debugTabInc();
     for (auto root_interval : z_roots) {
         root    = (root_interval.t0 + root_interval.t1) / 2.0;
         f_min   = std::min(f_min, p.eval(root) / q.eval(root));
-        debugl(2, "function value of rational target function for root %5.4f of numerator polynomial: %5.4f\n",
+        debugl(3, "function value of rational target function for root %5.4f of numerator polynomial: %5.4f\n",
             root, p.eval(root) / q.eval(root));
-Vec3<R> posi = spine_curve.eval(root);
-std::cout << "root " << ++nr << "/" << z_roots.size() << " = " << root << ",  r_val = " << p.eval(root) / q.eval(root)
-          << " at coords (" << posi[0] << ", " << posi[1] << "," << posi[2] << ")" << std::endl;
     }
     debugTabDec();
-    debugl(2, "minimum target function value fmin: %5.4f\n", fmin);
+    debugl(3, "minimum target function value fmin: %5.4f\n", fmin);
 
     debugTabDec();
-    debugl(2, "BezierCanalSurface::checkRenderVector(): done. f_min: %5.4f\n", f_min);
+    debugl(3, "BezierCanalSurface::checkRenderVector(): done. f_min: %5.4f\n", f_min);
 
     return f_min;
 }
@@ -885,7 +882,7 @@ template <uint32_t degree, typename R>
 void
 BLRCanalSurface<degree, R>::computeLocalSelfIntersectionPolynomial(BernsteinPolynomial<6*derivDeg, R, R> &p_lsi) const
 {
-    debugl(2, "BLRCanalSurface::computeLocalSelfIntersectionPolynomial()\n");
+    debugl(3, "BLRCanalSurface::computeLocalSelfIntersectionPolynomial()\n");
     debugTabInc();
 
     /* get degree, maximum radius, reference gamma to (this->spine_curve), first two derivatives dgamma and d2gamma of
@@ -940,7 +937,7 @@ BLRCanalSurface<degree, R>::computeLocalSelfIntersectionPolynomial(BernsteinPoly
     p_lsi               = crossProdSq_elev - dgamma_sqcube;
 
     debugTabDec();
-    debugl(2, "BLRCanalSurface::computeLocalSelfIntersectionPolynomial(): done.\n");
+    debugl(3, "BLRCanalSurface::computeLocalSelfIntersectionPolynomial(): done.\n");
 }
 
 template <uint32_t degree, typename R>
@@ -951,7 +948,7 @@ BLRCanalSurface<degree, R>::computeGlobalSelfIntersectionSystem(
     BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_t0,
     BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_t1) const
 {
-    debugl(1, "BLRCanalSurface::computeIntersectionSystem().\n");
+    debugl(2, "BLRCanalSurface::computeIntersectionSystem().\n");
     debugTabInc();
 
     /* for consistency with the above and the thesis, use const reference Gamma for "this" again */
@@ -1028,10 +1025,10 @@ BLRCanalSurface<degree, R>::computeGlobalSelfIntersectionSystem(
         dgamma[1].multiply(gamma[1] - gamma_t1[1]) + 
         dgamma[2].multiply(gamma[2] - gamma_t1[2]);
 
-    debugl(2, "BLRCanalSurface::computeGlobalSelfIntersectionSystem: p_edge_t0: BB(%d), p_edge_t1: BB(%d). coeffs vectors follow..\n", p_edge_t0.getDegree(), p_edge_t1.getDegree());
+    debugl(3, "BLRCanalSurface::computeGlobalSelfIntersectionSystem: p_edge_t0: BB(%d), p_edge_t1: BB(%d). coeffs vectors follow..\n", p_edge_t0.getDegree(), p_edge_t1.getDegree());
 
     debugTabDec();
-    debugl(1, "BLRCanalSurface::computeIntersectionSystem(): done.\n");
+    debugl(2, "BLRCanalSurface::computeIntersectionSystem(): done.\n");
 }
 
 template <uint32_t degree, typename R>
@@ -1045,7 +1042,7 @@ BLRCanalSurface<degree, R>::computeIntersectionSystem(
     BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_y0,
     BernsteinPolynomial<degree+derivDeg, R, R>      &p_edge_y1) const
 {
-    debugl(1, "BLRCanalSurface::computeIntersectionSystem().\n");
+    debugl(2, "BLRCanalSurface::computeIntersectionSystem().\n");
     debugTabInc();
 
    /* NOTE: (this) is Gamma within this context: a const reference is used for better readability. its spine curve
@@ -1131,5 +1128,5 @@ BLRCanalSurface<degree, R>::computeIntersectionSystem(
         dgamma[2].multiply(gamma[2] - delta_y1[2]);
 
     debugTabDec();
-    debugl(1, "CanalSurface::computeIntersectionSystem(): done.\n");
+    debugl(2, "CanalSurface::computeIntersectionSystem(): done.\n");
 }

@@ -178,7 +178,7 @@ class LinearRadiusInterpolatorArcLen {
                     arclen_t0t1 = gamma.approxArcLength(t0, t1, this->arclen_dt);
                     ratio       = arclen_t0t / arclen_t0t1; 
 
-                    debugl(2, "LinearRadiusInterpolatorArcLen::operator(): t: %5.4f, arclen in [t0, t] = %10.5f, total arclen in domain [t0, t1]: %10.5f, ratio: %10.5f\n", t, arclen_t0t, arclen_t0t1, ratio);
+                    debugl(3, "LinearRadiusInterpolatorArcLen::operator(): t: %5.4f, arclen in [t0, t] = %10.5f, total arclen in domain [t0, t1]: %10.5f, ratio: %10.5f\n", t, arclen_t0t, arclen_t0t1, ratio);
                     if (ratio < 0) ratio = 0;
                     if (ratio > 1) ratio = 1;
 

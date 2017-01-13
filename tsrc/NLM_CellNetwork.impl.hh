@@ -199,7 +199,7 @@ namespace NLM {
     void
     NeuritePath<R>::computeChordLengthParametrization()
     {
-        debugl(2, "NeuritePath::computeChordLengthParametrization()\n");
+        debugl(3, "NeuritePath::computeChordLengthParametrization()\n");
         debugTabInc();
 
         uint32_t const  n = this->neurite_segments.size() + 1;
@@ -225,14 +225,14 @@ namespace NLM {
         this->neurite_vertex_parameters[n-1]    = 1;
 
         debugTabDec();
-        debugl(2, "NeuritePath::computeChordLengthParametrization(): done.\n");
+        debugl(3, "NeuritePath::computeChordLengthParametrization(): done.\n");
     }
 
     template<typename R>
     void
     NeuritePath<R>::computeUniformParametrization()
     {
-        debugl(2, "NeuritePath::computeUniformParametrization(): done.\n");
+        debugl(3, "NeuritePath::computeUniformParametrization(): done.\n");
         debugTabInc();
 
         uint32_t i, n = this->neurite_segments.size() + 1;
@@ -245,7 +245,7 @@ namespace NLM {
         this->neurite_vertex_parameters.back() = 1.0;
 
         debugTabDec();
-        debugl(2, "NeuritePath::computeUniformParametrization(): done.\n");
+        debugl(3, "NeuritePath::computeUniformParametrization(): done.\n");
     }
 
     template<typename R>
@@ -281,10 +281,10 @@ namespace NLM {
         using Aux::Numbers::inf;
         using Aux::VecMat::onesVec3;
 
-        debugl(0, "NeuritePath::updateGeometry().\n");
+        debugl(1, "NeuritePath::updateGeometry().\n");
         debugTabInc();
 
-        debugl(1, "extracting vertex position components into vectors for linear solver..\n");
+        debugl(2, "extracting vertex position components into vectors for linear solver..\n");
         /* set m to the number of segments on the path */
         uint32_t const m = this->neurite_segments.size();
 
@@ -309,7 +309,7 @@ namespace NLM {
             vertex_position_components[2][i] = npos[2];
         }
 
-        debugl(1, "computing hermite boundary condition vectors..\n");
+        debugl(2, "computing hermite boundary condition vectors..\n");
         /* tangent boundary condition vectors for first and last vertex are obtained from the scaled unit direction vectors
          * between the two first and two last vertices: exception: if this is a neurite root path, set ds0 to be the normal
          * vector of the soma sphere */
@@ -322,7 +322,7 @@ namespace NLM {
                 ds0 = ( v0->getPosition() - slist.front()->getSinglePointPosition() );
             }
             else {
-                debugl(0,"NeuritePath::updateGeometry(): root_path = %d, v0 = %d, number of soma in-neighbours: %d, number of in-neighbours: %d  => internal logic error.\n", this->root_path, v0->id(), slist.size(), v0->getInNeighbours().size());
+                debugl(1,"NeuritePath::updateGeometry(): root_path = %d, v0 = %d, number of soma in-neighbours: %d, number of in-neighbours: %d  => internal logic error.\n", this->root_path, v0->id(), slist.size(), v0->getInNeighbours().size());
                 throw("NeuritePath::updateGeometry(): internal state indicates that (this) is a neurite root path, yet first vertex does not have exactly one soma as parent.");
             }
         }
@@ -339,7 +339,7 @@ namespace NLM {
         ds0.normalize();
         dsn.normalize();
 
-        debugl(1, "computing parametrization..\n");
+        debugl(2, "computing parametrization..\n");
 
         /* apply given parametrization algorithm, which returns a tuple containing
          *
@@ -351,7 +351,7 @@ namespace NLM {
         this->neurite_vertex_parameters = std::get<1>(para_algo_tuple);
         dsn                            *= std::get<2>(para_algo_tuple);
 
-        debugl(0, "calling Thomson linear solver for spline system for three component splines ({x, y, z})..\n");
+        debugl(1, "calling Thomson linear solver for spline system for three component splines ({x, y, z})..\n");
         /* get three result vectors for {x, y, z}-coefficient interpolation polynomial, each consisting of the 4n power
          * coefficients of the interpolating cubic spline with hermite boundary condition (ds0, dsn) for the respective
          * component {x,y,z}. for all (n-1) segments of the implicitly defined space curve, convert the component functions
@@ -365,7 +365,7 @@ namespace NLM {
                 result_powercoeff[j]);
         }
 
-        debugl(0, "systems solved. generating neurite segment curves and neurite canal segments..\n");
+        debugl(1, "systems solved. generating neurite segment curves and neurite canal segments..\n");
         /* for all n segments, assemble spine curve segment in power basis, convert to BezierCurve by converting
          * component functions to BernsteinPolynomials and finally create neurite canal segment BLRCanalSurface using the
          * radii of the two neurite vertices forming the neurite segment. */
@@ -385,10 +385,10 @@ namespace NLM {
         uint32_t coeff_index;
         debugTabInc();
         for (uint32_t i = 0; i < m; i++) {
-            debugl(1, "segment %d.\n", i);
+            debugl(2, "segment %d.\n", i);
             debugTabInc();
 
-            debugl(1, "extracting power coefficients for neurite segment curve and converting to BernsteinPolynomial.\n");
+            debugl(2, "extracting power coefficients for neurite segment curve and converting to BernsteinPolynomial.\n");
             coeff_index = 4*i;
             for (uint32_t j = 0; j < 3; j++) {
                 /* read in result power coefficients for j-th component polynomial of segment i "backwards.." for historical
@@ -412,11 +412,11 @@ namespace NLM {
                         &(segment_i_components[j]));
             }
 
-            debugl(1, "creating bezier curve from three component BernsteinPolynomials\n");
+            debugl(2, "creating bezier curve from three component BernsteinPolynomials\n");
             /* create bezier spine curve for segment i */
             segment_i_curve = BezierCurve<3u, R>(segment_i_components);
 
-            debugl(1, "creating BLRCanalSurface neurite canal segment..\n");
+            debugl(2, "creating BLRCanalSurface neurite canal segment..\n");
             /* finally, create BLRCanalSurface and store in NLM::NeuriteSegmentInfo of neurite segment i of (this) path. */
             NLM::NeuriteSegmentInfo<R> &segment_i_info  = this->neurite_segments[i]->neurite_segment_data;
 
@@ -432,19 +432,19 @@ namespace NLM {
 
             /* update bounding box of neurite canal segment and use it to calculate the bounding box of the entire neurite
              * path. */
-            debugl(1, "updating canal segment bounding box and potentially bounding box of entire neurite path.\n");
+            debugl(2, "updating canal segment bounding box and potentially bounding box of entire neurite path.\n");
             segment_i_info.canal_segment_magnified.updateBoundingBox();
             this->bb.update(segment_i_info.canal_segment_magnified.getBoundingBox());
 
             debugTabDec();
-            debugl(1, "done for segment %d\n", i);
+            debugl(2, "done for segment %d\n", i);
         }
         debugTabDec();
 
         /* if this is a root path, also compute the initial cylinder segment between first neurite vertex and the soma,
          * which is adjacent to the first neurite vertex. */
         if (this->root_path) {
-            debugl(0, "(this) is a neurite ROOT path => computing initial cylinder segment between soma centre and neurite root vertex.\n");
+            debugl(1, "(this) is a neurite ROOT path => computing initial cylinder segment between soma centre and neurite root vertex.\n");
             /* get NLM::NeuriteRootEdgeInfo */
             std::list<typename NLM_CellNetwork<R>::NeuriteRootEdge *> re_list;
             this->neurite_segments[0]->getSourceVertex()->
@@ -492,7 +492,7 @@ namespace NLM {
         this->geometry_updated  = true;
 
         debugTabDec();
-        debugl(0, "NeuritePath::updateGeometry(): done.\n");
+        debugl(1, "NeuritePath::updateGeometry(): done.\n");
     }
 
     template<typename R>
@@ -526,31 +526,23 @@ namespace NLM {
 
         // We allow ourselves one educated guess before creating random candidates:
         // Check if global z vector is mu-permissible for all neurite segment curves of this path.
-        r_min = inf<R>(); size_t nSeg = 0;
+        r_min = inf<R>();
         for (auto &C : this->canal_segments_magnified)
-        {
-            std::cout << ++nSeg << "  ";
             r_min = std::min(r_min, C->checkRenderVector(candidate));
-        }
 
         if (r_min > mu)
-        {
-        	//std::cout << "Found render vector in z attempt." << std::endl;
             return candidate;
-        }
-
 
         uint32_t const max_attempts = 1024;
         for (uint32_t attempt = 0; attempt < max_attempts; attempt++)
         {
-            debugl(0, "NeuritePath::findPermissibleRenderVector(): attempt %d with %d candidates.\n", attempt + 1, 1024);
+            debugl(1, "NeuritePath::findPermissibleRenderVector(): attempt %d with %d candidates.\n", attempt + 1, 1024);
 
             candidate = Aux::VecMat::randUnitVec3<R>();
-std::cout << "Called rand for cand, std::rand() = " << std::rand() << std::endl;
 
             /* check all candidates, pick alpha-permissible if possible, otherwise pick the best one if max_min is not
              * -inf */
-			debugl(2, "NeuritePath()::findPermissibleRenderVector(): current candidate: ");
+			debugl(3, "NeuritePath()::findPermissibleRenderVector(): current candidate: ");
 			#ifdef __DEBUG__
 			candidate.print();
 			#endif
@@ -559,14 +551,11 @@ std::cout << "Called rand for cand, std::rand() = " << std::rand() << std::endl;
 			for (auto &C : this->canal_segments_magnified)
 				r_min = std::min(r_min, C->checkRenderVector(candidate));
 
-std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " << std::rand() << std::endl;
-
-			debugl(2, "r_min: %5.4f", r_min);
+			debugl(3, "r_min: %5.4f", r_min);
 
             /* check if max_min > alpha, return result if that is the case, otherwise try the next candidate */
             if (r_min > lambda) {
-                debugl(0, "attempt %d of %d, r_min = %5.4f => %5.4f-permissible for P. returning..\n", attempt + 1, max_attempts, r_min, lambda);
-                //std::cout << "Found render vector in attempt " << attempt << std::endl;
+                debugl(1, "attempt %d of %d, r_min = %5.4f => %5.4f-permissible for P. returning..\n", attempt + 1, max_attempts, r_min, lambda);
                 return candidate;
             }
         }
@@ -591,7 +580,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
         R const                                                &radius_reduction_factor,
 		bool                                                    preserve_crease_edges) const
     {
-        debugl(0, "NeuritePath::generateInitialSegmentMesh().\n");
+        debugl(1, "NeuritePath::generateInitialSegmentMesh().\n");
         debugTabInc();
 
         /* check if geometry has been updated */
@@ -604,7 +593,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
          * neurite canal segment by the factor radius_reduction_factor <= 1, which is the radius at the start vertex
          * of (this) path. details about this can be found in the thesis .. */
         if (!this->root_path) {
-            debugl(1, "non-root path: getting copy of first neurite canal segment and applying radius reduction for start vertex. radius_reduction_factor = %f\n",
+            debugl(2, "non-root path: getting copy of first neurite canal segment and applying radius reduction for start vertex. radius_reduction_factor = %f\n",
                 radius_reduction_factor);
 
             /* copy first canal segment and reduce the start vertex radius with radius_reduction_factor */
@@ -616,7 +605,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
                     C0_radii.second
                 );
 
-            debugl(1, "generating mesh of reduced-radius initial segment..\n");
+            debugl(2, "generating mesh of reduced-radius initial segment..\n");
             C0_copy.template generateMesh<Tm, Tv, Tf>(
                 /* append to given mesh M */
                 M,
@@ -635,7 +624,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
                 &closing_vertex_it,
 				preserve_crease_edges);
 
-            debugl(1, "mesh generated.\n");
+            debugl(2, "mesh generated.\n");
         }
         /* for root paths, also generate mesh for initial cylinder segment from neurite root edge incident to start
          * vertex of (this) path. */
@@ -709,7 +698,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
         }
 
         debugTabDec();
-        debugl(0, "NeuritePath::generateInitialSegmentMesh(): done.\n");
+        debugl(1, "NeuritePath::generateInitialSegmentMesh(): done.\n");
     }
 
     template <typename R>
@@ -733,7 +722,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
         typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it,
 		bool                                                    preserve_crease_edges) const
     {
-        debugl(0, "NeuritePath::appendTailMesh().\n");
+        debugl(1, "NeuritePath::appendTailMesh().\n");
         debugTabInc();
 
         /* check if geometry has been updated */
@@ -754,10 +743,10 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
         segment_i_start_circle_closing_vertex_it    = start_circle_closing_vertex_it;
 
 
-        debugl(1, "appending tail neurite canal segment meshes..\n");
+        debugl(2, "appending tail neurite canal segment meshes..\n");
         debugTabInc();
         for (uint32_t i = 1; i < m; i++) {
-            debugl(1, "generating mesh for neurite canal segment %d\n", i);
+            debugl(2, "generating mesh for neurite canal segment %d\n", i);
             /* delete closing vertex of previous segment */
             M.vertices.erase(segment_i_start_circle_closing_vertex_it);
 
@@ -783,7 +772,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
                 &segment_i_start_circle_closing_vertex_it,
 				preserve_crease_edges);
 
-            debugl(1, "done with mesh for neurite canal segment %d\n", i);
+            debugl(2, "done with mesh for neurite canal segment %d\n", i);
         }
         debugTabDec();
 
@@ -803,7 +792,7 @@ std::cout << "After checking cand., r_min = " << r_min << ";  std::rand() = " <<
         }
 
         debugTabDec();
-        debugl(0, "NeuritePath::appendTailMesh(): done.\n");
+        debugl(1, "NeuritePath::appendTailMesh(): done.\n");
     }
 }
 
@@ -1056,7 +1045,7 @@ void
 NLM_CellNetwork<R>::updateNLMNetworkInfo()
 {
     if (!this->nlm_network_info_updated || !this->network_info_initialized) {
-        debugl(0, "NLM_CellNetwork::updateNLMNetworkInfo().\n");
+        debugl(1, "NLM_CellNetwork::updateNLMNetworkInfo().\n");
         debugTabInc();
 
         this->initializeNetworkInfo();
@@ -1065,10 +1054,10 @@ NLM_CellNetwork<R>::updateNLMNetworkInfo()
          * NLM::NeuriteInfo / NLM::NeuriteSegmentInfo containing e.g. information about the neurite path trees relevant
          * to the respective neurite vertex / neurite segment. this makes later access much more efficient and
          * comfortable.  */
-        debugl(1, "iterating over all cells (somas)..\n");
+        debugl(2, "iterating over all cells (somas)..\n");
         debugTabInc();
         for (auto &s : this->soma_vertices) {
-            debugl(1, "processing soma %d\n", s.id());
+            debugl(2, "processing soma %d\n", s.id());
             /* get reference to soma info and clear old data */
             NLM::SomaInfo<R>               &s_info  = s.soma_data;
             s_info.soma_sphere                      = NLM::SomaSphere<R>();
@@ -1078,12 +1067,12 @@ NLM_CellNetwork<R>::updateNLMNetworkInfo()
 
             s.template getFilteredOutEdges<NeuriteRootEdge>(s_neurite_root_edges);
 
-            debugl(1, "processing all neurites connected to soma %d\n", s.id());
+            debugl(2, "processing all neurites connected to soma %d\n", s.id());
             debugTabInc();
             for (auto &nre : s_neurite_root_edges) {
-                debugl(2, "processing neurite root edge %d with neurite root vertex r %d. retrieving connected component..\n", nre->id(), nre->getDestinationVertex()->id());
+                debugl(3, "processing neurite root edge %d with neurite root vertex r %d. retrieving connected component..\n", nre->id(), nre->getDestinationVertex()->id());
 
-                debugl(2, "adding neurite path graph to NLM::SomaInfo for soma %d.\n", s.id());
+                debugl(3, "adding neurite path graph to NLM::SomaInfo for soma %d.\n", s.id());
                 /* add neurite path graph for neurite root segment nre into soma info and get pointer to it. */
                 s_info.neurite_path_trees.push_back(NeuritePathTree(nre->iterator()));
 
@@ -1092,7 +1081,7 @@ NLM_CellNetwork<R>::updateNLMNetworkInfo()
                 /* extract neurite root vertex r of neurite starting with edge nre */
                 neurite_iterator r      = nre->getDestinationVertex();
 
-                debugl(2, "retrieving all neurite vertices / edges reachable from neurite roor vertex %d.\n", r->id());
+                debugl(3, "retrieving all neurite vertices / edges reachable from neurite roor vertex %d.\n", r->id());
                 /* get all neurite vertices / segments reachable from r */
                 std::list<NeuriteVertex *>  r_cc_nv;
                 std::list<NeuriteSegment *> r_cc_ns;
@@ -1100,22 +1089,22 @@ NLM_CellNetwork<R>::updateNLMNetworkInfo()
                 this->getNeuriteConnectedComponent(r, r_cc_nv, r_cc_ns);
 
                 /* init NLM::NeuriteInfo inside all reachable vertices */
-                debugl(2, "assigning basic NLM::NeuriteInfo to all %d neurite vertices reachable from r(%d).\n", r_cc_nv.size(), r->id());
+                debugl(3, "assigning basic NLM::NeuriteInfo to all %d neurite vertices reachable from r(%d).\n", r_cc_nv.size(), r->id());
                 debugTabInc();
                 for (auto &nv : r_cc_nv) {
-                    debugl(3, "processing neurite vertex %d.\n", nv->id());
+                    debugl(4, "processing neurite vertex %d.\n", nv->id());
                     NLM::NeuriteInfo<R> &nv_info    = nv->neurite_data;
                     nv_info.npt                     = npt;
                     nv_info.npt_info.clear();
                 }
                 debugTabDec();
-                debugl(2, "done assigning neurite vertex info.\n");
+                debugl(3, "done assigning neurite vertex info.\n");
 
                 /* init NLM::NeuriteSegmentInfo inside all reachable neurite segments */
-                debugl(2, "assigning basic NLM::NeuriteSegmentInfo to all %d neurite segments reachable from r(%d).\n", r_cc_ns.size(), r->id());
+                debugl(3, "assigning basic NLM::NeuriteSegmentInfo to all %d neurite segments reachable from r(%d).\n", r_cc_ns.size(), r->id());
                 debugTabInc();
                 for (auto &ns : r_cc_ns) {
-                    debugl(3, "processing neurite segment %d.\n", ns->id());
+                    debugl(4, "processing neurite segment %d.\n", ns->id());
                     NLM::NeuriteSegmentInfo<R> &ns_info = ns->neurite_segment_data;
                     ns_info.npt                         = npt;
                     ns_info.npt_it.explicitlyInvalidate();
@@ -1124,15 +1113,15 @@ NLM_CellNetwork<R>::updateNLMNetworkInfo()
                 debugTabDec();
             }
             debugTabDec();
-            debugl(1, "done with soma %d.\n", s.id());
+            debugl(2, "done with soma %d.\n", s.id());
         }
         debugTabDec();
-        debugl(0, "done processing somas.\n");
+        debugl(1, "done processing somas.\n");
 
         this->nlm_network_info_updated = true;
 
         debugTabDec();
-        debugl(0, "NLM_CellNetwork::updateNLMNetworkInfo(): done.\n");
+        debugl(1, "NLM_CellNetwork::updateNLMNetworkInfo(): done.\n");
     }
 }
 
@@ -1140,7 +1129,7 @@ template <typename R>
 bool
 NLM_CellNetwork<R>::updateNsMDVInformation(neurite_segment_iterator ns_it)
 {
-    debugl(0, "NLM_CellNetwork::updateNsMDVInformation(): ns %d = (%d, %d)\n",
+    debugl(1, "NLM_CellNetwork::updateNsMDVInformation(): ns %d = (%d, %d)\n",
         ns_it->id(),
         ns_it->getSourceVertex()->id(),
         ns_it->getDestinationVertex()->id());
@@ -1158,16 +1147,16 @@ NLM_CellNetwork<R>::updateNsMDVInformation(neurite_segment_iterator ns_it)
     R                                   rmax_v_nb;
     bool                                result  = false;
 
-    debugl(0, "checking for PMDV..\n");
+    debugl(1, "checking for PMDV..\n");
     /* check for PMDV: primary minimum distance violation */
     if (ns_len <= 2.0 * ns_rmax) {
-        debugl(0, "PMDV ns: (%d, %d)\n", u->id(), v->id());
+        debugl(1, "PMDV ns: (%d, %d)\n", u->id(), v->id());
 
         ns_info.pmdv = true;
         debugTabInc();
         /* check for severe primary minimum distance violation */
         if (ns_len <= ns_rmax) {
-            debugl(0, "SPMDV ns: (%d, %d)\n", u->id(), v->id());
+            debugl(1, "SPMDV ns: (%d, %d)\n", u->id(), v->id());
             ns_info.spmdv = true;
         }
         else {
@@ -1182,7 +1171,7 @@ NLM_CellNetwork<R>::updateNsMDVInformation(neurite_segment_iterator ns_it)
         ns_info.spmdv   = false;
     }
 
-    debugl(0, "computing rmax_u_nb\n");
+    debugl(1, "computing rmax_u_nb\n");
     if (!u->isNeuriteRootVertex()) {
         neurite_const_iterator const p = u->getNeuriteParent();
         rmax_u_nb   = std::max(u->getRadius(), p->getRadius());
@@ -1198,7 +1187,7 @@ NLM_CellNetwork<R>::updateNsMDVInformation(neurite_segment_iterator ns_it)
         rmax_u_nb = 0.0;
     }
 
-    debugl(0, "computing rmax_v_nb\n");
+    debugl(1, "computing rmax_v_nb\n");
     /* get rmax_v_nb: v is the child of u, skip parent u */
     if (!v->isNeuriteTerminalVertex()) {
         rmax_v_nb = v->getRadius();
@@ -1210,9 +1199,9 @@ NLM_CellNetwork<R>::updateNsMDVInformation(neurite_segment_iterator ns_it)
         rmax_v_nb = 0.0;
     }
 
-    debugl(0, "got neighbour radii quantities. checking for SMDV..\n");
+    debugl(1, "got neighbour radii quantities. checking for SMDV..\n");
     if (ns_len <= 1.0*(rmax_u_nb + rmax_v_nb) ) {
-        debugl(0, "SMDV ns: (%d, %d)\n", u->id(), v->id());
+        debugl(1, "SMDV ns: (%d, %d)\n", u->id(), v->id());
 
         /* u corresponds to v_start, v to v_end in nsinfo */
         ns_info.smdv            = true;
@@ -1226,7 +1215,7 @@ NLM_CellNetwork<R>::updateNsMDVInformation(neurite_segment_iterator ns_it)
     }
 
     debugTabDec();
-    debugl(0, "NLM_CellNetwork::updateNsMDVInformation(). done.\n");
+    debugl(1, "NLM_CellNetwork::updateNsMDVInformation(). done.\n");
 
     return result;
 }
@@ -1235,7 +1224,7 @@ template <typename R>
 void
 NLM_CellNetwork<R>::updateAllMDVInformation()
 {
-    debugl(0, "NLM_CellNetwork::updateAllMDVInformation().\n");
+    debugl(1, "NLM_CellNetwork::updateAllMDVInformation().\n");
     debugTabInc();
 
     for (auto &ns : this->neurite_segments) {
@@ -1243,7 +1232,7 @@ NLM_CellNetwork<R>::updateAllMDVInformation()
     }
 
     debugTabDec();
-    debugl(0, "NLM_CellNetwork::updateAllMDVInformation(): done.\n");
+    debugl(1, "NLM_CellNetwork::updateAllMDVInformation(): done.\n");
 }
 
 template<typename R>
@@ -1368,7 +1357,7 @@ NLM_CellNetwork<R>::partitionCell(
             )
         >  const                       &selection_algorithm)
 {
-    debugl(0, "NLM_CellNetwork::partitionCell(): partitioning cell tree rooted in soma %d\n", s_it->id());
+    debugl(1, "NLM_CellNetwork::partitionCell(): partitioning cell tree rooted in soma %d\n", s_it->id());
     debugTabInc();
 
     /* initialize cell network information if needed (checked internally): NLM_SomaInfo, NLM::NeuriteInfo, .. annotated
@@ -1538,14 +1527,14 @@ NLM_CellNetwork<R>::partitionCell(
 
         /* debug print all neurite paths for neurite nre */
 #ifdef __DEBUG__
-        debugl(0, "finished partitioning neurite with neurite root edge %d.\n", nre->id());
-        debugl(0, "listing neurite paths:\n");
+        debugl(1, "finished partitioning neurite with neurite root edge %d.\n", nre->id());
+        debugl(1, "listing neurite paths:\n");
         debugTabInc();
         for (auto &npt_v : npt.vertices) {
-            debugl(0, "neurite path tree vertex %d: contained path:..\n", npt_v.id());
+            debugl(1, "neurite path tree vertex %d: contained path:..\n", npt_v.id());
             debugTabInc();
             for (auto &path_segment : npt_v->neurite_segments) {
-                debugl(0, "neurite segment: %d\n", path_segment->id());
+                debugl(1, "neurite segment: %d\n", path_segment->id());
             }
             debugTabDec();
         }
@@ -1553,21 +1542,21 @@ NLM_CellNetwork<R>::partitionCell(
 #endif
     }
 
-    debugl(0, "checking integrity of partitioning..\n");
+    debugl(1, "checking integrity of partitioning..\n");
     /* all neurite segments belonging to soma s must be contained in exactly one neurite path. */
     debugTabInc();
     for (auto &ns : this->neurite_segments) {
         if (ns.getSoma() == s_it) {
             NLM::NeuriteSegmentInfo<R> &ns_info = ns.neurite_segment_data;
             if (ns_info.npt_it.explicitlyInvalid()) {
-                debugl(0, "FATAL: NLM_CellNetwork::partitionCell(): neurite segment %d belonging to soma %d "\
+                debugl(1, "FATAL: NLM_CellNetwork::partitionCell(): neurite segment %d belonging to soma %d "\
                     "contains explicitly invalidated NeuritePathTree::vertex_iterator inside attached NLM_"\
                     "NeuriteInfo struct AFTER cell partitioning. internal logic error.", ns.id(), s_it->id());
 
                 throw("NLM_CellNetwork::partitionCell(): discovered neurite segment with explicitly invalidated "\
                     "neurite path tree iterator contained in attached NLM::NeuriteInfo.");
             }
-            debugl(1, "neurite segment %d: neurite: %d, path %d, segment index %d\n",
+            debugl(2, "neurite segment %d: neurite: %d, path %d, segment index %d\n",
                 ns.id(), ns.getNeurite()->id(), ns_info.npt_it->id(), ns_info.npt_ns_idx);
         }
     }
@@ -1575,7 +1564,7 @@ NLM_CellNetwork<R>::partitionCell(
     for (auto &nv : this->neurite_vertices) {
         if (nv.getSoma() == s_it) {
             NLM::NeuriteInfo<R> &nv_info = nv.neurite_data;
-            debugl(1, "neurite vertex %d (branching: %d): ..\n", nv.id(), nv.isNeuriteBranchingVertex());
+            debugl(2, "neurite vertex %d (branching: %d): ..\n", nv.id(), nv.isNeuriteBranchingVertex());
             if (!nv.isNeuriteBranchingVertex() && nv_info.npt_info.size() != 1) {
                 throw("CellNetwork::partitionCell(): found non-neurite branching vertex which is contained in more "\
                     "than one neurite path. internal logic error.");
@@ -1584,7 +1573,7 @@ NLM_CellNetwork<R>::partitionCell(
 #ifdef __DEBUG__
             debugTabInc();
             for (auto &nv_npt_info : nv_info.npt_info) {
-                debugl(1, "neurite: %d, path %d, vertex %d.\n",
+                debugl(2, "neurite: %d, path %d, vertex %d.\n",
                     nv.getNeurite()->id(), nv_npt_info.first->id(), nv_npt_info.second);
             }
             debugTabDec();
@@ -1592,10 +1581,10 @@ NLM_CellNetwork<R>::partitionCell(
         }
     }
     debugTabDec();
-    debugl(0, "partitioning seems ok.\n");
+    debugl(1, "partitioning seems ok.\n");
 
     debugTabDec();
-    debugl(0, "NLM_CellNetwork::partitionCell(): done with cell tree rooted in soma %d\n", s_it->id());
+    debugl(1, "NLM_CellNetwork::partitionCell(): done with cell tree rooted in soma %d\n", s_it->id());
 }
 
 template <typename R>
@@ -1756,7 +1745,7 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     R const                    &univar_solver_eps,
     std::vector<NLM::p2<R>>    &isec_stat_points)
 {
-    //debugl(0, "(static) NLM_CellNetwork::checkSomaNeuriteIntersection()\n");
+    //debugl(1, "(static) NLM_CellNetwork::checkSomaNeuriteIntersection()\n");
     bool                                    result;
     uint32_t                                i;
     R                                       r_S, r_Gamma_max, thres, dist, feps, t_i;
@@ -1766,13 +1755,13 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     std::vector<PolyAlg::RealInterval<R> >   roots;
     std::vector<PolyAlg::RealInterval<R> >   candidate_points;
 
-    debugl(0, "getting data from soma sphere..\n");
+    debugl(1, "getting data from soma sphere..\n");
     /* get soma centre, radius and max radius of pipe surface. compute threshold, which is (rmax + S_r)^2 */
     S_c         = S.centre();
     r_Gamma_max = Gamma.getMaxRadius();
     r_S         = S.radius();
     
-    debugl(0, "computing threshold..\n");
+    debugl(1, "computing threshold..\n");
     thres       = (r_Gamma_max + r_S);
     thres      *= thres;
 
@@ -1780,7 +1769,7 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
     candidate_points.push_back( PolyAlg::RealInterval<R>(0.0, 0.0));
     candidate_points.push_back( PolyAlg::RealInterval<R>(1.0, 1.0));
 
-    debugl(0, "SONS: computing check polynomial..\n");
+    debugl(1, "SONS: computing check polynomial..\n");
 
     /* get the check polynomial */
     Gamma.spineCurveComputeStationaryPointDistPoly(S_c, p);
@@ -1805,7 +1794,7 @@ NLM_CellNetwork<R>::checkSomaNeuriteIntersection(
         dist    = (S_c - Gamma.spineCurveEval(t_i)).len2squared();
 
         if (neurite_root_segment && t_i <= offset) {
-            debugl(0, "skipping candidate point %5.4f for neurite root canal segment.\n", t_i); 
+            debugl(1, "skipping candidate point %5.4f for neurite root canal segment.\n", t_i); 
         } 
         else if (dist <= thres + feps) {
             result = true;
@@ -1872,7 +1861,7 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
     R const                    &bivar_solver_eps,
     std::vector<NLM::p3<R>>    &gsi_stat_points)
 {
-    debugl(1, "NLM_CellNetwork::checkNeuriteGlobalSelfIntersection():\n");
+    debugl(2, "NLM_CellNetwork::checkNeuriteGlobalSelfIntersection():\n");
 
     bool                                    result;
     uint32_t                                i;
@@ -1905,7 +1894,7 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
     /* scale down to generous absolute error bound */
     //feps *= 1E-10;
 
-    debugl(1, "solving bivariate system with bivariate linear clipping..\n");
+    debugl(2, "solving bivariate system with bivariate linear clipping..\n");
     /* solve the system of bivariate polynomials with bivariate linear clipping. */
 
     /* unnecessarily, the bivariate linaer clipping implementation requires both polynomials to be in the same
@@ -1919,7 +1908,7 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
         PolyAlg::BiLinClip_roots<7u, 7u, R>(p_elev, q_elev, 0.0, 1.0, 0.0, 1.0, bivar_solver_eps, pq_roots);
     }
     catch (const char *err) {
-        debugl(0, "checkNeuriteGlobalSelfIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system and rethrowing.\n", err);
+        debugl(1, "checkNeuriteGlobalSelfIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system and rethrowing.\n", err);
         p_elev.writePlotFile(200, "gsi_exception_p.plot");
         q_elev.writePlotFile(200, "gsi_exception_q.plot");
 
@@ -1930,13 +1919,13 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
     /* append root rectangles returned by bivariate linear clipping to candidate points */
     candidate_points.insert(candidate_points.end(), pq_roots.begin(), pq_roots.end());
 
-    debugl(1, "BilClip returned %ld roots.\n", pq_roots.size());
+    debugl(2, "BilClip returned %ld roots.\n", pq_roots.size());
 
     /* solve _two_ edge polynomial systems and append respective roots, converted to rectangles, to candidate_points. */
     edge_roots.clear();
     PolyAlg::BezClip_roots<5u, R>(pe_t0, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
-        //debugl(0, "t0 edge poly root interval (%20.13E, %20.13E)\n", edge_roots[i].x0, edge_roots[i].x1);
+        //debugl(1, "t0 edge poly root interval (%20.13E, %20.13E)\n", edge_roots[i].x0, edge_roots[i].x1);
         candidate_points.push_back( { 0.0, 0.0, edge_roots[i].t0, edge_roots[i].t1 } );
                 /*
                 Vec2(
@@ -1949,7 +1938,7 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
     edge_roots.clear();
     PolyAlg::BezClip_roots<5u, R>(pe_t1, 0.0, 1.0, univar_solver_eps, edge_roots);
     for (i = 0; i < edge_roots.size(); i++) {
-        //debugl(0, "t1 edge poly root interval (%20.13E, %20.13E)\n", edge_roots[i].x0, edge_roots[i].x1);
+        //debugl(1, "t1 edge poly root interval (%20.13E, %20.13E)\n", edge_roots[i].x0, edge_roots[i].x1);
         candidate_points.push_back( { 1.0, 1.0, edge_roots[i].t0, edge_roots[i].t1 } );
                 /*
                 Vec2(
@@ -1967,13 +1956,13 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
     for (i = 0; i < candidate_points.size(); i++) {
         auto z_i = candidate_points[i].midpoint();
         if ( (z_i[0] <= offset && z_i[1] <= offset) || (z_i[0] >= (1.0 - offset) && z_i[1] >= (1.0 - offset) ) ) {
-            debugl(1, "\tgsi candidate point i = %d: (%20.13e, %20.13e) is being ignored..\n", i, z_i[0], z_i[1]);
+            debugl(2, "\tgsi candidate point i = %d: (%20.13e, %20.13e) is being ignored..\n", i, z_i[0], z_i[1]);
         }
         else {
             //dist    = canalSurfacesSqDist(Gamma, Gamma, z_i[0], z_i[1]);
             dist    = (Gamma.spineCurveEval(z_i[0]) - Gamma.spineCurveEval(z_i[1])).len2squared();
             if (dist < thres) {
-                debugl(0, "\tgsi candidate point i = %d: (%5.4e, %5.4e) has distance dist = %5.4f < thres = %f => gsi\n",
+                debugl(1, "\tgsi candidate point i = %d: (%5.4e, %5.4e) has distance dist = %5.4f < thres = %f => gsi\n",
                         i, z_i[0], z_i[1], dist, thres);
 
                 /* got a true candidate point. set result = true and append candidate points to gsi_stat_points. */
@@ -1981,7 +1970,7 @@ NLM_CellNetwork<R>::checkNeuriteGlobalSelfIntersection(
                 gsi_stat_points.push_back( NLM::p3<R>(candidate_points[i], dist) );
             }
             else {
-                debugl(1, "\tgsi candidate point i = %d: (%5.4e, %5.4e) has distance dist = %5.4f > thres = %f => no gsi\n",
+                debugl(2, "\tgsi candidate point i = %d: (%5.4e, %5.4e) has distance dist = %5.4f > thres = %f => no gsi\n",
                         i, z_i[0], z_i[1], dist, thres);
             }
         }
@@ -1999,7 +1988,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     R const                    &bivar_solver_eps,
     std::vector<NLM::p3<R>>    &isec_stat_points)
 {
-    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection():\n");
+    debugl(2, "NLM_CellNetwork::checkNeuriteNeuriteIntersection():\n");
 
     bool                                    result;
     uint32_t                                i;
@@ -2034,8 +2023,8 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     /* scale down to generous absolute error bound */
     feps *= 1E-10;
 
-    debugl(1, "solving bivariate system with bivariate linear clipping..\n");
-    debugl(0, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving bivariate system with bivariate linear clipping..\n");
+    debugl(2, "solving bivariate system with bivariate linear clipping..\n");
+    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving bivariate system with bivariate linear clipping..\n");
     /* solve the system of bivariate polynomials with bivariate linear clipping.
      * NOTE: unnecessarily, the bivariate linaer clipping implementation requires both polynomials
      * to be in the same basis, because the same legendre approximation matrices are used. this is
@@ -2049,7 +2038,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
         PolyAlg::BiLinClip_roots<5u, 5u, R>(p_elev, q_elev, 0.0, 1.0, 0.0, 1.0, bivar_solver_eps, pq_roots);
     }
     catch (const char *err) {
-        debugl(0, "checkNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system and defaulting to intersection.\n", err);
+        debugl(1, "checkNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system and defaulting to intersection.\n", err);
         //p.writePlotFile(200, "gsi_exception_p.plot");
         //q.writePlotFile(200, "gsi_exception_q.plot");
 
@@ -2060,10 +2049,10 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
     /* append root rectangles returned by bivariate linear clipping to candidate points */
     candidate_points.insert(candidate_points.end(), pq_roots.begin(), pq_roots.end());
 
-    debugl(1, "BilClip returned %ld roots.\n", roots.size());
-    debugl(0, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): bivariate linear clipping returned %ld roots.\n", roots.size());
+    debugl(2, "BilClip returned %ld roots.\n", roots.size());
+    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): bivariate linear clipping returned %ld roots.\n", roots.size());
 
-    debugl(0, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving four univariate edge polynomial systems.\n");
+    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): solving four univariate edge polynomial systems.\n");
     /* solve four edge polynomial systems and append respective roots, converted to rectangles, to candidate_points. */
     edge_roots.clear();
     PolyAlg::BezClip_roots<5u, R>(pe_x0, 0.0, 1.0, univar_solver_eps, edge_roots);
@@ -2075,7 +2064,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
                     (edge_roots[i].x0 + edge_roots[i].x1) / 2.0 
                 ) 
             */
-        //debugl(0, "%20.15e %20.15e\n", candidate_points.back()[0], candidate_points.back()[1]);
+        //debugl(1, "%20.15e %20.15e\n", candidate_points.back()[0], candidate_points.back()[1]);
     }
 
     edge_roots.clear();
@@ -2114,7 +2103,7 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
             */
     }
 
-    debugl(0, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done. evaluating results..\n");
+    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done. evaluating results..\n");
 
     /* evaluate all candiate points */
     isec_stat_points.clear();
@@ -2125,10 +2114,10 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
         //dist        = canalSurfacesSqDist(Gamma, Delta, z_i[0], z_i[1]);
         dist        = (Gamma.spineCurveEval(z_i[0]) - Delta.spineCurveEval(z_i[1])).len2squared();
         if (dist <= thres) {
-            debugl(1, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
+            debugl(2, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
                     i, z_i[0], z_i[1], dist, thres);
 
-            debugl(0, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
+            debugl(1, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
                     i, z_i[0], z_i[1], dist, thres);
 
             /* got a true candidate point. set result = true and append candidate points to isec_stat_points. */
@@ -2136,12 +2125,12 @@ NLM_CellNetwork<R>::checkNeuriteNeuriteIntersection(
             isec_stat_points.push_back( NLM::p3<R>(candidate_points[i], dist) );
         }
         else {
-            debugl(1, "candidate point i = %d: (%f, %f) has distance dist = %f > thres = %f => no intersection\n",
+            debugl(2, "candidate point i = %d: (%f, %f) has distance dist = %f > thres = %f => no intersection\n",
                     i, z_i[0], z_i[1], dist, thres);
         }
     }
     debugTabDec();
-    debugl(0, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done...\n");
+    debugl(1, "NLM_CellNetwork::checkNeuriteNeuriteIntersection(): done...\n");
     return result;
 }
 
@@ -2158,7 +2147,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
     bool                        fst_end_snd_start,
     std::vector<NLM::p3<R>>    &isec_stat_points)
 {
-    debugl(1, "NLM_CellNetwork::checkAdjacentNeuriteNeuriteIntersection():\n");
+    debugl(2, "NLM_CellNetwork::checkAdjacentNeuriteNeuriteIntersection():\n");
 
     bool                                    result;
     uint32_t                                i;
@@ -2200,7 +2189,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
     /* scale down to generous absolute error bound */
     feps *= 1E-10;
 
-    debugl(1, "solving bivariate system with bivariate linear clipping..\n");
+    debugl(2, "solving bivariate system with bivariate linear clipping..\n");
     /* solve the system of bivariate polynomials with bivariate linear clipping.  NOTE: unnecessarily, the bivariate
      * linaer clipping implementation requires both polynomials to be in the same basis, because the same legendre
      * approximation matrices are used. this is not necessary, but inconvenient to change right now, so: p is in
@@ -2250,8 +2239,8 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
                 true, &pq_blacklist);
     }
     catch (const char *err) {
-        debugl(0, "checkAdjacentNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system..\n", err);
-        debugl(0, "checkAdjacentNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system..\n", err);
+        debugl(1, "checkAdjacentNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system..\n", err);
+        debugl(1, "checkAdjacentNeuriteNeuriteIntersection(): caught exception from BiLinClip_roots: \'%s\'. outputting plot files of polynomial system..\n", err);
 
         //p_elev.writePlotFile(200, "consecutive_exception_p.plot");
         //q.writePlotFile(200, "consecutive_exception_q.plot");
@@ -2263,7 +2252,7 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
     /* append root rectangles returned by bivariate linear clipping to candidate points */
     candidate_points.insert(candidate_points.end(), pq_roots.begin(), pq_roots.end());
 
-    debugl(1, "BilClip returned %ld roots.\n", pq_roots.size());
+    debugl(2, "BilClip returned %ld roots.\n", pq_roots.size());
 
     /* solve four edge polynomial systems and append respective roots, converted to rectangles, to candidate_points. */
     edge_roots.clear();
@@ -2325,14 +2314,14 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
         if (( fst_end_snd_start && (z_i[0] >= 1.0 - offset   && z_i[1] <= offset) ) ||
             (!fst_end_snd_start && (z_i[0] <= offset         && z_i[1] <= offset) ) )
         {
-            debugl(1, "candidate point i = %d: (%20.13e, %20.13e) is being ignored (fst_end_snd_start = %d)...\n", i, z_i[0], z_i[1], fst_end_snd_start);
+            debugl(2, "candidate point i = %d: (%20.13e, %20.13e) is being ignored (fst_end_snd_start = %d)...\n", i, z_i[0], z_i[1], fst_end_snd_start);
         }
         else {
-            debugl(1, "candidate point i = %d: (%20.13e, %20.13e) is considered (fst_end_snd_start = %d)...\n", i, z_i[0], z_i[1], fst_end_snd_start);
+            debugl(2, "candidate point i = %d: (%20.13e, %20.13e) is considered (fst_end_snd_start = %d)...\n", i, z_i[0], z_i[1], fst_end_snd_start);
             //dist    = canalSurfacesSqDist(Gamma, Delta, z_i[0], z_i[1]);
             dist    = (Gamma.spineCurveEval(z_i[0]) - Delta.spineCurveEval(z_i[1])).len2squared();
             if (dist <= thres) {
-                debugl(1, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
+                debugl(2, "candidate point i = %d: (%f, %f) has distance dist = %f < thres = %f => intersection\n",
                         i, z_i[0], z_i[1], dist, thres);
 
                 /* got a true candidate point. set result = true and append candidate points to isec_stat_points. */
@@ -2340,13 +2329,13 @@ NLM_CellNetwork<R>::checkAdjacentNeuriteNeuriteIntersection(
                 isec_stat_points.push_back( NLM::p3<R>(candidate_points[i], dist) );
             }
             else {
-                debugl(1, "candidate point i = %d: (%f, %f) has distance dist = %f > thres = %f => no intersection\n",
+                debugl(2, "candidate point i = %d: (%f, %f) has distance dist = %f > thres = %f => no intersection\n",
                         i, z_i[0], z_i[1], dist, thres);
             }
         }
     }
     debugTabDec();
-    debugl(0, "NLM_CellNetwork::checkAdjacentNeuriteNeuriteIntersection(): done.\n");
+    debugl(1, "NLM_CellNetwork::checkAdjacentNeuriteNeuriteIntersection(): done.\n");
 
     return result;
 }
@@ -2386,7 +2375,7 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
         for (auto generic_job_shared_ptr : tinfo->job_list) {
             generic_job         = generic_job_shared_ptr.get();
 
-            debugl(0, "Thread %2d: processing job %5d: type: %2d\n", tinfo->thread_id, job_index, generic_job->type());
+            debugl(1, "Thread %2d: processing job %5d: type: %2d\n", tinfo->thread_id, job_index, generic_job->type());
 
             /* reset all specialized pointers to NULL */
             reg_job             = NULL;
@@ -2510,7 +2499,7 @@ NLM_CellNetwork<R>::startWorkerThread(ThreadInfo *tinfo)
             generic_job->job_state = JOB_DONE;
         }
 
-        debugl(0, "Thread slot %02d: thread finished after %5.4f seconds.\n", tinfo->thread_id, tack(tinfo->thread_id + 1));
+        debugl(1, "Thread slot %02d: thread finished after %5.4f seconds.\n", tinfo->thread_id, tack(tinfo->thread_id + 1));
 
         /* set thread state to DONE */
         tinfo->thread_state = THREAD_DONE;
@@ -2651,7 +2640,7 @@ NLM_CellNetwork<R>::computeFullAnalysisIntersectionJobs(
 
                 /* check for bounding box intersection */
                 if (P_Gamma_i_bb && P_Gamma_j_bb) {
-                    debugl(0, "creating non-adj nsns job (from within one path P): (%d, %d) - (%d, %d)\n",
+                    debugl(1, "creating non-adj nsns job (from within one path P): (%d, %d) - (%d, %d)\n",
                             P.neurite_segments[i]->getSourceVertex()->id(),
                             P.neurite_segments[i]->getDestinationVertex()->id(),
                             P.neurite_segments[j]->getSourceVertex()->id(),
@@ -2744,7 +2733,7 @@ NLM_CellNetwork<R>::computeFullAnalysisIntersectionJobs(
                             auto Q_Delta_bb                     = Q_Delta.getBoundingBox();
 
                             if (P_Gamma_bb && Q_Delta_bb) {
-                                debugl(0, "creating non-adj nsns job (from two paths P !- Q): (%d, %d) - (%d, %d)\n",
+                                debugl(1, "creating non-adj nsns job (from two paths P !- Q): (%d, %d) - (%d, %d)\n",
                                         P_c->getSourceVertex()->id(),
                                         P_c->getDestinationVertex()->id(),
                                         Q_d->getSourceVertex()->id(),
@@ -2782,8 +2771,8 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
         this->thread_slots.push_back(ThreadInfo(i));
     }
 
-    debugl(0, "NLM_CellNetwork::processIntersectionJobs(). number of jobs: %ld\n", job_queue.size());
-    //debugl(0, "NLM_CellNetwork::processIntersectionJobs(). number of jobs: %ld\n", job_queue.size());
+    debugl(1, "NLM_CellNetwork::processIntersectionJobs(). number of jobs: %ld\n", job_queue.size());
+    //debugl(1, "NLM_CellNetwork::processIntersectionJobs(). number of jobs: %ld\n", job_queue.size());
 
     /* if not single-threaded, set njobs_per_thread to 1/(5*nthreads) of the number of total jobs, but not less than 500. just a
      * heuristic setting to avoid too low or too high work load */
@@ -2816,7 +2805,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                             thread_slots[i].thread.join();
                         }
 
-                        debugl(0, "Thread slot %2d: free. fetching results and preparing another thread..\n", i);
+                        debugl(1, "Thread slot %2d: free. fetching results and preparing another thread..\n", i);
 
                         /* push results */
                         for (auto job : thread_slots[i].job_list) {
@@ -2842,7 +2831,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                         njobs_remaining -= thread_slots[i].job_list.size();
 
                         /* create new thread */
-                        debugl(0, "Thread slot %2d: launching new thread for %5zu jobs. job queue contains another %u waiting jobs.\n",
+                        debugl(1, "Thread slot %2d: launching new thread for %5zu jobs. job queue contains another %u waiting jobs.\n",
                                 i, thread_slots[i].job_list.size(), njobs_remaining );
 
                         try {
@@ -2856,7 +2845,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
                         }
                     }
                     else if (thread_slots[i].thread_state == THREAD_PROCESSING) {
-                        debugl(0, "main loop too quick to relock thread mutex %d. unlocking..\n", i);
+                        debugl(1, "main loop too quick to relock thread mutex %d. unlocking..\n", i);
                     }
                     else {
                         throw("NLM_CellNetwork::processIntersectionJobsMultiThreaded(): discovered thread with unknown value for ThreadInfo::thread_state. internal logic error.");
@@ -2884,7 +2873,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
     }
     debugTabDec();
 
-    debugl(0, "NLM_CellNetwork::processIntersectionJobs(): job queue empty. joining..\n");
+    debugl(1, "NLM_CellNetwork::processIntersectionJobs(): job queue empty. joining..\n");
 
     /* lock all slot mutices. if slot i has ever been in use, join with it and retrieve results.
      * */
@@ -2912,7 +2901,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
             thread_slots[i].reset();
         }
         else if (thread_slots[i].thread_state == THREAD_IDLE) {
-            debugl(0, "Thread slot %2d: never been used..\n", i);
+            debugl(1, "Thread slot %2d: never been used..\n", i);
         }
         else if (thread_slots[i].thread_state == THREAD_PROCESSING) {
             throw("NLM_CellNetwork::processIntersectionJobs(): discovered thread with state PROCESSING after locking mutex. internal logic error.");
@@ -2922,7 +2911,7 @@ NLM_CellNetwork<R>::processIntersectionJobsMultiThreaded(
         }
     }
     fflush(stdout);
-    debugl(0, "NLM_CellNetwork::processIntersectionJobs(): joined. done.\n");
+    debugl(1, "NLM_CellNetwork::processIntersectionJobs(): joined. done.\n");
 }
 
 template <typename R>
@@ -2963,7 +2952,7 @@ template <typename R>
 bool
 NLM_CellNetwork<R>::performFullAnalysis()
 {
-    debugl(0, "NLM_CellNetwork::performFullAnalysis().\n");
+    debugl(1, "NLM_CellNetwork::performFullAnalysis().\n");
     debugTabInc();
 
     /* precompute data for polynomials / numerical solvers.  disable dynamic recomputation of inner products,
@@ -2980,24 +2969,24 @@ NLM_CellNetwork<R>::performFullAnalysis()
     BernsteinPolynomial<3u, R, R>::initBernsteinBasisInnerProducts(24);
     BernsteinPolynomial<3u, R, R>::setInnerProductDataImmutable();
 
-    debugl(0, "various approximation data for univariate and bivariate numerical solvers..\n");
+    debugl(1, "various approximation data for univariate and bivariate numerical solvers..\n");
     PolyAlg::BiLinClip_getApproximationData<8u, 8u, R>(
             // disable dynamic recomputation after computation to be thread-safe.
             false);
 
-    debugl(0, "global self-intersection data for maximum radius pipe surface approximation..\n");
+    debugl(1, "global self-intersection data for maximum radius pipe surface approximation..\n");
     BLRCanalSurface<3u, R>::initGlobalSelfIntersectionData();
     */
 
     /* update mdv information */
     this->updateAllMDVInformation();
 
-    debugl(0, "computing all intersection jobs for one full analysis interation..\n");
+    debugl(1, "computing all intersection jobs for one full analysis interation..\n");
     /* compute all intersection jobs */
     std::list<std::shared_ptr<IsecJob>> job_list, intersection_list;
     this->computeFullAnalysisIntersectionJobs(job_list);
 
-    debugl(0, "got %zu jobs => shuffling..\n", job_list.size());
+    debugl(1, "got %zu jobs => shuffling..\n", job_list.size());
 
     /* move job list into vector, shuffle, move back to job list */
     std::vector<std::shared_ptr<IsecJob>> job_vec(job_list.size());
@@ -3117,7 +3106,7 @@ NLM_CellNetwork<R>::performFullAnalysis()
     }
 
     debugTabDec();
-    debugl(0, "NLM_CellNetwork::performFullAnalysis(): done.\n");
+    debugl(1, "NLM_CellNetwork::performFullAnalysis(): done.\n");
 
     return clean;
 }
@@ -3135,7 +3124,7 @@ template <typename Tm, typename Tv, typename Tf>
 void
 NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
 {
-    debugl(0, "NLM_CellNetwork<R>::renderCellNetwork(): \"%s\".\n", filename.c_str());
+    debugl(1, "NLM_CellNetwork<R>::renderCellNetwork(): \"%s\".\n", filename.c_str());
     debugTabInc();
 
     using namespace RedBlue_ExCodes;
@@ -3153,7 +3142,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
 
     /* initialize the cell mesh to consist of all soma spheres. while iterating over all somas, get breadth-first
      * ordering of neurite paths for all neurites and append to global list */
-    debugl(0, "initializing soma sphere meshes and computing BFS ordering among neurite paths.\n");
+    debugl(1, "initializing soma sphere meshes and computing BFS ordering among neurite paths.\n");
     for (auto &s : this->soma_vertices) {
         NLM::SomaInfo<R> &s_info  = s.soma_data;
 
@@ -3195,11 +3184,11 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
     std::list<uint32_t>                         M_cell_flush_last_boundary_vertices_ids_backup;                          
 
     /* in the computed bread-first ordering, inductively append neurite path meshes */
-    debugl(0, "processing neurite paths in BFS order.\n");
+    debugl(1, "processing neurite paths in BFS order.\n");
     debugTabInc();
     uint32_t np_idx = 1;
     for (auto npt_vit = npt_vertices_bfs_ordered.begin(); npt_vit != npt_vertices_bfs_ordered.end(); ++npt_vit) {
-        debugl(1, "processing neurite path %d\n", (*npt_vit)->id());
+        debugl(2, "processing neurite path %d\n", (*npt_vit)->id());
         printf("\t meshing neurite path %5u of %5zu.\n", np_idx, npt_vertices_bfs_ordered.size() );
 
         /* get reference to neurite path */
@@ -3236,7 +3225,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
         for (auto &x : P_vstart_vertex_nbs) {
             radius_factor_safe_lb = std::min(radius_factor_safe_lb, x->getRadius() / (2.0 * P_vstart_radius));
         }
-        debugl(0, "radius_factor_safe_lb = %5.4f\n", radius_factor_safe_lb);
+        debugl(1, "radius_factor_safe_lb = %5.4f\n", radius_factor_safe_lb);
 
         /* if mesh has more than meshing_flush_face_limit faces, flush all vertices and faces to disk which
          * definitely don't participate in any merging operation that remains to be done. the set of respective
@@ -3292,7 +3281,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
         tmp.writeObjFile("M_cell_before_merge");
         */
 
-        debugl(0, "entering outer meshing loop for path %d.\n", (*npt_vit)->id());
+        debugl(1, "entering outer meshing loop for path %d.\n", (*npt_vit)->id());
         debugTabInc();
         while (!done) {
             /* if necessary, use back M_cell_backup to restore original M_cell before the RedBlueUnion call if
@@ -3315,10 +3304,10 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                  * M_cell_boundary_vertex_ids_backup.
                  *
                  * */
-                debugl(0, "restoring M_cell from backup via assignment.\n");
+                debugl(1, "restoring M_cell from backup via assignment.\n");
                 M_cell = M_cell_backup;
 
-                debugl(0, "updating pointers in M_flush_info.last_boundary_vertices via id lookup..\n");
+                debugl(1, "updating pointers in M_flush_info.last_boundary_vertices via id lookup..\n");
                 auto fp_it = M_cell_flushinfo.last_boundary_vertices.begin();
                 for (auto &v_id : M_cell_flush_last_boundary_vertices_ids_backup) {
                     auto v_it = M_cell.vertices.find(v_id);
@@ -3337,7 +3326,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     throw("NLM_CellNetwork::renderCellNetwork(): iterator to MeshObjFlushInfo::last_boundary_vertices has not reached end() after cell mesh backup. internal logic error.");
                 }
 
-                debugl(0, "M_cell and flush info fully restored.\n");
+                debugl(1, "M_cell and flush info fully restored.\n");
             }
 
             new_outer_iteration         = false;
@@ -3348,12 +3337,11 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 radius_factor   = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
             }
 
-            debugl(0, "outer meshing loop: iteration %d. radius factor: %5.4f\n", outer_loop_iter, radius_factor);
-            debugl(0, "choosing random phi_0 and generating initial mesh segment..\n");
+            debugl(1, "outer meshing loop: iteration %d. radius factor: %5.4f\n", outer_loop_iter, radius_factor);
+            debugl(1, "choosing random phi_0 and generating initial mesh segment..\n");
 
             /* compute random angular offset phi_0 */
             phi_0 = Aux::Numbers::frand(0.0, (2*(R)M_PI) / (R)this->meshing_canal_segment_n_phi_segments);
-std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
 
             /* clear path mesh */
             M_P.clear();
@@ -3404,14 +3392,14 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
             complex_edge_growth_factor  = 0.0;
             complex_edge_initial_count  = 0;
 
-            debugl(0, "entering inner meshing loop..\n");
+            debugl(1, "entering inner meshing loop..\n");
             debugTabInc();
             while (!new_outer_iteration && !break_inner_meshing_loop && inner_loop_iter < this->meshing_inner_loop_maxiter) {
                 /* copy circle_its_update_original into circle_its_update for current meshing run */
                 circle_its_update = circle_its_update_original;
                 inner_loop_iter++;
 
-                debugl(1, "calling RedBlueUnion algorithm to merge initial mesh segment into partially completed cell mesh.\n");
+                debugl(2, "calling RedBlueUnion algorithm to merge initial mesh segment into partially completed cell mesh.\n");
 
                 Aux::Timing::tick(14);
 
@@ -3437,7 +3425,7 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                     throw;
                 }
                 catch (RedBlue_Ex_ComplexEdges<R>& complex_ex) {
-                    debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: %d complexly intersecting edges.. splitting.\n", complex_ex.edge_isec_info.size()); 
+                    debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: %d complexly intersecting edges.. splitting.\n", complex_ex.edge_isec_info.size());
                     debugTabInc();
 
                     uint32_t const nce = complex_ex.edge_isec_info.size();
@@ -3446,32 +3434,32 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                     if (complex_edge_growth_factor == 0.0) {
                         complex_edge_initial_count  = nce;
                         complex_edge_growth_factor  = 1.0;
-                        debugl(0, "setting complex edge initial count to %d, factor to %5.4f\n", nce, complex_edge_growth_factor);
+                        debugl(1, "setting complex edge initial count to %d, factor to %5.4f\n", nce, complex_edge_growth_factor);
                     }
                     /* otherwise calculate "growth factor". in certain situations, splitting all complex edges creates
                      * even more complex edges. this process can amplify itself exponentially. to prevent this, check
                      * if the growth factor exceeds a certain limit */
                     else {
                         complex_edge_growth_factor  = (R)nce / (R)complex_edge_initial_count;
-                        debugl(0, "setting complex edge growth factor to %5.4f\n", complex_edge_growth_factor);
+                        debugl(1, "setting complex edge growth factor to %5.4f\n", complex_edge_growth_factor);
                     }
 
                     /* if complex edge growth factor is too large, start new outer meshing iteration */
                     if (complex_edge_growth_factor > this->meshing_complex_edge_max_growth_factor) {
-                        std::cout << "Complex edge growth factor too large.\n";
+                        debugl(0, "Complex edge growth factor too large.\n");
                         radius_factor   = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
                         new_outer_iteration = true;
                         restore_M_cell      = true;
                     }
                     else for (auto e_info : complex_ex.edge_isec_info) {
-                        debugl(1, "complex edge: e = (%d, %d)\n", e_info.u_id, e_info.v_id);
+                        debugl(2, "complex edge: e = (%d, %d)\n", e_info.u_id, e_info.v_id);
 
                         /* sort and check lambdas */
-                        debugl(1, "sorting complex exception edge lambdas. size(): %zu..\n", e_info.edge_lambdas.size() );
+                        debugl(2, "sorting complex exception edge lambdas. size(): %zu..\n", e_info.edge_lambdas.size() );
                         std::sort(e_info.edge_lambdas.begin(), e_info.edge_lambdas.end(), std::less<R>() );
                         debugTabInc();
                         for (auto &lambda : e_info.edge_lambdas) {
-                            debugl(2, "lambda: %5.4f\n", lambda);
+                            debugl(3, "lambda: %5.4f\n", lambda);
                             if (lambda <= 0 || lambda >= 1) {
                                 debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                                 throw("NLM_CellNetwork::renderCellNetwork(): got exceptino about complex edge indicating fractional edge intersection value lambda outside ]0, 1[."\
@@ -3485,13 +3473,13 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                         std::vector<R> e_split_points(n + 1);
 
                         e_split_points[0] = e_info.edge_lambdas[0] / 2.0;
-                        debugl(2, "split_points[0] = %5.4f\n", e_split_points[0]);
+                        debugl(3, "split_points[0] = %5.4f\n", e_split_points[0]);
                         for (uint32_t i = 1; i < n; i++) {
                             e_split_points[i] = (e_info.edge_lambdas[i] + e_info.edge_lambdas[i - 1]) / 2.0;
-                            debugl(2, "split_points[%d] = %5.4f\n", i, e_split_points[i]);
+                            debugl(3, "split_points[%d] = %5.4f\n", i, e_split_points[i]);
                         }
                         e_split_points[n] = (1.0 + e_info.edge_lambdas[n-1]) / 2.0;
-                        debugl(2, "split_points[%d] = %5.4f\n", n, e_split_points[n]);
+                        debugl(3, "split_points[%d] = %5.4f\n", n, e_split_points[n]);
 
                         /* split in red mesh, i.e. M_cell */
                         if (e_info.red) {
@@ -3538,13 +3526,11 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                     */
                 }
                 catch (RedBlue_Ex_NumericalEdgeCase& numerical_ex) {
-                    std::cout << "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: numerical edge case => retry..\n";
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: numerical edge case => retry..\n");
                     new_outer_iteration = true;
                     restore_M_cell      = !numerical_ex.R_intact;
                 }
                 catch (RedBlue_Ex_Triangulation<R>& tri_ex) {
-                    std::cout << "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: error during triangulation of outside / inside polygons. => retry..\n";
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: error during triangulation of outside / inside polygons. => retry..\n");
 
                     /* decrease radius factor, but lower bound by radius_factor_safe_lb. */
@@ -3553,7 +3539,6 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                     restore_M_cell      = !tri_ex.R_intact;
                 }
                 catch (RedBlue_Ex_NumIsecPoly& isecpoly_ex) {
-                    std::cout << "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: number of intersection polygons != 1.\n";
                     debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: number of intersection polygons != 1.\n");
                     radius_factor       = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
                     new_outer_iteration = true;
@@ -3563,14 +3548,13 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                     debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
                     throw;
                 }
-                debugl(0, "inner meshing loop time: %5.4f\n\n", Aux::Timing::tack(14));
+                debugl(1, "inner meshing loop time: %5.4f\n\n", Aux::Timing::tack(14));
             }
             debugTabDec();
-            debugl(0, "inner meshing loop left..\n");
+            debugl(1, "inner meshing loop left..\n");
 
             /* if maximum number of inner meshing loop iterations has been reached, restart outer meshing loop. */
             if (inner_loop_iter == this->meshing_inner_loop_maxiter) {
-                std::cout << "inner meshing loop broken because maximum number of iterations has been reached => restart outer meshing loop.\n";
                 debugl(0, "inner meshing loop broken because maximum number of iterations has been reached => restart outer meshing loop.\n");
                 radius_factor   = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
                 new_outer_iteration = true;
@@ -3579,7 +3563,7 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
 
             /* start fresh iteration of outer meshing loop if required */
             if (new_outer_iteration) {
-                debugl(0, "re-iteration of outer meshing loop necessary..\n");
+                debugl(1, "re-iteration of outer meshing loop necessary..\n");
                 /* if radius_factor has reached radius_factor_safe_lb, throw exception, since a definitely safe radius
                  * should already have been reached. */
                 if (radius_factor == radius_factor_safe_lb) {
@@ -3608,7 +3592,7 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
 
                 }
                 else if (!it.checkContainer(M_cell)) {
-                    debugl(0, "it.container: %p, M_cell (ptr): %p, M_P (ptr): %p.\n", it.getContainer(), &M_cell, &M_P);
+                    debugl(1, "it.container: %p, M_cell (ptr): %p, M_P (ptr): %p.\n", it.getContainer(), &M_cell, &M_P);
                     debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): RedBlueUnion algorithm has returned an "\
                         "updated end circle iterator that does not refer to the partially completed cell mesh. "\
@@ -3616,7 +3600,7 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                 }
             }
 
-            debugl(1, "initial mesh segment successfully merged. appending path tail mesh..\n");
+            debugl(2, "initial mesh segment successfully merged. appending path tail mesh..\n");
 
             /* unpack updated iterators referring to M_cell. */
             closing_vertex_it   = circle_its_update.back();
@@ -3648,7 +3632,7 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
             }
             catch (...) {debugTabDec(); debugTabDec(); debugTabDec(); throw;}
 
-            debugl(1, "tail path mesh appended. appending terminal half-sphere.\n");
+            debugl(2, "tail path mesh appended. appending terminal half-sphere.\n");
 
             /* append a terminal "half-sphere" at the end neurite point of P */
             BLRCanalSurface<3u, R> &C_end   = *(P.canal_segments_magnified.back());
@@ -3667,12 +3651,12 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
                     end_circle_its,
                     closing_vertex_it);
 
-            debugl(1, "half-sphere appended. triangulating quads..\n");
+            debugl(2, "half-sphere appended. triangulating quads..\n");
 
             /* triangulate quads in M_cell */
             M_cell.triangulateQuads();
 
-            debugl(0, "path %d completely processed. M_cell.numVertices(): %d\n", (*npt_vit)->id(), M_cell.numVertices());
+            debugl(1, "path %d completely processed. M_cell.numVertices(): %d\n", (*npt_vit)->id(), M_cell.numVertices());
 
             /* done for path P */
             done = true;
@@ -3681,7 +3665,7 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
         np_idx++;
     }
     debugTabDec();
-    debugl(0, "all neurite paths processed. finalizing obj file..\n");
+    debugl(1, "all neurite paths processed. finalizing obj file..\n");
 
     /* select all faces from cell mesh and flush them .. if no flush has been performed before, this is semantically
      * equivalent to writeObjFile(), otherwise it completes partially flushed cell meshes that are yet incomplete in the
@@ -3692,7 +3676,7 @@ std::cout << "Called rand for phi0, std::rand() = " << std::rand() << std::endl;
     catch (...) {debugTabDec(); debugTabDec(); throw;}
 
     debugTabDec();
-    debugl(0, "NLM_CellNetwork<R>::renderCellNetwork(): done.\n");
+    debugl(1, "NLM_CellNetwork<R>::renderCellNetwork(): done.\n");
 }
 
 template <typename R>
@@ -3783,7 +3767,7 @@ template <typename R>
 void
 NLM_CellNetwork<R>::writeMorphViewFile(std::string filename) const
 {
-    debugl(0, "NLM_CellNetwork::writeMorphViewFile(): writing to filename \"%s\".\n", filename.c_str() );
+    debugl(1, "NLM_CellNetwork::writeMorphViewFile(): writing to filename \"%s\".\n", filename.c_str() );
     debugTabInc();
 
     FILE *f = fopen(filename.c_str(), "w");
@@ -3800,7 +3784,7 @@ NLM_CellNetwork<R>::writeMorphViewFile(std::string filename) const
     uint32_t num_nv = this->neurite_vertices.size();
     fwrite(&num_nv, sizeof(uint32_t), 1, f);
 
-    debugl(0, "writing position / radius / branching flag for %d neurite vertices.\n", num_nv);
+    debugl(1, "writing position / radius / branching flag for %d neurite vertices.\n", num_nv);
 
     /* iterate over all neurite vertices */
     Vec3<R> nv_pos;
@@ -3822,14 +3806,14 @@ NLM_CellNetwork<R>::writeMorphViewFile(std::string filename) const
     uint32_t num_neurite_paths = neurite_paths.size();
     fwrite(&num_neurite_paths, sizeof(uint32_t), 1, f);
 
-    debugl(0, "writing information about %d neurite paths.\n", num_neurite_paths);
+    debugl(1, "writing information about %d neurite paths.\n", num_neurite_paths);
 
     /* iterate over all neurite paths */
     uint32_t    nP, i, j, k, degree;
     Vec3<R>     bb_min, bb_max, bb_len;
     debugTabInc();
     for (auto &P : neurite_paths) {
-        debugl(1, " ----- Dumping Path ----- \n");
+        debugl(2, " ----- Dumping Path ----- \n");
 
         /* write number of neurite segment curves of P in file */
         nP                  = P->numVertices();
@@ -3943,7 +3927,7 @@ NLM_CellNetwork<R>::writeMorphViewFile(std::string filename) const
     bb_max                      = s_bb.max();
     bb_len                      = bb_max - bb_min;
 
-    debugl(1, "writing soma sphere position vector / radius / bounding box for first soma %d\n", s->id());
+    debugl(2, "writing soma sphere position vector / radius / bounding box for first soma %d\n", s->id());
 
     /* write soma centre, radius and bounding box */
     fwrite(&s_sphere_centre[0], sizeof(R), 1, f);
@@ -3964,5 +3948,5 @@ NLM_CellNetwork<R>::writeMorphViewFile(std::string filename) const
     fclose(f);
 
     debugTabDec();
-    debugl(0, "NLM_CellNetwork::writeMorphViewFile(): done writing file \"%s\".\n", filename.c_str() );
+    debugl(1, "NLM_CellNetwork::writeMorphViewFile(): done writing file \"%s\".\n", filename.c_str() );
 }

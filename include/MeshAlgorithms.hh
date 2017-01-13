@@ -84,9 +84,6 @@ struct RedBlue_EdgeIsecInfo {
      * important for the lambda value below */
     uint32_t                u_id, v_id;
 
-    /* ids of the other mesh's intersected faces */
-    std::vector<uint32_t>   isec_face_ids;
-
     /* corresponding lambda values, i.e. intersection points are u + (v-u)*lambda(k) for
      * in-range k */
     std::vector<TR>         edge_lambdas;
@@ -95,9 +92,8 @@ struct RedBlue_EdgeIsecInfo {
         bool                            _red,
         uint32_t                        _u_id,
         uint32_t                        _v_id,
-        std::vector<uint32_t> const    &_isec_face_ids,
         std::vector<TR> const          &_edge_lambdas)
-    : red(_red), u_id(_u_id), v_id(_v_id), isec_face_ids(_isec_face_ids), edge_lambdas(_edge_lambdas)
+    : red(_red), u_id(_u_id), v_id(_v_id), edge_lambdas(_edge_lambdas)
     {
         if (edge_lambdas.empty())
             throw("RedBlue_Ex_ComplexEdges(): no lambda values supplied for complex edge. internal logic error.");

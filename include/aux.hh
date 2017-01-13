@@ -113,7 +113,7 @@ namespace Aux {
             }
 
             if (bicof_recompute) {
-                debugl(1, "initBinomialCoefficients(): ... \n");
+                debugl(2, "initBinomialCoefficients(): ... \n");
 
                 /* allocate bicof array. use macro BICOF_DEFAULT_SIZE as lower bound */
                 uint32_t max_n = std::max((uint32_t)BICOF_DEFAULT_SIZE, n);
@@ -128,7 +128,7 @@ namespace Aux {
                     }
                     bicof(n, n) = 1.0;
                 }
-                debugl(1, "done.\n");
+                debugl(2, "done.\n");
 
                 bicof_max_n     = max_n;
                 bicof_recompute = false;
@@ -315,9 +315,9 @@ namespace Aux {
                 c_2 = gamma[j] + -3.0*delta[j]*t[j];
                 c_3 = delta[j];
 
-                debugl(1, "segment function = %d, c_0: %f, c_1: %f, c_2: %f, c_3: %f\n", j, c_0, c_1, c_2, c_3);
-                debugl(1, "a[%d] = %f, alpha[%d] = %f, beta[%d] = %f, gamma[%d] = %f, delta[%d] = %f\n", j, a[j], j, alpha[j], j, beta[j], j, gamma[j], j, delta[j]);
-                debugl(1, "t[%d] = %f, x[%d] = %f\n", j, t[j], j, x[j]);
+                debugl(2, "segment function = %d, c_0: %f, c_1: %f, c_2: %f, c_3: %f\n", j, c_0, c_1, c_2, c_3);
+                debugl(2, "a[%d] = %f, alpha[%d] = %f, beta[%d] = %f, gamma[%d] = %f, delta[%d] = %f\n", j, a[j], j, alpha[j], j, beta[j], j, gamma[j], j, delta[j]);
+                debugl(2, "t[%d] = %f, x[%d] = %f\n", j, t[j], j, x[j]);
 
                 result_vector[4*j    ] = c_3;
                 result_vector[4*j + 1] = c_2;
@@ -821,15 +821,15 @@ namespace Aux {
         {
             using namespace Aux::Geometry::IntersectionTestResults;
 
-            debugl(3, "Aux::Geometry::rayTriangle(): .. \n");
+            debugl(4, "Aux::Geometry::rayTriangle(): .. \n");
             debugTabInc();
 
-            p0.print_debugl(2);
-            p1.print_debugl(2);
+            p0.print_debugl(3);
+            p1.print_debugl(3);
 
-            v0.print_debugl(2);
-            v1.print_debugl(2);
-            v2.print_debugl(2);
+            v0.print_debugl(3);
+            v1.print_debugl(3);
+            v2.print_debugl(3);
 
             /* calculate normal vector of the triangle plane */
             Vec3<R> u = v1 - v0;
@@ -841,7 +841,7 @@ namespace Aux {
 
             /* denom very small => infinite ray parallel to plane.. */
             if (std::abs(denom / n.len2() / p.len2()) < ieps) {
-                debugl(0, "n.len2(): %5.4e. denom = %5.4e < ieps => segment parallel to plane.\n", n.len2(), denom);
+                debugl(1, "n.len2(): %5.4e. denom = %5.4e < ieps => segment parallel to plane.\n", n.len2(), denom);
                 debugTabDec();
                 return DISJOINT;
             }
@@ -852,12 +852,12 @@ namespace Aux {
                 /* infinite ray intersects the plane definitely (not parallel if we reach this line), but the
                  * parametric value has to be in [0,1] for the segment (p0, p1) to intersect the plane */
                 if (x_lambda < 0.0 || x_lambda > 1.0) {
-                    debugl(1, "x_lambda = %10.5e not in [0,1] => finite segment does not intersect plane.\n", x_lambda);
+                    debugl(2, "x_lambda = %10.5e not in [0,1] => finite segment does not intersect plane.\n", x_lambda);
                     debugTabDec();
                     return DISJOINT;
                 }
                 else {
-                    debugl(1, "x_lambda = %10.5e in [0,1] => finite segment intersects plane.\n", x_lambda);
+                    debugl(2, "x_lambda = %10.5e in [0,1] => finite segment intersects plane.\n", x_lambda);
                     x = p0 + p*x_lambda;
                     Vec3<R> w = x - v0;
 
@@ -874,15 +874,15 @@ namespace Aux {
 
                     /* barycentric parameters of triangle outside [0,1]^2 => point not in triangle */
                     if (x_s < 0.0 || x_t < 0.0 || (x_s + x_t > 1.0) ) {
-                        debugl(3, "barycentric parametric coordinates x_s = %10.5e, x_t = %10.5e => point not on triangle\n", x_s, x_t);
-                        debugl(3, "Aux::Geometry::rayTriangle(): DISJOINT.\n");
+                        debugl(4, "barycentric parametric coordinates x_s = %10.5e, x_t = %10.5e => point not on triangle\n", x_s, x_t);
+                        debugl(4, "Aux::Geometry::rayTriangle(): DISJOINT.\n");
                         debugTabDec();
                         return DISJOINT;
                     }
                     /* got one */
                     else {
-                        debugl(3, "rayTriangle(): hit. x_s: %5.4e, x_t: %5.4e, x_lambda: %5.4e\n", x_s, x_t, x_lambda);
-                        debugl(3, "Aux::Geometry::rayTriangle(): INTERSECTION.\n");
+                        debugl(4, "rayTriangle(): hit. x_s: %5.4e, x_t: %5.4e, x_lambda: %5.4e\n", x_s, x_t, x_lambda);
+                        debugl(4, "Aux::Geometry::rayTriangle(): INTERSECTION.\n");
                         debugTabDec();
                         return INTERSECTION;
                     }
@@ -939,7 +939,7 @@ namespace Aux {
             R          &s,
             R          &t)
         {
-            debugl(3, "Aux::Geometry::computeBaryCoordsOfProjectedPoint().\n");
+            debugl(4, "Aux::Geometry::computeBaryCoordsOfProjectedPoint().\n");
             debugTabInc();
           
             Vec3<R> u = v1 - v0;
@@ -954,13 +954,13 @@ namespace Aux {
             b1          = ( (w.cross(v)) * n) * inv_denom;
             /* b0          = 1.0 - b2 - b1; */
 
-            debugl(4, "b0: %5.4f, b1: %5.4f, b2: %5.4f\n", 1.0 - b2 - b1, b1, b2);
+            debugl(5, "b0: %5.4f, b1: %5.4f, b2: %5.4f\n", 1.0 - b2 - b1, b1, b2);
 
             s = b1;
             t = b2;
 
             debugTabDec();
-            debugl(3, "Aux::Geometry::computeBaryCoordsOfProjectedPoint(): done.\n");
+            debugl(4, "Aux::Geometry::computeBaryCoordsOfProjectedPoint(): done.\n");
         }
 
 
@@ -1197,12 +1197,12 @@ namespace Aux {
 
             using namespace Aux::Geometry::IntersectionTestResults;
 
-            debugl(2, "partition_intersect(): depth %4d. A_list.size(): %6ld, B_list.size(): %6ld\n", rec_depth, A_list.size(), B_list.size());
+            debugl(3, "partition_intersect(): depth %4d. A_list.size(): %6ld, B_list.size(): %6ld\n", rec_depth, A_list.size(), B_list.size());
             debugTabInc();
 
             /* if any of the facelists is empty => there cannot be any intersection */
             if (A_list.empty() || B_list.empty()) {
-                debugl(0, "A_list or B_list empty => return\n");
+                debugl(1, "A_list or B_list empty => return\n");
             }
             /* leaf reached or number of components small enough => create leaf and compute intersection */
             else if (rec_depth >= max_rec_depth || A_list.size() + B_list.size() < max_elements) {
@@ -1220,11 +1220,11 @@ namespace Aux {
                         }
                     }
                 }
-                debugl(2, "criterion reached => creating leaf.\n");
+                debugl(3, "criterion reached => creating leaf.\n");
             }
             /* partition face list with current cube, recursive call */
             else {
-                debugl(2, "max depth not yet reached => partitioning %8ld (A) and %8ld (B) faces among children..\n", A_list.size(), B_list.size());
+                debugl(3, "max depth not yet reached => partitioning %8ld (A) and %8ld (B) faces among children..\n", A_list.size(), B_list.size());
                 uint32_t                                    i;
                 Vec3<R>                                     nc_min, nc_max, nc_m;
                 Vec3<R>                                     face_bb_min, face_bb_max;
@@ -1347,7 +1347,7 @@ namespace Aux {
                 }
             }
             debugTabDec();
-            debugl(2, "all recursive calls finished => returning..\n");
+            debugl(3, "all recursive calls finished => returning..\n");
         }
 
         /* version with std::function / function pointer. std::function version was extremely slow during testing.. */
@@ -1371,7 +1371,7 @@ namespace Aux {
         {
             using namespace Aux::Geometry::IntersectionTestResults;
 
-            debugl(2, "partition_intersect(): depth %4d. A_list.size(): %6ld, B_list.size(): %6ld\n", rec_depth, A_list.size(), B_list.size());
+            debugl(3, "partition_intersect(): depth %4d. A_list.size(): %6ld, B_list.size(): %6ld\n", rec_depth, A_list.size(), B_list.size());
             debugTabInc();
 
             Vec3<R>                     A_elem_bb_min, A_elem_bb_max, B_elem_bb_min, B_elem_bb_max;
@@ -1379,7 +1379,7 @@ namespace Aux {
 
             /* if any of the facelists is empty => there cannot be any intersection */
             if (A_list.empty() || B_list.empty()) {
-                debugl(0, "A_list or B_list empty => return\n");
+                debugl(1, "A_list or B_list empty => return\n");
             }
             /* leaf reached or number of components small enough => create leaf and compute intersection */
             else if (rec_depth >= max_rec_depth || A_list.size() + B_list.size() < max_elements) {
@@ -1395,11 +1395,11 @@ namespace Aux {
                         }
                     }
                 }
-                debugl(2, "criterion reached => creating leaf.\n");
+                debugl(3, "criterion reached => creating leaf.\n");
             }
             /* partition face list with current cube, recursive call */
             else {
-                debugl(2, "max depth not yet reached => partitioning %8ld (A) and %8ld (B) faces among children..\n", A_list.size(), B_list.size());
+                debugl(3, "max depth not yet reached => partitioning %8ld (A) and %8ld (B) faces among children..\n", A_list.size(), B_list.size());
                 uint32_t                        i;
                 Vec3<R>                         nc_min, nc_max, nc_m;
                 Vec3<R>                         face_bb_min, face_bb_max;
@@ -1537,7 +1537,7 @@ namespace Aux {
             }
 
             debugTabDec();
-            debugl(2, "all recursive calls finished => returning..\n");
+            debugl(3, "all recursive calls finished => returning..\n");
         }
     }
 

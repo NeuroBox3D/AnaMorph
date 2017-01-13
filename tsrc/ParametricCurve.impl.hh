@@ -64,7 +64,7 @@ ParametricCurve<C2F, T, Tr>::checkEvalParameter(
     std::string const      &fn) const
 {
     if (x < this->t0 || x > this->t1) {
-        debugl(0, "ParametricCurve::checkEvalParameter(): x (%s) out of range[%s, %s]\n", std::to_string(x).c_str(), std::to_string(this->t0).c_str(), std::to_string(this->t1).c_str());
+        debugl(1, "ParametricCurve::checkEvalParameter(): x (%s) out of range[%s, %s]\n", std::to_string(x).c_str(), std::to_string(this->t0).c_str(), std::to_string(this->t1).c_str());
         throw(fn + " implement parameter out of domain exception please");
     }
 }
@@ -492,16 +492,16 @@ SpaceCurveReal<C2F, R>::approxArcLength(
     /* if tstart == tend or tstart = this->t0 && tend = this->t0 (and dt matched this->arclen_dt),
      * return 0.0 and this->arclength, respectively */
     if (tstart == tend) {
-        debugl(4, "SpaceCurveReal::approxArcLength(): result trivial (tstart == tend). returning zero..\n");
+        debugl(5, "SpaceCurveReal::approxArcLength(): result trivial (tstart == tend). returning zero..\n");
         return 0.0;
     }
     else if (this->arclen_set && this->arclen_dt == dt && tstart == this->t0 && tend == this->t1) {
-        debugl(4, "SpaceCurveReal::approxArcLength(): result cached: %10.5f. returning..\n", this->arclen);
+        debugl(5, "SpaceCurveReal::approxArcLength(): result cached: %10.5f. returning..\n", this->arclen);
         return this->arclen;
     }
     /* otherwise re-approximate for given settings */
     else {
-        debugl(4, "SpaceCurveReal::approxArcLength(): result not trivial / cached: computing..\n");
+        debugl(5, "SpaceCurveReal::approxArcLength(): result not trivial / cached: computing..\n");
         current = this->eval(tstart);
         debugTabInc();
         for (t = tstart + dt; t < tend; t += dt) {
@@ -513,7 +513,7 @@ SpaceCurveReal<C2F, R>::approxArcLength(
         }
         debugTabDec();
         arclen_t += (this->eval(tend) - last).len2();
-        debugl(4, "SpaceCurveReal::approxArcLength(): done. result: %10.5f.\n", arclen_t);
+        debugl(5, "SpaceCurveReal::approxArcLength(): done. result: %10.5f.\n", arclen_t);
         return arclen_t;
     }
 }
@@ -822,5 +822,5 @@ BezierCurve<degree, R>::computeStationaryPointDistPoly(
         this->d_component_functors[1].multiply(this->component_functors[1] - x_bb[1]) + 
         this->d_component_functors[2].multiply(this->component_functors[2] - x_bb[2]);
 
-    debugl(2, "CanalSurface::computeStationaryPointDistPoly(): n = %d, stationary point polynomial computed in BB(%d)\n", degree, degree);
+    debugl(3, "CanalSurface::computeStationaryPointDistPoly(): n = %d, stationary point polynomial computed in BB(%d)\n", degree, degree);
 }
