@@ -358,7 +358,6 @@ CanalSurface<C2F, RadF, R>::generateMesh(
 
         debugl(1, "start_circle_its == NULL => generating initial circle.\n"); 
 
-        Vec3<R>                                         start_closing_vertex_pos;
         typename Mesh<Tm, Tv, Tf, R>::vertex_iterator   start_closing_vertex_it;
 
         /* start circle is never offset, overwrite wrong argument if necessary */
@@ -370,12 +369,10 @@ CanalSurface<C2F, RadF, R>::generateMesh(
             phi                         = ( (R)j * Common::twopi) / (R)n_phi_segments;
             vpos                        = p + py*(r*cos(phi + phi_offset)) + pz*(r*sin(phi + phi_offset));
             current_circle[j]           = M.vertices.insert(vpos);
-            start_closing_vertex_pos    += vpos;
         }
 
         /* get centroid of initial circle */
-        start_closing_vertex_pos   *= ( 1.0 / (R)n_phi_segments);
-        start_closing_vertex_it     = M.vertices.insert(start_closing_vertex_pos);
+        start_closing_vertex_it     = M.vertices.insert(p);
 
         /* closing triangles */
         M.faces.insert(start_closing_vertex_it, current_circle[0], current_circle[n_phi_segments - 1]);
