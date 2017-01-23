@@ -556,6 +556,8 @@ namespace NLM {
                 debugl(1, "attempt %d of %d, r_min = %5.4f => %5.4f-permissible for P. returning..\n", attempt + 1, max_attempts, r_min, lambda);
                 return candidate;
             }
+            else
+                debugl(1, "attempt %d of %d, r_min = %5.4f not %5.4f-permissible for P.\n", attempt + 1, max_attempts, r_min, lambda);
         }
 
         throw("NeuritePath::findPermissibleRenderVector(). no permissible render vector found.");
@@ -3210,7 +3212,10 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
         R           complex_edge_growth_factor  = 0.0;
         uint32_t    complex_edge_initial_count  = 0;
 
-        R           radius_factor           = this->meshing_radius_factor_initial_value;
+        // compute a good initial guess for the radius reduction factor of the initial segment:
+        // to that end, compute the radius of the in-circle of the cross-section polygon of the
+        // parent section
+        R radius_factor = cos(M_PI / meshing_canal_segment_n_phi_segments);
 
         /* compute a radius factor the corresponds to a generous lower bound on a safe radius, which can be obtained
          * by analysing the local neighbourhood of P's start vertex. */
@@ -3331,7 +3336,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
             outer_loop_iter++;
 
             if (outer_loop_iter % this->meshing_outer_loop_maxiter == 0) {
-                radius_factor   = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
+                radius_factor = std::max(radius_factor_safe_lb, radius_factor - this->meshing_radius_factor_decrement);
             }
 
             debugl(1, "outer meshing loop: iteration %d. radius factor: %5.4f\n", outer_loop_iter, radius_factor);
@@ -3513,12 +3518,12 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     /*
                     Mesh<Tm, Tv, Tf, R> tmp = M_cell;
                     std::ostringstream oss1;
-                    oss1 << "M_cell_split_" << inner_loop_iter;
+                    oss1 << "M_cell_split_" << outer_loop_iter << "_" << inner_loop_iter;
                     tmp.writeObjFile(oss1.str().c_str());
 
                     tmp = M_P;
                     std::ostringstream oss2;
-                    oss2 << "M_P_split_" << inner_loop_iter;
+                    oss2 << "M_P_split_" << outer_loop_iter << "_" << inner_loop_iter;
                     tmp.writeObjFile(oss2.str().c_str());
                     */
                 }
