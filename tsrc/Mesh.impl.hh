@@ -4941,7 +4941,7 @@ Mesh<Tm, Tv, Tf, R>::VertexAccessor::erase(vertex_iterator it)
     debugl(3, "Mesh::VertexAccessor::erase(). erase()ing and returning vertex_iterator to next vertex.\n");
 
     /* erase vertex from internal map this->mesh.V and return vertex_iterator to the next element
-     * (by wrapping the result of std::map::erae in the vertex_iterator constructor). */
+     * (by wrapping the result of std::map::erase in the vertex_iterator constructor). */
     return Mesh::vertex_iterator( &(this->mesh), this->mesh.V.erase(it.int_it) );
 }
 
@@ -5326,7 +5326,7 @@ Mesh<Tm, Tv, Tf, R>::FaceAccessor::erase(face_iterator it)
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::FaceAccessor::erase(): could not erase face pointer from the incident_faces set of at least one contained vertex. internal logic error.");
         }
 
-        /* remove one occurance of adjacencies from the face */
+        /* remove one occurrence of adjacencies from the face */
         auto sortFct = [] (const Vertex* x, const Vertex* y) -> bool {return (x->id() < y->id());};
         removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_k);
         removeFirstOccurrenceFromList(v_i->adjacent_vertices, v_j);

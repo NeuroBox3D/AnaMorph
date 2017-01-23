@@ -513,7 +513,7 @@ MeshAlg::getPotentiallyIntersectingEdgeFacePairs(
  * backward_tri_it,
  * forward_tri_it:              ids of the two incident triangles in the mesh where point p lies on
  *                              an edge. again, if type == true => point lies on an edge of M => 
- *                              two ids of triangles incident ot that edge in M. symmetric for
+ *                              two ids of triangles incident to that edge in M. symmetric for
  *                              false.
  *                              orientation is backward_tri -> common_edge -> forward_tr/
  *
@@ -1295,7 +1295,7 @@ RedBlue_cyclicallyOrderTupleList(
     RB_Tuple<Tm, Tv, Tf, TR>                               *d;
     typename std::list<RB_Tuple<Tm, Tv, Tf, TR>>::iterator  pit;
 
-    debugl(3, "sorting all tuples from unordere list into ordered list..\n");
+    debugl(3, "sorting all tuples from unordered list into ordered list..\n");
     /* while there are still red tuples left to be sorted .. */
     debugTabInc();
     while (!M_tuples_unordered.empty()) {
@@ -2537,10 +2537,6 @@ MeshAlg::partialFlushToObjFile(
 
     debugTabInc();
     for (auto &v : M.vertices) {
-        std::list<typename Mesh<Tm, Tv, Tf, R>::Face *> v_fstar;
-        v.getFaceStar(v_fstar);
-        debugl(2, "vertex %d. face star size: %d .. ", v.id(), v_fstar.size());
-
         if (v.isIsolated()) {
             isolated_vertices.push_back({&v, 0});
             debugl(2, "is isolated.\n");
@@ -2584,7 +2580,7 @@ MeshAlg::partialFlushToObjFile(
 
     debugl(1, "after sort: isolated_vertices.size(): %zu, boundary_vertices.size(): %zu.\n", isolated_vertices.size(), boundary_vertices.size());
 
-    /* compute sef-differences: isolated_vertices \ in_boundary_vertices and boundary_vertices \ in_boundary_vertices */ 
+    /* compute set-differences: isolated_vertices \ in_boundary_vertices and boundary_vertices \ in_boundary_vertices */
     std::set_difference(
         isolated_vertices.begin(), isolated_vertices.end(),
         in_boundary_vertices.begin(), in_boundary_vertices.end(),
@@ -2742,6 +2738,7 @@ MeshAlg::partialFlushToObjFile(
     fprintf(swap_file, "# %5zu flushed faces.\n", flush_face_list.size());
     for (auto &f : flush_face_list) {
         if (f.quad) {
+            /*
             fprintf(swap_file, "f %d//%d %d//%d %d//%d %d//%d\n",
                     f.v_ids[0] + 1, 
                     f.v_ids[0] + 1, 
@@ -2751,8 +2748,16 @@ MeshAlg::partialFlushToObjFile(
                     f.v_ids[2] + 1,
                     f.v_ids[3] + 1,
                     f.v_ids[3] + 1);
+             */
+            fprintf(swap_file, "f %d %d %d %d\n",
+                    f.v_ids[0] + 1,
+                    f.v_ids[1] + 1,
+                    f.v_ids[2] + 1,
+                    f.v_ids[3] + 1);
+
         }
         else {
+            /*
             fprintf(swap_file, "f %d//%d %d//%d %d//%d\n",
                     f.v_ids[0] + 1, 
                     f.v_ids[0] + 1, 
@@ -2760,6 +2765,11 @@ MeshAlg::partialFlushToObjFile(
                     f.v_ids[1] + 1,
                     f.v_ids[2] + 1,
                     f.v_ids[2] + 1);
+            */
+            fprintf(swap_file, "f %d %d %d\n",
+                    f.v_ids[0] + 1,
+                    f.v_ids[1] + 1,
+                    f.v_ids[2] + 1 );
         }
     }
 
@@ -2824,7 +2834,7 @@ MeshAlg::partialFlushToObjFile(
 
     /* sort */
     out_boundary_vertices.sort(cmp);
-        
+
     /* delete all isolated vertices, old and new, from M. note that only old boundary vertices, which have become
      * isolated during the call, are thereby deleted. no other boundary vertex is deleted, but they have been written to
      * the obj file already to guarantee the invariant for the next flushing or the finalizing call. */
