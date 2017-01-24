@@ -2542,7 +2542,7 @@ MeshAlg::partialFlushToObjFile(
             debugl(2, "is isolated.\n");
         }
         else if (!v.isManifold()) {
-            boundary_vertices.push_back({ &v, 0});
+            boundary_vertices.push_back({&v, 0});
             debugl(2, "is not isolated but non-manifold => boundary vertex.\n");
         }
         else {
@@ -2571,7 +2571,7 @@ MeshAlg::partialFlushToObjFile(
 
     auto pair_equal = [] (const std::pair<typename Mesh<Tm, Tv, Tf, R>::Vertex*, uint32_t>& x,
                      const std::pair<typename Mesh<Tm, Tv, Tf, R>::Vertex*, uint32_t>& y) -> bool
-                     {return x.first->id() == y.first->id() && x.second == y.second;};
+                     {return x.first->id() == y.first->id();};
 
     in_boundary_vertices.sort(cmp);
     in_boundary_vertices.unique(pair_equal);

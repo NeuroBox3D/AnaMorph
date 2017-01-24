@@ -382,14 +382,12 @@ namespace MeshAlg {
             {}
 
             MeshObjFlushInfo(const std::string& _filename)
-            : filename(_filename)
+            : filename(_filename), obj_file(NULL), last_flush_vertex_id(0)
             {
                 this->obj_file  = fopen( (this->filename + ".obj").c_str(), "w");
                 if (!this->obj_file) {
                     throw("MeshAlg::MeshObjFlushInfo::MeshObjFlushInfo(std:: string filemame): couldn't open given obj file for writing..\n");
                 }
-                this->last_flush_vertex_id  = 0;
-                this->last_boundary_vertices.clear();
             }
 
             void    

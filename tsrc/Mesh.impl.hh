@@ -1555,7 +1555,8 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesSharedEdgeAndRemainingVertices(
             A_vertices.end(),
             B_vertices.begin(),
             B_vertices.end(),
-            std::inserter(AB_shared_vertices, AB_shared_vertices.begin() )
+            std::inserter(AB_shared_vertices, AB_shared_vertices.begin()),
+            vrtCmp
         );
 
     /* if both triangles share exactly two vertices, i.e. a common edge */
@@ -1568,7 +1569,8 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesSharedEdgeAndRemainingVertices(
                 A_vertices.end(),
                 AB_shared_vertices.begin(),
                 AB_shared_vertices.end(),
-                std::inserter(A_remaining_vertices, A_remaining_vertices.begin())
+                std::inserter(A_remaining_vertices, A_remaining_vertices.begin()),
+                vrtCmp
             );
 
         if (A_remaining_vertices.size() != 1) {
@@ -1580,7 +1582,8 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesSharedEdgeAndRemainingVertices(
                 B_vertices.end(),
                 AB_shared_vertices.begin(),
                 AB_shared_vertices.end(),
-                std::inserter(B_remaining_vertices, B_remaining_vertices.begin())
+                std::inserter(B_remaining_vertices, B_remaining_vertices.begin()),
+                vrtCmp
             );
 
         if (B_remaining_vertices.size() != 1) {
@@ -1629,7 +1632,8 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesCommonVertexAndRemainingVertices(
             A_vertices.end(),
             B_vertices.begin(),
             B_vertices.end(),
-            std::inserter(AB_shared_vertices, AB_shared_vertices.begin() )
+            std::inserter(AB_shared_vertices, AB_shared_vertices.begin()),
+            vrtCmp
         );
 
     if (AB_shared_vertices.size() == 1) {
@@ -1640,7 +1644,8 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesCommonVertexAndRemainingVertices(
                 A_vertices.end(),
                 AB_shared_vertices.begin(),
                 AB_shared_vertices.end(),
-                std::inserter(A_remaining_vertices, A_remaining_vertices.begin())
+                std::inserter(A_remaining_vertices, A_remaining_vertices.begin()),
+                vrtCmp
             );
 
         if (A_remaining_vertices.size() != 2) {
@@ -1652,7 +1657,8 @@ Mesh<Tm, Tv, Tf, R>::Face::getTwoTrianglesCommonVertexAndRemainingVertices(
                 B_vertices.end(),
                 AB_shared_vertices.begin(),
                 AB_shared_vertices.end(),
-                std::inserter(B_remaining_vertices, B_remaining_vertices.begin())
+                std::inserter(B_remaining_vertices, B_remaining_vertices.begin()),
+                vrtCmp
             );
 
         if (B_remaining_vertices.size() != 2) {
@@ -3189,7 +3195,7 @@ Mesh<Tm, Tv, Tf, R>::invertFaceSelection(std::list<Face *> &flist) const
             }
     };
 
-    std::list<std::pair<uint32_t, Face *>> result;
+    std::list<std::pair<uint32_t, Face *> > result;
 
     flist.sort(id_sort_cmp());
     std::set_difference(
@@ -3402,7 +3408,8 @@ Mesh<Tm, Tv, Tf, R>::getTriCommonEdge(
             A_vertices.end(),
             B_vertices.begin(),
             B_vertices.end(),
-            std::inserter(AB_shared_vertices, AB_shared_vertices.begin() )
+            std::inserter(AB_shared_vertices, AB_shared_vertices.begin()),
+            vrtCmp
         );
 
     if (AB_shared_vertices.size() == 2) {

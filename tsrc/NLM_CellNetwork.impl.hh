@@ -3239,7 +3239,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
          * all faces in the obtained set (list) will never be affected during a merging operation and can safely be
          * flushed to disk. */
         if (this->meshing_flush && M_cell.numFaces() > this->meshing_flush_face_limit) {
-            printf("\t partial cell mesh has %5d > %5d (flush face limit)) faces. flushing definitely no longer needed parts of to disk.. ",
+            printf("\t Partial cell mesh has %5d > %5d (flush face limit)) faces. Flushing definitely no longer needed parts off to disk.. ",
                     M_cell.numFaces(), this->meshing_flush_face_limit);
             fflush(stdout);
 
