@@ -16,10 +16,10 @@ make -j4 -f Makefile.dynamic
 ------------------------------------------------------------------------------
 Options for conversion of swc files in terminal (if compiled dynamically):  
 
-Usage: am_cellgen.dynamic -i <NETWORKNAME> [OPTIONS]
+Usage: am_cellgen -i <NETWORKNAME> [OPTIONS]
 
 Command line switches:
- -i <NETWORKNAME>               MANDATORY: specify input cell network name. 
+ -i <NETWORKNAME>               MANDATORY: specify input cell network name.
                                 the network name is the name of the SWC
                                 morphology file without suffix (that is,
                                 without ".swc").
@@ -30,7 +30,7 @@ Command line switches:
                                 if "ri05.CNG". using "ri05.CNG.obj" would yield
                                 the same network name.
 
- -analysis                  
+ -analysis
  -no-analysis                   enable / disable geometric analysis. once a
                                 single full geometric analysis run completes,
                                 a result visualization file suitable for the
@@ -52,17 +52,17 @@ Command line switches:
                                 supports hyper-threading, a good choice is 2*n,
                                 otherwise n, where n is the number of physical
                                 cores of the CPU. n must be > 0.
-                                DEFAULT: 4. 
+                                DEFAULT: 1.
 
  -ana-univar-eps <eps>          floating point tolerance value used for the
                                 numerical solver (Bezier Clipping) for
-                                univariate polynomial root finding problems. 
+                                univariate polynomial root finding problems.
                                 <eps> must be in [1E-11, 1E-3].
                                 DEFAULT: 1E-6.
 
  -ana-bivar-eps <eps>           floating point tolerance value used for the
                                 numerical solver (Bivariate Linear Clipping) for
-                                bivariate polynomial root finding problems. 
+                                bivariate polynomial root finding problems.
                                 <eps> must be in [1E-11, 1E-3].
                                 DEFAULT: 1E-4.
 
@@ -73,7 +73,7 @@ Command line switches:
                                 if enabled: <alpha>, <beta> and <gamma> are the
                                 parameters for the (preliminary) preconditioning
                                 algorithm for cell networks, all of which must
-                                be > 0.0. the preconditioned cell network is 
+                                be > 0.0. the preconditioned cell network is
                                 subjected to geometric analysis.
                                 DEFAULT: enabled, <alpha> = 3.0, <beta> = 1.5
                                 <gamma> = 10.0.
@@ -99,7 +99,7 @@ Command line switches:
                                     vertex.
 
                                 the parameters <filter_angle>, given in degrees
-                                from [0, 180], and <filter_radius_ratio>, from 
+                                from [0, 180], and <filter_radius_ratio>, from
                                 [1.0, oo(, are used to narrow the set of
                                 possible neurite segments to choose from:
                                 among all possible neurite segments, only those
@@ -126,7 +126,7 @@ Command line switches:
 
                                 DEFAULT: <strategy> = "chord-length".
 
- -meshing                        
+ -meshing
  -no-meshing                    enable / disable inductive cell meshing, which
                                 generates a consistent triangular output mesh
                                 representing the plasma membrane of the input
@@ -139,12 +139,12 @@ Command line switches:
                                 use -force-meshing. the mesh output file name is
 
                                 "<CELLNETWORK>.obj"
-                                
+
                                 DEFAULT: enabled.
 
  -force-meshing                 force inductive cell meshing, even for unclean
                                 networks. can be used only if geometric
-                                analysis is enabled as well (-analysis). 
+                                analysis is enabled as well (-analysis).
                                 DEFAULT: don't force meshing.
 
  -meshing-individual-surfaces   render all modelling surfaces individually
@@ -159,8 +159,8 @@ Command line switches:
 
                                 DEFAULT: no individual surface meshing.
 
- -meshing-flush <flush_face_limit>                    
- -no-meshing-flush                        
+ -meshing-flush <flush_face_limit>
+ -no-meshing-flush
                                 enable / disable mesh flushing.
                                 requires -meshing and -analysis.
                                 during inductive cell network meshing, large
@@ -174,7 +174,7 @@ Command line switches:
                                 [1024,oo[, defines the face count limit that
                                 triggers another partial flushing to disk. that
                                 is, if the partially completed mesh reaches
-                                the face count <flush_face_limit>, all 
+                                the face count <flush_face_limit>, all
                                 definitely no longer needed mesh components are
                                 identified and written to disk.
                                 if disabled, the entire mesh is kept in RAM.
@@ -185,29 +185,35 @@ Command line switches:
                                 amount of available RAM is exceeded.
                                 DEFAULT: enabled, <flush_face_limit> = 100000.
 
- -meshing-cansurf-angularsegments <nseg>      
+ -meshing-cansurf-angularsegments <nseg>
                                 defines angular discretization precision used
-                                during neurite path / neurite canal segment 
+                                during neurite path / neurite canal segment
                                 meshing. during canal surface meshing, circles
                                 are approximated by ring polygons with <nseg>
                                 corners on the circle, where all <nseg> sides
                                 are chosen equilaterally. <nseg> must be
-                                in [12, 360].
+                                in [3, 36].
                                 NOTE: vertex / face count of canal surfaces are
                                 O(<nseg>^2): choosing high values for <nseg>
                                 will produce meshes of correspondingly high
                                 vertex / face count.
-                                DEFAULT: <nseg> = 12.
+                                DEFAULT: <nseg> = 6.
+
+ -meshing-triangle-height <h>   Defines the factor by which the optimal height of
+                                canal surface triangles is multiplied. This argument
+                                is useful to reduce the number of faces in the output
+                                grid - at the cost of decreasing element quality.
+                                DEFAULT: <h> = 1.0.
 
  -meshing-outerloop-maxiter <n> defines the maximum number of iterations
                                 performed in the outer meshing loop before
-                                the start radius factor for the currently 
+                                the start radius factor for the currently
                                 processed neurite path mesh is decreased
-                                by the decrement defined by 
+                                by the decrement defined by
                                 -meshing-merging-radiusfactor-decrement.
                                 <n> must be positive.
                                 DEFAULT: <n> = 16.
-                                 
+
  -meshing-innerloop-maxiter <n> defines the maximum number of iterations
                                 performed in the inner meshing loop before
                                 breaking the latter and re-randomizing in
@@ -221,25 +227,14 @@ Command line switches:
                                 This prevents concavities along the neurites, but also
                                 means the triangles in the neurites will no longer
                                 be perfectly equilateral.
-                                
- -meshing-merging-initial-radiusfactor <f>
-                                defines the initial radius factor used during
-                                merging of neurite path meshes. the factor <f>
-                                is used to scale down the radius of the 
-                                neurite start vertex of the currently processed
-                                neurite path for meshing only. this is necessary
-                                to ensure various invariants for the internally
-                                used Red-Blue meshing algorithm.
-                                <f> must be in [0.9, 1.0].
-                                DEFAULT: <f> = 0.975.
-                                 
+
  -meshing-merging-radiusfactor-decrement <d>
                                 defines the decrement applied to the radius
-                                factor if 
+                                factor if
                                     i) one of certain geometric invariants
                                     used by the Red-Blue-Algorithm is violated,
                                     which indicates that the radius factor must
-                                    be further reduced. 
+                                    be further reduced.
 
                                     ii) the number of outer meshing loop
                                     iterations for the currently processed
@@ -283,25 +278,27 @@ Command line switches:
                                 process. <c> must be > 0.0, but a value close to
                                 1 is advisable in light of the above explanation.
                                 DEFAULT: <c> = 2.0.
-                                
+
  -no-mesh-pp                    disable cell network union mesh post-processing
                                 entirely. equivalent to
                                 -no-mesh-pp-gec -no-mesh-pp-hc
 
- -mesh-pp-gec <alpha> <lambda> <mu>
+ -mesh-pp-gec <alpha> <lambda> <mu> <n>
  -no-mesh-pp-gec                enable / disable stage 1 of the post-processing
                                 chain for the cell network union mesh: improved
                                 greedy edge collapsing.
                                 <alpha>, <lambda> and <mu> are the parameters
-                                passed to the improved greedy edge collapse 
+                                passed to the improved greedy edge collapse
                                 algorithm. <alpha> is a triangle aspect ratio
                                 and must hence be >= 1.0. <lambda> and <mu>
-                                are area scaling factors and must be > 0.0.
+                                are area scaling factors and must be > 0.0,
+                                n is the depth of the search for neighbors and
+                                must be >1.
 
                                 DEFAULT: enabled, <alpha> = 1.5,
-                                <lambda> = 0.125, <mu> = 0.5.
+                                <lambda> = 0.125, <mu> = 0.5, <n> = 5.
 
-                                NOTE: if either -mesh-pp-gec (stage 1) or 
+                                NOTE: if either -mesh-pp-gec (stage 1) or
                                 -mesh-pp-hc (stage2) is enabled, post-processing
                                 is performed as configured, where stage 1 always
                                 precedes stage 2. the mesh obtained after post-
@@ -318,10 +315,10 @@ Command line switches:
                                 <beta> are the key parameters for HC Laplacian
                                 smoothing, where <beta> must be greater than
                                 <alpha> to ensure a converging "diffusion",
-                                i.e. smoothing, process. 
-                                DEFAULT: enabled, 
+                                i.e. smoothing, process.
+                                DEFAULT: enabled, alpha=0.4, beta=0.7, maxiter=100
 
-                                NOTE: if either -mesh-pp-gec (stage 1) or 
+                                NOTE: if either -mesh-pp-gec (stage 1) or
                                 -mesh-pp-hc (stage2) is enabled, post-processing
                                 is performed as configured, where stage 1 always
                                 precedes stage 2. the mesh obtained after post-
@@ -329,8 +326,6 @@ Command line switches:
 
                                 "<CELLNETWORK>_post_processed.obj".
 
--debug-lvl <cmp> <lvl>          Enable debugging for component <cmp>
+ -debug-lvl <cmp> <lvl>         Enable debugging for component <cmp>
                                 and set debug level to <lvl>.
                                 Debug component 0 is global debugging.
-
- -h                             display this help message.

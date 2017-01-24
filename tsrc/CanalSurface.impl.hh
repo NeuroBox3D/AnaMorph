@@ -251,6 +251,7 @@ void
 CanalSurface<C2F, RadF, R>::generateMesh(
     Mesh<Tm, Tv, Tf, R>                                    &M,
     uint32_t                                                n_phi_segments,
+    R                                                       triangle_height_factor,
     Vec3<R>                                                 rvec,
     R const                                                &phi_0,
     R const                                                &arclen_dt,
@@ -263,8 +264,7 @@ CanalSurface<C2F, RadF, R>::generateMesh(
             typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
         >                                                  *end_circle_its,
     typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it,
-	bool                                                    preserve_crease_edges,
-	R														triangle_height_factor) const
+	bool                                                    preserve_crease_edges) const
 {
     debugl(1, "CanalSurface::generateMesh().\n");
     debugTabInc();

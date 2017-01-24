@@ -98,7 +98,6 @@ class AnaMorph_cellgen : private CLApplication {
         bool                meshing_preserve_crease_edges;
         double 				meshing_cansurf_triangle_height_factor;
 
-        double              meshing_radius_factor_initial_value;
         double              meshing_radius_factor_decrement;
         double              meshing_complex_edge_max_growth_factor;
 

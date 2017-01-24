@@ -569,6 +569,7 @@ namespace NLM {
     NeuritePath<R>::generateInitialSegmentMesh(
         Mesh<Tm, Tv, Tf, R>                                    &M,
         uint32_t                                                n_phi_segments,
+        R                                                       triangle_height_factor,
         Vec3<R>                                                 rvec,
         R const                                                &phi_0,
         R const                                                &arclen_dt,
@@ -612,6 +613,7 @@ namespace NLM {
                 /* pass n_phi_segments, render vector rvec, initial angle offset phi0 and arclen approximation precision
                  * from parameters */
                 n_phi_segments,
+                triangle_height_factor,
                 rvec,
                 phi_0,
                 arclen_dt,
@@ -645,6 +647,7 @@ namespace NLM {
                     /* pass n_phi_segments, render vector rvec, initial angle offset phi0 and arclen approximation precision
                      * from parameters */
                     n_phi_segments,
+                    triangle_height_factor,
                     rvec,
                     phi_0,
                     arclen_dt,
@@ -667,6 +670,7 @@ namespace NLM {
                     /* pass n_phi_segments, render vector rvec, initial angle offset phi0 and arclen approximation precision
                      * from parameters */
                     n_phi_segments,
+                    triangle_height_factor,
                     rvec,
                     phi_0,
                     arclen_dt,
@@ -707,6 +711,7 @@ namespace NLM {
     NeuritePath<R>::appendTailMesh(
         Mesh<Tm, Tv, Tf, R>                                    &M,
         uint32_t                                                n_phi_segments,
+        R                                                       triangle_height_factor,
         Vec3<R>                                                 rvec,
         R const                                                &phi_0,
         R const                                                &arclen_dt,
@@ -756,6 +761,7 @@ namespace NLM {
                 /* pass n_phi_segments, render vector rvec, initial angle offset phi0 and arclen approximation precision
                  * from parameters */
                 n_phi_segments,
+                triangle_height_factor,
                 rvec,
                 phi_0,
                 arclen_dt,
@@ -845,7 +851,6 @@ NLM_CellNetwork<R>::NLM_CellNetwork(std::string network_name)
 
     this->meshing_preserve_crease_edges             = false;
 
-    this->meshing_radius_factor_initial_value       = 0.975;
     this->meshing_radius_factor_decrement           = 0.01;
     this->meshing_complex_edge_max_growth_factor    = 2.0;
 }
@@ -880,7 +885,6 @@ NLM_CellNetwork<R>::getSettings() const
 
     s.meshing_preserve_crease_edges             = this->meshing_preserve_crease_edges;
 
-    s.meshing_radius_factor_initial_value       = this->meshing_radius_factor_initial_value;
     s.meshing_radius_factor_decrement           = this->meshing_radius_factor_decrement;
     s.meshing_complex_edge_max_growth_factor    = this->meshing_complex_edge_max_growth_factor;
 
@@ -903,12 +907,13 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
     this->meshing_flush_face_limit                  = s.meshing_flush_face_limit;
 
     this->meshing_canal_segment_n_phi_segments      = s.meshing_canal_segment_n_phi_segments;
+    this->meshing_cansurf_triangle_height_factor    = s.meshing_cansurf_triangle_height_factor;
+
     this->meshing_outer_loop_maxiter                = s.meshing_outer_loop_maxiter;
     this->meshing_inner_loop_maxiter                = s.meshing_inner_loop_maxiter;
 
     this->meshing_preserve_crease_edges             = s.meshing_preserve_crease_edges;
 
-    this->meshing_radius_factor_initial_value       = s.meshing_radius_factor_initial_value;
     this->meshing_radius_factor_decrement           = s.meshing_radius_factor_decrement;
     this->meshing_complex_edge_max_growth_factor    = s.meshing_complex_edge_max_growth_factor;
 
@@ -922,7 +927,6 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
         "\t meshing_outer_loop_maxiter:             %5d\n"\
         "\t meshing_inner_loop_maxiter:             %5d\n"\
 		"\t meshing_preserve_crease_edges:          %s\n"\
-        "\t meshing_radius_factor_initial_value:    %5.4f\n"\
         "\t meshing_radius_factor_decrement:        %5.4f\n"\
         "\t meshing_complex_edge_max_growth_factor: %5.4f\n\n",
         this->analysis_nthreads,
@@ -931,10 +935,10 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
         this->meshing_flush,
         this->meshing_flush_face_limit,
         this->meshing_canal_segment_n_phi_segments,
+        this->meshing_cansurf_triangle_height_factor,
         this->meshing_outer_loop_maxiter,
         this->meshing_inner_loop_maxiter,
 		this->meshing_preserve_crease_edges ? "true" : "false",
-        this->meshing_radius_factor_initial_value,
         this->meshing_radius_factor_decrement,
         this->meshing_complex_edge_max_growth_factor);
 }
@@ -3356,6 +3360,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     M_P,
                     /* n_phi_segments default to 16 for testing */
                     this->meshing_canal_segment_n_phi_segments,
+                    meshing_cansurf_triangle_height_factor,
                     /* render vector */
                     render_vector,
                     /* phi_0, arclen_dt = 1E-3 */
@@ -3548,6 +3553,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 }
                 catch (RedBlue_Ex_AffectedCircleTrivial& trivcircle_ex) {
                     debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
+                    //FIXME: This exception needs to be handled, not re-thrown!
                     throw;
                 }
                 debugl(1, "inner meshing loop time: %5.4f\n\n", Aux::Timing::tack(14));
@@ -3617,6 +3623,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     M_cell,
                     /* n_phi_segments default to 16 for testing */
                     this->meshing_canal_segment_n_phi_segments,
+                    meshing_cansurf_triangle_height_factor,
                     /* render vector */
                     render_vector,
                     /* phi_0, arclen_dt = 1E-3 */
@@ -3716,8 +3723,8 @@ NLM_CellNetwork<R>::renderModellingMeshesIndividually(std::string filename) cons
                 P.template generateInitialSegmentMesh<Tm, Tv, Tf>(
                     /* append to mesh M_P for path P*/
                     M_P,
-                    /* n_phi_segments default to 16 for testing */
-                    16, 
+                    meshing_canal_segment_n_phi_segments,
+                    meshing_cansurf_triangle_height_factor,
                     /* render vector */
                     render_vector,
                     /* phi_0 = 0, arclen_dt = 1E-3 */
@@ -3739,8 +3746,8 @@ NLM_CellNetwork<R>::renderModellingMeshesIndividually(std::string filename) cons
                 P.template appendTailMesh<Tm, Tv, Tf>(
                     /* append to mesh M_P for path P */
                     M_P,
-                    /* n_phi_segments default to 16 for testing */
-                    16, 
+                    meshing_canal_segment_n_phi_segments,
+                    meshing_cansurf_triangle_height_factor,
                     /* render vector */
                     render_vector,
                     /* phi_0 = 0, arclen_dt = 1E-3 */

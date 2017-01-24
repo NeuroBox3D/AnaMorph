@@ -228,6 +228,7 @@ namespace NLM {
             void                                    generateInitialSegmentMesh(
                                                         Mesh<Tm, Tv, Tf, R>                                    &M,
                                                         uint32_t                                                n_phi_segments,
+                                                        R                                                       triangle_height_factor,
                                                         Vec3<R>                                                 rvec,
                                                         R const                                                &phi_0,
                                                         R const                                                &arclen_dt,
@@ -244,6 +245,7 @@ namespace NLM {
             void                                    appendTailMesh(
                                                         Mesh<Tm, Tv, Tf, R>                                    &M,
                                                         uint32_t                                                n_phi_segments,
+                                                        R                                                       triangle_height_factor,
                                                         Vec3<R>                                                 rvec,
                                                         R const                                                &phi_0,
                                                         R const                                                &arclen_dt,

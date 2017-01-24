@@ -72,12 +72,12 @@ const std::list<
         { "mesh-pp-gec",                            4 },
         { "no-mesh-pp-gec",                         0 },
         { "mesh-pp-hc",                             3 },
-        { "no-mesh-pp-hc",                          3 },
+        { "no-mesh-pp-hc",                          0 },
         { "meshing-cansurf-angularsegments",        1 },
+        { "meshing-triangle-height",                1 },
         { "meshing-outerloop-maxiter",              1 },
         { "meshing-innerloop-maxiter",              1 },
         { "preserve-crease-edges",                  0 },
-		{ "cansurf-triangle-height",        		1 },
         { "meshing-flush",                          1 },
         { "no-meshing-flush",                       0 },
         { "meshing-merging-initial-radiusfactor",   1 },
@@ -194,7 +194,7 @@ const std::string usage_string =
 "                                supports hyper-threading, a good choice is 2*n,\n"\
 "                                otherwise n, where n is the number of physical\n"\
 "                                cores of the CPU. n must be > 0.\n"\
-"                                DEFAULT: 4. \n"\
+"                                DEFAULT: 1. \n"\
 "\n"\
 " -ana-univar-eps <eps>          floating point tolerance value used for the\n"\
 "                                numerical solver (Bezier Clipping) for\n"\
@@ -334,13 +334,19 @@ const std::string usage_string =
 "                                are approximated by ring polygons with <nseg>\n"\
 "                                corners on the circle, where all <nseg> sides\n"\
 "                                are chosen equilaterally. <nseg> must be\n"\
-"                                in [12, 360].\n"\
+"                                in [3, 36].\n"\
 "                                NOTE: vertex / face count of canal surfaces are\n"\
 "                                O(<nseg>^2): choosing high values for <nseg>\n"\
 "                                will produce meshes of correspondingly high\n"\
 "                                vertex / face count.\n"\
-"                                DEFAULT: <nseg> = 12.\n"\
+"                                DEFAULT: <nseg> = 6.\n"\
 "\n"\
+" -meshing-triangle-height <h>   Defines the factor by which the optimal height of\n"
+"                                canal surface triangles is multiplied. This argument\n"
+"                                is useful to reduce the number of faces in the output\n"
+"                                grid - at the cost of decreasing element quality.\n"
+"                                DEFAULT: <h> = 1.0.\n"
+"                                \n"
 " -meshing-outerloop-maxiter <n> defines the maximum number of iterations\n"\
 "                                performed in the outer meshing loop before\n"\
 "                                the start radius factor for the currently \n"\
@@ -357,17 +363,13 @@ const std::string usage_string =
 "                                <n> must be positive.\n"\
 "                                DEFAULT: <n> = 8.\n"\
 "                                \n"\
-" -meshing-merging-initial-radiusfactor <f>\n"\
-"                                defines the initial radius factor used during\n"\
-"                                merging of neurite path meshes. the factor <f>\n"\
-"                                is used to scale down the radius of the \n"\
-"                                neurite start vertex of the currently processed\n"\
-"                                neurite path for meshing only. this is necessary\n"\
-"                                to ensure various invariants for the internally\n"\
-"                                used Red-Blue meshing algorithm.\n"\
-"                                <f> must be in [0.9, 1.0].\n"\
-"                                DEFAULT: <f> = 0.975.\n"\
-"                                 \n"\
+" -preserve-crease-edges         If this option is passed then the triangles along\n"
+"                                the dendritic and axonal elements will be arranged\n"
+"                                in such a way that there is no torsion in the neurites.\n"
+"                                This prevents concavities along the neurites, but also\n"
+"                                means the triangles in the neurites will no longer\n"
+"                                be perfectly equilateral.\n"
+"                                \n"
 " -meshing-merging-radiusfactor-decrement <d>\n"\
 "                                defines the decrement applied to the radius\n"\
 "                                factor if \n"\
@@ -423,7 +425,7 @@ const std::string usage_string =
 "                                entirely. equivalent to\n"\
 "                                -no-mesh-pp-gec -no-mesh-pp-hc\n"\
 "\n"\
-" -mesh-pp-gec <alpha> <lambda> <mu>\n"\
+" -mesh-pp-gec <alpha> <lambda> <mu> <n>\n"\
 " -no-mesh-pp-gec                enable / disable stage 1 of the post-processing\n"\
 "                                chain for the cell network union mesh: improved\n"\
 "                                greedy edge collapsing.\n"\
@@ -431,10 +433,12 @@ const std::string usage_string =
 "                                passed to the improved greedy edge collapse \n"\
 "                                algorithm. <alpha> is a triangle aspect ratio\n"\
 "                                and must hence be >= 1.0. <lambda> and <mu>\n"\
-"                                are area scaling factors and must be > 0.0.\n"\
+"                                are area scaling factors and must be > 0.0,\n"\
+"                                n is the depth of the search for neighbors and\n"\
+"                                must be >1.\n"\
 "\n"\
 "                                DEFAULT: enabled, <alpha> = 1.5,\n"\
-"                                <lambda> = 0.125, <mu> = 0.5.\n"\
+"                                <lambda> = 0.125, <mu> = 0.5, <n> = 5.\n"\
 "\n"\
 "                                NOTE: if either -mesh-pp-gec (stage 1) or \n"\
 "                                -mesh-pp-hc (stage2) is enabled, post-processing\n"\
@@ -454,7 +458,7 @@ const std::string usage_string =
 "                                smoothing, where <beta> must be greater than\n"\
 "                                <alpha> to ensure a converging \"diffusion\",\n"\
 "                                i.e. smoothing, process. \n"\
-"                                DEFAULT: enabled, \n"\
+"                                DEFAULT: enabled, alpha=0.4, beta=0.7, maxiter=100\n"\
 "\n"\
 "                                NOTE: if either -mesh-pp-gec (stage 1) or \n"\
 "                                -mesh-pp-hc (stage2) is enabled, post-processing\n"\
@@ -500,14 +504,13 @@ AnaMorph_cellgen::AnaMorph_cellgen(
     this->meshing_flush                             = true;
     this->meshing_flush_face_limit                  = 100000;
 
-    this->meshing_canal_segment_n_phi_segments      = 12;
+    this->meshing_canal_segment_n_phi_segments      = 6;
     this->meshing_outer_loop_maxiter                = 16;
     this->meshing_inner_loop_maxiter                = 8;
 
     this->meshing_preserve_crease_edges             = false;
     this->meshing_cansurf_triangle_height_factor	= 1.0;
 
-    this->meshing_radius_factor_initial_value       = 0.975;
     this->meshing_radius_factor_decrement           = 0.01;
     this->meshing_complex_edge_max_growth_factor    = 2.0;
 
@@ -833,20 +836,20 @@ AnaMorph_cellgen::processCommandLineArguments()
         else if (s == "preserve-crease-edges") {
             this->meshing_preserve_crease_edges = true;
         }
-        else if (s == "cansurf-triangle-height") {
+        else if (s == "meshing-triangle-height") {
             try {
                 this->meshing_cansurf_triangle_height_factor = std::stod(s_args[0]);
             }
             catch (std::out_of_range& ex) {
-                printf("ERROR: argument to switch \"cansurf-triangle-height\" out of range.\n");
+                printf("ERROR: argument to switch \"meshing-triangle-height\" out of range.\n");
                 return false;
             }
             catch (...) {
-                printf("ERROR: argument to switch \"cansurf-triangle-height\" could not be converted to a double precision floating point value.\n");
+                printf("ERROR: argument to switch \"meshing-triangle-height\" could not be converted to a double precision floating point value.\n");
                 return false;
             }
             if (this->meshing_cansurf_triangle_height_factor <= 0) {
-                printf("ERROR: invalid argument to switch \"cansurf-triangle-height\". factor must be greater than 0.\n");
+                printf("ERROR: invalid argument to switch \"meshing-triangle-height\". factor must be greater than 0.\n");
                 return false;
             }
         }
@@ -873,25 +876,6 @@ AnaMorph_cellgen::processCommandLineArguments()
         }
         else if (s == "no-meshing-flush") {
             this->meshing_flush = false;
-        }
-        else if (s == "meshing-merging-initial-radiusfactor") {
-            try {
-                this->meshing_radius_factor_initial_value = std::stod(s_args[0]);
-            }
-            catch (std::out_of_range& ex) {
-                printf("ERROR: argument to switch \"meshing-merging-initial-radiusfactor\" out of range.\n");
-                return false;
-            }
-            catch (...) {
-                printf("ERROR: invalid arguments to switch \"meshing-merging-initial-radiusfactor\".\n");
-                return false;
-            }
-
-            /* check value */
-            if (this->meshing_radius_factor_initial_value > 1.0 || this->meshing_radius_factor_initial_value < 0.9) {
-                printf("ERROR: initial radius factor parameter to switch \"meshing-merging-initial-radiusfactor\" must be in [0.9, 1.0].\n");
-                return false;
-            }
         }
         else if (s == "meshing-merging-radiusfactor-decrement") {
             try {
@@ -1030,7 +1014,6 @@ AnaMorph_cellgen::run()
             C_settings.meshing_preserve_crease_edges            = this->meshing_preserve_crease_edges;
             C_settings.meshing_cansurf_triangle_height_factor	= this->meshing_cansurf_triangle_height_factor;
 
-            C_settings.meshing_radius_factor_initial_value      = this->meshing_radius_factor_initial_value;
             C_settings.meshing_radius_factor_decrement          = this->meshing_radius_factor_decrement;
             C_settings.meshing_complex_edge_max_growth_factor   = this->meshing_complex_edge_max_growth_factor;
 

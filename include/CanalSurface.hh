@@ -355,6 +355,7 @@ class CanalSurface {
         void                            generateMesh(
                                             Mesh<Tm, Tv, Tf, R>                                    &M,
                                             uint32_t                                                nphisegments,
+                                            R                                                       triangle_height_factor,
                                             Vec3<R>                                                 rvec,
                                             R const                                                &phi_0,
                                             R const                                                &arclen_dt               = 1E-3,
@@ -367,8 +368,7 @@ class CanalSurface {
                                                     typename Mesh<Tm, Tv, Tf, R>::vertex_iterator
                                                 >                                                  *end_circle_its          = NULL,
                                             typename Mesh<Tm, Tv, Tf, R>::vertex_iterator          *closing_vertex_it       = NULL,
-                                            bool                                                    preserve_crease_edges   = false,
-											R														triangle_height_factor	= 1.0) const ;
+                                            bool                                                    preserve_crease_edges   = false) const ;
 };
 
 #if 0

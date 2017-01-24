@@ -127,7 +127,6 @@ class NLM_CellNetwork
         bool            meshing_preserve_crease_edges;
         R				meshing_cansurf_triangle_height_factor;
 
-        R               meshing_radius_factor_initial_value;
         R               meshing_radius_factor_decrement;
         R               meshing_complex_edge_max_growth_factor;
 
@@ -238,7 +237,6 @@ class NLM_CellNetwork
             bool            meshing_preserve_crease_edges;
             R				meshing_cansurf_triangle_height_factor;
 
-            R               meshing_radius_factor_initial_value;
             R               meshing_radius_factor_decrement;
             R               meshing_complex_edge_max_growth_factor;
         };
