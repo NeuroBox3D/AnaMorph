@@ -719,33 +719,52 @@ MeshAlg::RedBlueAlgorithm(
 #endif
 
     /* if both lists are empty, there can't be any intersection. throw exception. */
-    if ( red_tuples.empty() && blue_tuples.empty() ) {
+    if (red_tuples.empty() && blue_tuples.empty())
+    {
         debugl(1, "redpoints and bluepoints both empty. nothing to do => returning.\n");
         debugTabDec();
         throw RedBlue_Ex_Disjoint("RedBlue_Algorithm(): no red edge intersect a blue face and vice versa => red and blue meshes disjoint.");
     }
     /* if there is no red tuple but at least one blue tuple, then all blue edges intersect the SAME red face, resulting
-     * the ''circle'' of affected red faces in the dual of the red mesh to be trivial, which violates an assumption of
+     * in the ''circle'' of affected red faces in the dual of the red mesh to be trivial, which violates an assumption of
      * the RedBlue (union) algorithm. throw exception to indicate this to the caller, who will have to react, e.g. by
      * splitting the red triangle properly. */
-    else if ( red_tuples.empty() ) {
+    else if (red_tuples.empty())
+    {
         debugl(1, "redpoints empty..\n");
+
+        // get the coordinates for a splitting point as the center of all local edge intersection points
+        Vec3<TR> splitPt(0.0);
+        for (auto& tup : blue_tuples)
+            splitPt += tup.x;
+        splitPt /= blue_tuples.size();
+
         debugTabDec();
-        throw RedBlue_Ex_AffectedCircleTrivial(
+        throw RedBlue_Ex_AffectedCircleTrivial<TR>(
                 "RedBlue_Algorithm(): red tuple list empty => affected circle of red triangles trivial, i.e. consisting of exactly one red face => split it.", 
                 true,
-                blue_tuples.front().face_it->id()
+                blue_tuples.front().face_it->id(),
+                splitPt
             );
     }
     /* symmetric case: no blue tuples, yet at least one red tuple => trivial ''circle'' of blue
      * affected faces. throw exception */
-    else if ( blue_tuples.empty() ) {
+    else if (blue_tuples.empty())
+    {
         debugl(1, "bluepoints empty..\n");
+
+        // get the coordinates for a splitting point as the center of all local edge intersection points
+        Vec3<TR> splitPt(0.0);
+        for (auto& tup : blue_tuples)
+            splitPt += tup.x;
+        splitPt /= blue_tuples.size();
+
         debugTabDec();
-        throw RedBlue_Ex_AffectedCircleTrivial(
+        throw RedBlue_Ex_AffectedCircleTrivial<TR>(
                 "RedBlue_Algorithm(): blue tuple list empty => affected circle of blue triangles trivial, i.e. consisting of exactly one blue face => split it.", 
                 false,
-                red_tuples.front().face_it->id()
+                red_tuples.front().face_it->id(),
+                splitPt
             );
     }
 

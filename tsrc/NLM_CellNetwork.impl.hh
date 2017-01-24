@@ -3551,10 +3551,14 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     new_outer_iteration = true;
                     restore_M_cell      = !isecpoly_ex.R_intact;
                 }
-                catch (RedBlue_Ex_AffectedCircleTrivial& trivcircle_ex) {
-                    debugTabDec(); debugTabDec(); debugTabDec(); debugTabDec();
-                    //FIXME: This exception needs to be handled, not re-thrown!
-                    throw;
+                catch (RedBlue_Ex_AffectedCircleTrivial<R>& trivcircle_ex){
+                    debugl(0, "NLM_CellNetwork::renderCellNetwork(): RedBlueAlgorithm returned exception: affected circle trivial.\n");
+
+                    // split the single triangle with a center vertex at the pre-computed position
+                    if (trivcircle_ex.red)
+                        M_cell.split_face_with_center(trivcircle_ex.face_id, trivcircle_ex.splitPos);
+                    else
+                        M_P.split_face_with_center(trivcircle_ex.face_id, trivcircle_ex.splitPos);
                 }
                 debugl(1, "inner meshing loop time: %5.4f\n\n", Aux::Timing::tack(14));
             }

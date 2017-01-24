@@ -3742,6 +3742,45 @@ Mesh<Tm, Tv, Tf, R>::splitEdge(
     this->splitEdge(u_it, v_it, lambda);
 }
 
+
+template <typename Tm, typename Tv, typename Tf, typename R>
+void
+Mesh<Tm, Tv, Tf, R>::split_face_with_center
+(
+    uint32_t face_id,
+    const Vec3<R>& splitPos
+)
+{
+    face_iterator fit = faces.find(face_id);
+    if (fit == faces.end())
+        throw MeshEx(MESH_LOGIC_ERROR, "Mesh::split_face_with_center(): Given input id for face is invalid.");
+
+    // get corner vertices
+    std::vector<vertex_iterator> corners(3);
+    if (fit->isTri())
+        fit->getTriIterators(corners[0], corners[1], corners[2]);
+    else if (fit->isQuad())
+    {
+        corners.resize(4);
+        fit->getQuadIterators(corners[0], corners[1], corners[2], corners[3]);
+    }
+    else
+        throw MeshEx(MESH_LOGIC_ERROR, "Mesh::split_face_with_center(): "
+            "Face associated to input id is neither triangle not quadrilateral.");
+
+    // remove face
+    faces.erase(fit);
+
+    // create new vertex
+    vertex_iterator center = vertices.insert(splitPos);
+
+    // create new faces
+    size_t nCorner = corners.size();
+    for (size_t i = 0; i < nCorner; ++i)
+        faces.insert(corners[i], corners[(i+1)%nCorner], center);
+}
+
+
 /* split quad such that the sum of aspect ratios of the two resulting triangles is minimized */
 template <typename Tm, typename Tv, typename Tf, typename R>
 void

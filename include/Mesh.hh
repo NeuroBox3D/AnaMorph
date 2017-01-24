@@ -1251,6 +1251,10 @@ class Mesh {
                                                 vertex_iterator         v_it,
                                                 std::vector<R> const   &lambda_values);
 
+        void                                split_face_with_center(
+                                                uint32_t face_id,
+                                                const Vec3<R>& splitPos);
+
         void                                splitQuadIntoTwoTris(face_iterator quad);
         void                                splitQuadIntoTwoTrisShorterDiagonal(face_iterator quad);
         void                                triangulateQuads();

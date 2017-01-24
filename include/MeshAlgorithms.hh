@@ -155,17 +155,22 @@ struct RedBlue_Ex_NumIsecPoly : public RedBlue_Ex {
     }
 };
 
+template <typename TR>
 struct RedBlue_Ex_AffectedCircleTrivial : public RedBlue_Ex {
     bool        red;
     uint32_t    face_id;
+    Vec3<TR>    splitPos;
 
-    RedBlue_Ex_AffectedCircleTrivial(
+    RedBlue_Ex_AffectedCircleTrivial
+    (
         const std::string& msg,
-        bool        red,
-        uint32_t    face_id)
-            : RedBlue_Ex(RedBlue_ExCodes::RB_AFFECTED_CIRCLE_TRIVIAL, msg, true, true), red(red), face_id(face_id)
-    {
-    }
+        bool red,
+        uint32_t face_id,
+        const Vec3<TR>& _splitPos
+    )
+    : RedBlue_Ex(RedBlue_ExCodes::RB_AFFECTED_CIRCLE_TRIVIAL, msg, true, true),
+      red(red), face_id(face_id), splitPos(_splitPos)
+    {}
 };
 
 namespace MeshAlg {
