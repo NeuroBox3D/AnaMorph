@@ -1198,7 +1198,9 @@ RedBlue_generateRBTupleList(
             /* get vertex positions of blue candidate triangle */
             candidate_tri->getTriPositions(f_0, f_1, f_2);
 
-            if (Aux::Geometry::rayTriangle(u_it->pos(), v_it->pos(), f_0, f_1, f_2, x, x_s, x_t, x_lambda) == INTERSECTION) {
+            uint32_t isecType = Aux::Geometry::rayTriangle(u_it->pos(), v_it->pos(), f_0, f_1, f_2, x, x_s, x_t, x_lambda);
+            if (isecType == INTERSECTION)
+            {
                 debugl(3, "intersection! => creating tuple for candidate face %5d.\n", candidate_tri->id());
                 uv_nisec_faces++;
 
@@ -1214,6 +1216,15 @@ RedBlue_generateRBTupleList(
                             true,
                             true
                         );
+                }
+
+                // check if s == 0 or t == 0 or s+t == 1 (intersection point is an triangle boundary)
+                // and throw edge case exception if this is the case
+                if (std::abs(x_s) < 1E-10 || std::abs(x_t) < 1E-10 || std::abs(x_s + x_t - 1.0) < 1E-10)
+                {
+                    debugTabDec(); debugTabDec(); debugTabDec();
+                    throw RedBlue_Ex_NumericalEdgeCase("RedBlue_generateRBTupleList(): "
+                        "Edge intersecting face on its boundary.", true, true);
                 }
 
                 e_isec_tri_ids.push_back(candidate_tri->id());
@@ -1246,6 +1257,12 @@ RedBlue_generateRBTupleList(
                             uv_fst_tri_it, uv_snd_tri_it
                         )
                     );
+            }
+            else if (isecType == EDGE_CASE)
+            {
+                debugTabDec(); debugTabDec(); debugTabDec();
+                throw RedBlue_Ex_NumericalEdgeCase("RedBlue_generateRBTupleList(): "
+                    "Edge and triangle are parallel and intersecting.", true, true);
             }
             /* else: candidate face blue_candidate_tri has not been intersected by edge e_r = (u, v) and is not
              * considered any further.*/

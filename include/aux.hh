@@ -773,6 +773,93 @@ namespace Aux {
 
         template <typename R>
         uint32_t
+        segmentSegmentInPlaneIntersection
+        (
+            const Vec3<R>& p0,  // segment 1 start pt
+            const Vec3<R>& p1,  // segment 1 end pt
+            const Vec3<R>& q0,  // segment 2 start pt
+            const Vec3<R>& q1,  // segment 2 end pt
+            const Vec3<R>& n,    // plane normal
+            R ieps = 1E-10      // precision
+        )
+        {
+            using namespace Aux::Geometry::IntersectionTestResults;
+
+            Vec3<R> p = p1 - p0;
+            Vec3<R> q = q1 - q0;
+            Vec3<R> w = p0 - q0;
+
+            Vec3<R> orthog = n.cross(p);
+            R denom = orthog * q;
+
+            // segments not parallel
+            if (std::abs(denom) / orthog.len2() / q.len2() >= ieps)
+            {
+                R lambda = orthog * w / denom;
+                if (lambda < -ieps || lambda > 1 + ieps)
+                    return DISJOINT;
+                if (std::abs(lambda) < ieps || std::abs(lambda - 1.0) < ieps)
+                    return EDGE_CASE;
+
+                R eta = (p*(q*lambda - w)) / (p*p);
+                if (eta < -ieps || eta > 1 + ieps)
+                    return DISJOINT;
+                if (std::abs(eta) < ieps || std::abs(eta - 1.0) < ieps)
+                    return EDGE_CASE;
+
+                return INTERSECTION;
+            }
+
+            return TEST_INCONCLUSIVE;
+        }
+
+
+        template <typename R>
+        uint32_t
+        rayTriangleInPlane
+        (
+            const Vec3<R>& p0,
+            const Vec3<R>& p1,
+            const Vec3<R>& v0,
+            const Vec3<R>& v1,
+            const Vec3<R>& v2,
+            const Vec3<R>& n,    // plane normal
+            R ieps = 1E-10
+        )
+        {
+            using namespace Aux::Geometry::IntersectionTestResults;
+
+            // check whether the ray intersects one of the three edges
+            uint32_t res = segmentSegmentInPlaneIntersection(v0, v1, p0, p1, n, ieps);
+            if (res == INTERSECTION || res == EDGE_CASE)
+               return res;
+            res = segmentSegmentInPlaneIntersection(v0, v2, p0, p1, n, ieps);
+            if (res == INTERSECTION || res == EDGE_CASE)
+               return res;
+            res = segmentSegmentInPlaneIntersection(v1, v2, p0, p1, n, ieps);
+            if (res == INTERSECTION || res == EDGE_CASE)
+               return res;
+
+            // it is also possible that the ray is completely inside the triangle
+            // this is the case exactly if both end points are inside
+            // as soon as one end point is not on the inner side of one of the edges
+            // there is no intersection
+            Vec3<R> o = (v1-v0).cross(n); // is oriented in (v2-v0) direction
+            if (o*(p0-v0) < -ieps) return DISJOINT;
+            if (o*(p1-v0) < -ieps) return DISJOINT;
+            o = n.cross(v2-v0); // is oriented in (v1-v0) direction
+            if (o*(p0-v0) < -ieps) return DISJOINT;
+            if (o*(p1-v0) < -ieps) return DISJOINT;
+            o = (v2-v1).cross(n); // is oriented in (v0-v1) direction
+            if (o*(p0-v1) < -ieps) return DISJOINT;
+            if (o*(p1-v1) < -ieps) return DISJOINT;
+
+            return A_SUBSET_B;
+        }
+
+
+        template <typename R>
+        uint32_t
         rayTriangle(
             const Vec3<R>&     p0,
             const Vec3<R>&     p1,
@@ -809,6 +896,20 @@ namespace Aux {
             if (std::abs(denom / n.len2() / p.len2()) < ieps) {
                 debugl(1, "n.len2(): %5.4e. denom = %5.4e < ieps => segment parallel to plane.\n", n.len2(), denom);
                 debugTabDec();
+
+                // In the unlikely case that the ray is in the same plane as the triangle,
+                // then they might indeed intersect.
+                Vec3<R> w = v0 - p0;
+                R test = n * w;
+                if (test / n.len2() / w.len2() < ieps)
+                {
+                    // they ARE in the same plane; calculate whether they intersect
+                    R isec = rayTriangleInPlane(p0, p1, v0, v1, v2, n, ieps);
+                    if (isec != DISJOINT)
+                        return EDGE_CASE;
+                    return DISJOINT;
+                }
+
                 return DISJOINT;
             }
             else {
