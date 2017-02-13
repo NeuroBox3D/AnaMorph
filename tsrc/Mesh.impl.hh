@@ -2090,15 +2090,15 @@ Mesh<Tm, Tv, Tf, R>::getAvgAspectRatio(
 {
     using Aux::Numbers::inf;
 
-    std::vector<R     > ratios;
+    std::vector<R> ratios;
 
     for (auto &f : this->faces) {
         f.checkTri("Mesh::getAvgAspectRatio():");
         ratios.push_back( f.getTriAspectRatio() );
     }
 
-    R      ar_min_tmp, ar_max_tmp;
-    Aux::Stat::computeMinMaxAvgSigma<R     >(
+    R ar_min_tmp, ar_max_tmp;
+    Aux::Stat::computeMinMaxAvgSigma<R>(
             ratios, 
             ar_min_tmp,
             ar_max_tmp,

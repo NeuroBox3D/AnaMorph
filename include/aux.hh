@@ -1903,7 +1903,7 @@ namespace Aux {
 
             for (R x : values) {
                 min     = std::min(min, x);
-                max     = std::max(min, x);
+                max     = std::max(max, x);
                 sum    += x;
             }
             avg = sum / n;
