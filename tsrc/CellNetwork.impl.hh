@@ -1777,6 +1777,19 @@ NeuronEdge::updateVertexPointers()
     this->v_neuron_dst = dynamic_cast<NeuronVertex *>(this->v_dst);
 }
 
+
+template <
+    typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
+    typename Tns, typename Tas, typename Tds, typename Tnr, typename Tar, typename Tdr, typename R
+>
+const CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>*
+CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::NeuronEdge::
+getNetwork() const
+{
+    return network;
+}
+
+
 /* virtual method getLength(). default implementation: return difference of getSinglePointPosition() for source and
  * destination vertex */
 template <
@@ -5703,6 +5716,17 @@ transformToSomaSystem(soma_const_iterator const &s_it)
     /* update global displacement vector */
     this->global_coordinate_displacement += d;
 }
+
+template <
+    typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
+    typename Tns, typename Tas, typename Tds, typename Tnr, typename Tar, typename Tdr, typename R
+>
+Vec3<R> CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
+getGlobalCoordinateDisplacement() const
+{
+    return global_coordinate_displacement;
+}
+
 
 /* initialize network from standardized SWC file as used by NeuroMorpho.org */
 template <

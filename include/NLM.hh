@@ -141,7 +141,7 @@ namespace NLM {
             }
 
             template <typename Tm, typename Tv, typename Tf>
-            void generateMesh(Mesh<Tm, Tv, Tf, R>& meshOut, uint32_t tessellation_depth = 2) const
+            void generateMesh(Mesh<Tm, Tv, Tf, R>& meshOut, uint32_t tessellation_depth = 3) const
             {
                 MeshAlg::generateIcoSphere(_centre, _radius, tessellation_depth, meshOut);
             }

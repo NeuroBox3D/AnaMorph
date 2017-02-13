@@ -845,6 +845,7 @@ NLM_CellNetwork<R>::NLM_CellNetwork(std::string network_name)
     this->meshing_flush                             = true;
     this->meshing_flush_face_limit                  = 100000;
 
+    this->meshing_n_soma_refs                       = 3;
     this->meshing_canal_segment_n_phi_segments      = 12;
     this->meshing_outer_loop_maxiter                = 16;
     this->meshing_inner_loop_maxiter                = 8;
@@ -879,6 +880,7 @@ NLM_CellNetwork<R>::getSettings() const
     s.meshing_flush                             = this->meshing_flush;
     s.meshing_flush_face_limit                  = this->meshing_flush_face_limit;
 
+    s.meshing_n_soma_refs                       = this->meshing_n_soma_refs;
     s.meshing_canal_segment_n_phi_segments      = this->meshing_canal_segment_n_phi_segments;
     s.meshing_outer_loop_maxiter                = this->meshing_outer_loop_maxiter;
     s.meshing_inner_loop_maxiter                = this->meshing_inner_loop_maxiter;
@@ -906,6 +908,7 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
     this->meshing_flush                             = s.meshing_flush;
     this->meshing_flush_face_limit                  = s.meshing_flush_face_limit;
 
+    this->meshing_n_soma_refs                       = s.meshing_n_soma_refs;
     this->meshing_canal_segment_n_phi_segments      = s.meshing_canal_segment_n_phi_segments;
     this->meshing_cansurf_triangle_height_factor    = s.meshing_cansurf_triangle_height_factor;
 
@@ -923,6 +926,7 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
         "\t analysis_bivar_solver_eps:              %5.4e\n"\
         "\t meshing_flush:                          %5d\n"\
         "\t meshing_flush_face_limit:               %5d\n"\
+        "\t meshing_n_soma_refs:                    %5d\n"\
         "\t meshing_canal_segment_n_phi_segments:   %5d\n"\
         "\t meshing_outer_loop_maxiter:             %5d\n"\
         "\t meshing_inner_loop_maxiter:             %5d\n"\
@@ -934,6 +938,7 @@ NLM_CellNetwork<R>::updateSettings(Settings const &s)
         this->analysis_bivar_solver_eps,
         this->meshing_flush,
         this->meshing_flush_face_limit,
+        this->meshing_n_soma_refs,
         this->meshing_canal_segment_n_phi_segments,
         this->meshing_cansurf_triangle_height_factor,
         this->meshing_outer_loop_maxiter,
@@ -3040,7 +3045,16 @@ NLM_CellNetwork<R>::performFullAnalysis()
 
             ns_info.updateREGStatus(reg_isec_info);
 
-            printf("\t REG:       (%5d).\n", reg_job->ns_it->id());
+            // calculate coordinates
+            Vec3<R> srcCoord = reg_isec_info->ns_it->getSourceVertex()->getSinglePointPosition();
+            Vec3<R> destCoord = reg_isec_info->ns_it->getDestinationVertex()->getSinglePointPosition();
+            srcCoord += destCoord;
+            srcCoord *= 0.5;
+            destCoord = reg_isec_info->ns_it->getNetwork()->getGlobalCoordinateDisplacement();
+            srcCoord += destCoord;
+
+            // print out
+            printf("\t regularity violation:      (%5d) at [%f, %f, %f].\n", reg_job->ns_it->id(), srcCoord[0], srcCoord[1], srcCoord[2]);
         }
         else if (type == JOB_LSI) {
             LSI_Job        *lsi_job                     = dynamic_cast<LSI_Job *>(generic_job);
@@ -3049,7 +3063,16 @@ NLM_CellNetwork<R>::performFullAnalysis()
 
             ns_info.updateLSIStatus(lsi_isec_info);
 
-            printf("\t local self-intersection:      (%5d).\n", lsi_isec_info->ns_it->id());
+            // calculate coordinates
+            Vec3<R> srcCoord = lsi_isec_info->ns_it->getSourceVertex()->getSinglePointPosition();
+            Vec3<R> destCoord = lsi_isec_info->ns_it->getDestinationVertex()->getSinglePointPosition();
+            srcCoord += destCoord;
+            srcCoord *= 0.5;
+            destCoord = lsi_isec_info->ns_it->getNetwork()->getGlobalCoordinateDisplacement();
+            srcCoord += destCoord;
+
+            // print out
+            printf("\t local self-intersection:   (%5d) at [%f, %f, %f].\n", lsi_isec_info->ns_it->id(), srcCoord[0], srcCoord[1], srcCoord[2]);
         }
         else if (type == JOB_GSI) {
             GSI_Job        *gsi_job                     = dynamic_cast<GSI_Job *>(generic_job);
@@ -3057,7 +3080,16 @@ NLM_CellNetwork<R>::performFullAnalysis()
             NLM::NeuriteSegmentInfo<R> &ns_info         = gsi_isec_info->ns_it->neurite_segment_data;
             ns_info.updateGSIStatus(gsi_isec_info);
 
-            printf("\t global self-intersection:     (%5d)\n", gsi_isec_info->ns_it->id());
+            // calculate coordinates
+            Vec3<R> srcCoord = gsi_isec_info->ns_it->getSourceVertex()->getSinglePointPosition();
+            Vec3<R> destCoord = gsi_isec_info->ns_it->getDestinationVertex()->getSinglePointPosition();
+            srcCoord += destCoord;
+            srcCoord *= 0.5;
+            destCoord = gsi_isec_info->ns_it->getNetwork()->getGlobalCoordinateDisplacement();
+            srcCoord += destCoord;
+
+            // print out
+            printf("\t global self-intersection:  (%5d) at [%f, %f, %f]\n", gsi_isec_info->ns_it->id(), srcCoord[0], srcCoord[1], srcCoord[2]);
         }
         else if (type == JOB_SONS) {
             SONS_Job            *sons_job               = dynamic_cast<SONS_Job *>(generic_job);
@@ -3066,7 +3098,16 @@ NLM_CellNetwork<R>::performFullAnalysis()
             NLM::NeuriteSegmentInfo<R> &ns_info         = sons_isec_info->ns_it->neurite_segment_data;
             ns_info.ic_sons                             = true;
 
-            printf("\t soma/neurite:                 (%5d, %5d).\n", sons_isec_info->s_it->id(), sons_isec_info->ns_it->id());
+            // calculate coordinates
+            Vec3<R> srcCoord = sons_isec_info->ns_it->getSourceVertex()->getSinglePointPosition();
+            Vec3<R> destCoord = sons_isec_info->ns_it->getDestinationVertex()->getSinglePointPosition();
+            srcCoord += destCoord;
+            srcCoord *= 0.5;
+            destCoord = sons_isec_info->ns_it->getNetwork()->getGlobalCoordinateDisplacement();
+            srcCoord += destCoord;
+
+            // print out
+            printf("\t soma/neurite:              (%5d, %5d) at [%f, %f, %f].\n", sons_isec_info->s_it->id(), sons_isec_info->ns_it->id(), srcCoord[0], srcCoord[1], srcCoord[2]);
         }
         else if (type == JOB_NS_NS_ADJ || type == JOB_NS_NS_NONADJ) {
             NSNS_Job       *nsns_job                    = dynamic_cast<NSNS_Job *>(generic_job);
@@ -3080,20 +3121,28 @@ NLM_CellNetwork<R>::performFullAnalysis()
             NLM::NeuriteSegmentInfo<R> &e_info  = e_it->neurite_segment_data;
             NLM::NeuriteSegmentInfo<R> &f_info  = f_it->neurite_segment_data;
 
+            // calculate coordinates
+            Vec3<R> srcCoord = e_it->getSourceVertex()->getSinglePointPosition();
+            Vec3<R> destCoord = e_it->getDestinationVertex()->getSinglePointPosition();
+            srcCoord += destCoord;
+            srcCoord *= 0.5;
+            destCoord = e_it->getNetwork()->getGlobalCoordinateDisplacement();
+            srcCoord += destCoord;
+
             /* set flags depending on the type of NSNS intersection. */
             uint32_t isec_type = nsns_isec_info->type();
             if (isec_type == RC_NSNS) {
-                printf("\t inter-cell neurites:      (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
+                printf("\t inter-cell neurites:      (%5d, %5d) at [%f, %f, %f].\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id(), srcCoord[0], srcCoord[1], srcCoord[2]);
                 e_info.rc_nsns      = true;
                 f_info.rc_nsns      = true;
             }
             else if (isec_type == ICRN_NSNS) {
-                printf("\t intra-cell inter-neurite: (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
+                printf("\t intra-cell inter-neurite: (%5d, %5d) at [%f, %f, %f].\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id(), srcCoord[0], srcCoord[1], srcCoord[2]);
                 e_info.icrn_nsns    = true;
                 f_info.icrn_nsns    = true;
             }
             else if (isec_type == ICIN_NSNS || isec_type == ICIN_NSNSA) {
-                printf("\t intra-cell intra-neurite: (%5d, %5d).\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id());
+                printf("\t intra-cell intra-neurite: (%5d, %5d) at [%f, %f, %f].\n", nsns_job->ns_first_it->id(), nsns_job->ns_second_it->id(), srcCoord[0], srcCoord[1], srcCoord[2]);
                 e_info.icin_nsns    = true;
                 f_info.icin_nsns    = true;
             }
@@ -3149,7 +3198,7 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
     for (auto &s : this->soma_vertices) {
         NLM::SomaInfo<R> &s_info  = s.soma_data;
 
-        s_info.soma_sphere.template generateMesh<Tm, Tv, Tf>(M_S);
+        s_info.soma_sphere.template generateMesh<Tm, Tv, Tf>(M_S, meshing_n_soma_refs);
 
         M_cell.moveAppend(M_S);
 
@@ -3579,8 +3628,25 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 /* if radius_factor has reached radius_factor_safe_lb, throw exception, since a definitely safe radius
                  * should already have been reached. */
                 if (radius_factor == radius_factor_safe_lb) {
+                    /*
+                    #ifndef NDEBUG
+                    Mesh<Tm, Tv, Tf, R> tmp = M_cell;
+                    std::ostringstream oss1;
+                    oss1 << "M_cell_split_" << outer_loop_iter << "_" << inner_loop_iter;
+                    tmp.writeObjFile(oss1.str().c_str());
+
+                    tmp = M_P;
+                    std::ostringstream oss2;
+                    oss2 << "M_P_split_" << outer_loop_iter << "_" << inner_loop_iter;
+                    tmp.writeObjFile(oss2.str().c_str());
+                    #endif
+                    */
+
                     debugTabDec(); debugTabDec(); debugTabDec();
-                    throw("NLM_CellNetwork::renderCellNetwork(): reached safe lower bound radius factor for current neurite path. this must not happen for clean cell networks.");
+                    throw("NLM_CellNetwork::renderCellNetwork(): Reached safe lower bound radius factor for current "
+                        "neurite path. This must not happen for clean cell networks and indicates that the initial "
+                        "segment of the neurite currently being connected, apart from the connection point, has a "
+                        "second intersection with the rest of the geometry.");
                 }
                 /* otherwise start another meshing run */
                 else {
@@ -3596,12 +3662,28 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
              * and append rest of path to M_cell. */
             for (auto &it : circle_its_update) {
                 if (it.explicitlyInvalid()) {
+                    /*
+                    #ifndef NDEBUG
+                    Mesh<Tm, Tv, Tf, R> tmp = M_cell;
+                    std::ostringstream oss1;
+                    oss1 << "M_cell_split_" << outer_loop_iter << "_" << inner_loop_iter;
+                    tmp.writeObjFile(oss1.str().c_str());
+
+                    tmp = M_P;
+                    std::ostringstream oss2;
+                    oss2 << "M_P_split_" << outer_loop_iter << "_" << inner_loop_iter;
+                    tmp.writeObjFile(oss2.str().c_str());
+                    #endif
+                    */
+
+                    // TODO: This need not be an error right away!
+                    //       One could first try to enlarge the blue mesh segment by segment and try again.
                     debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): RedBlueUnion algorithm has explicitly invalidated an "\
                         "end circle iterator or the closing vertex iterator of the current path P's initial mesh "
-                        "segment. in a clean network, this should be impossible. numerical edge case due to tight "
-                        "PMDV / SMDV constants?");
-
+                        "segment. This means the tip of the initial segment intersects with the rest of the geometry."
+                        " This degenerate case cannot be dealt with at the moment. In a clean network, this should be "
+                        "impossible. numerical edge case due to tight PMDV / SMDV constants?");
                 }
                 else if (!it.checkContainer(M_cell)) {
                     debugl(1, "it.container: %p, M_cell (ptr): %p, M_P (ptr): %p.\n", it.getContainer(), &M_cell, &M_P);

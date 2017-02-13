@@ -546,6 +546,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
                 virtual void                updateVertexPointers();
 
             public:
+                const CellNetwork           *getNetwork() const;
                 /* get edge of length for traversals. this might involve "simplifying" complex edge types and provide an
                  * approximate length (e.g. for axon,dendrite root edges and synapses). */
                 virtual R                   getLength() const;
@@ -3725,6 +3726,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
         /* transform to coordinate system whose is the position of the soma given by s_it */
         void                                        transformToSomaSystem(soma_const_iterator const &s_it);
 
+        Vec3<R>                                     getGlobalCoordinateDisplacement() const;
         /* -----------------------------------  I / O  ------------------------------------------------------------- */
         /* initialize network from standardized SWC file as used by NeuroMorpho.org */
         void                                        readFromNeuroMorphoSWCFile(

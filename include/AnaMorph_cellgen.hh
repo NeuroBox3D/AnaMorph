@@ -91,6 +91,7 @@ class AnaMorph_cellgen : private CLApplication {
         bool                meshing_flush;
         uint32_t            meshing_flush_face_limit;
 
+        uint32_t            meshing_n_soma_refs;
         uint32_t            meshing_canal_segment_n_phi_segments;
         uint32_t            meshing_outer_loop_maxiter;
         uint32_t            meshing_inner_loop_maxiter;

@@ -454,9 +454,6 @@ CanalSurface<C2F, RadF, R>::generateMesh(
 
     this->spineCurveGetRenderFrame(this->t1, rvec, px, py, pz);
     //this->spineCurveGetFrenetFrame(this->t1, px, py, pz);
-
-    Vec3<R>                                         end_closing_vertex_pos = Aux::VecMat::nullvec<R>();
-    typename Mesh<Tm, Tv, Tf, R>::vertex_iterator   end_closing_vertex_it;
     
     /* last circle has index ntsegments, since we got (ntsegments + 1) circles */
     if (start_circle_offset)
@@ -482,13 +479,12 @@ CanalSurface<C2F, RadF, R>::generateMesh(
         phi                     = ( (R)j * Common::twopi) / (R)n_phi_segments;
         vpos                    = p + py*(r*cos(phi + phi_offset)) + pz*(r*sin(phi + phi_offset));
         current_circle[j]       = M.vertices.insert(vpos);
-        end_closing_vertex_pos += vpos;
     }
     debugTabDec();
 
     /* get centroid of last circle vertices and place closing vertex in the middle */
-    end_closing_vertex_pos *= (1.0 / (R)n_phi_segments);
-    end_closing_vertex_it   = M.vertices.insert(end_closing_vertex_pos);
+    Vec3<R> end_closing_vertex_pos = p;
+    typename Mesh<Tm, Tv, Tf, R>::vertex_iterator end_closing_vertex_it = M.vertices.insert(end_closing_vertex_pos);
 
     /* generate quad faces between last_circle and current_circle */
     for (j = 0; j < n_phi_segments - 1; j++) {

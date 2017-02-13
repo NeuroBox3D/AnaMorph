@@ -185,6 +185,10 @@ Command line switches:
                                 amount of available RAM is exceeded.
                                 DEFAULT: enabled, <flush_face_limit> = 100000.
 
+ -meshing-soma-refs <n>         defines the number of refinements performed on an
+                                icosahedron to represent the soma sphere,
+                                default value: 3.
+
  -meshing-cansurf-angularsegments <nseg>
                                 defines angular discretization precision used
                                 during neurite path / neurite canal segment

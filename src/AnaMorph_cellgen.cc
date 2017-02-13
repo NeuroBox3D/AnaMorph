@@ -73,6 +73,7 @@ const std::list<
         { "no-mesh-pp-gec",                         0 },
         { "mesh-pp-hc",                             3 },
         { "no-mesh-pp-hc",                          0 },
+        { "meshing-soma-refs",                      1 },
         { "meshing-cansurf-angularsegments",        1 },
         { "meshing-triangle-height",                1 },
         { "meshing-outerloop-maxiter",              1 },
@@ -327,6 +328,10 @@ const std::string usage_string =
 "                                amount of available RAM is exceeded.\n"\
 "                                DEFAULT: enabled, <flush_face_limit> = 100000.\n"\
 "\n"\
+" -meshing-soma-refs <n>         defines the number of refinements performed on an\n"
+"                                icosahedron to represent the soma sphere,\n"
+"                                default value: 3.\n"
+"\n"
 " -meshing-cansurf-angularsegments <nseg>      \n"\
 "                                defines angular discretization precision used\n"\
 "                                during neurite path / neurite canal segment \n"\
@@ -504,6 +509,7 @@ AnaMorph_cellgen::AnaMorph_cellgen(
     this->meshing_flush                             = true;
     this->meshing_flush_face_limit                  = 100000;
 
+    this->meshing_n_soma_refs                       = 3;
     this->meshing_canal_segment_n_phi_segments      = 6;
     this->meshing_outer_loop_maxiter                = 16;
     this->meshing_inner_loop_maxiter                = 8;
@@ -776,6 +782,25 @@ AnaMorph_cellgen::processCommandLineArguments()
         else if (s == "no-mesh-pp-hc") {
             this->pp_hc = false;
         }
+        else if (s == "meshing-soma-refs") {
+            try {
+                meshing_n_soma_refs = stou(s_args[0]);
+            }
+            catch (std::out_of_range& ex) {
+                printf("ERROR: argument to switch \"meshing-soma-refs\" out of range.\n");
+                return false;
+            }
+            catch (...) {
+                printf("ERROR: argument to switch \"meshing-soma-refs\" could not be converted to an unsigned integer.\n");
+                return false;
+            }
+
+            // check value
+            if (this->meshing_canal_segment_n_phi_segments > 10) {
+                printf("ERROR: number of soma refinements parameter specified in switch \"meshing-soma-refs\" must be in [0,10].\n");
+                return false;
+            }
+        }
         else if (s == "meshing-cansurf-angularsegments") {
             try {
                 this->meshing_canal_segment_n_phi_segments = stou(s_args[0]);
@@ -1007,6 +1032,7 @@ AnaMorph_cellgen::run()
             C_settings.meshing_flush                            = this->meshing_flush;
             C_settings.meshing_flush_face_limit                 = this->meshing_flush_face_limit;
 
+            C_settings.meshing_n_soma_refs                      = this->meshing_n_soma_refs;
             C_settings.meshing_canal_segment_n_phi_segments     = this->meshing_canal_segment_n_phi_segments;
             C_settings.meshing_outer_loop_maxiter               = this->meshing_outer_loop_maxiter;
             C_settings.meshing_inner_loop_maxiter               = this->meshing_inner_loop_maxiter;
