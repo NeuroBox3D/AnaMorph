@@ -197,6 +197,13 @@ Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStar(
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
+const std::list<typename Mesh<Tm, Tv, Tf, R>::Vertex*>&
+Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStar() const
+{
+    return adjacent_vertices;
+}
+
+template <typename Tm, typename Tv, typename Tf, typename R>
 void
 Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStarIndices(
     std::list<uint32_t> &vstar) const
@@ -207,6 +214,19 @@ Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStarIndices(
     }
     vstar.sort();
     vstar.unique();
+}
+
+template <typename Tm, typename Tv, typename Tf, typename R>
+void
+Mesh<Tm, Tv, Tf, R>::Vertex::getVertexStarIndicesVector(std::vector<uint32_t>& vstar) const
+{
+    vstar.clear();
+    for (auto& nb : this->adjacent_vertices)
+        vstar.push_back(nb->id());
+
+    std::sort(vstar.begin(), vstar.end());
+    auto newEnd = std::unique(vstar.begin(), vstar.end());
+    vstar.erase(newEnd, vstar.end());
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>
@@ -3930,7 +3950,7 @@ Mesh<Tm, Tv, Tf, R>::collapseTriEdge(
     uv_fst_tri_it->checkTri("Mesh::collapseTriEdge()");
     uv_snd_tri_it->checkTri("Mesh::collapseTriEdge()");
 
-    /* check topological saftey of collapse. criterion: the set of common neighbours of both u and v
+    /* check topological safety of collapse. criterion: the set of common neighbours of both u and v
      * (which excludes u and v themselves) has size two. */
     std::list<uint32_t> u_nbs, v_nbs;
     std::list<uint32_t> shared_nbs;

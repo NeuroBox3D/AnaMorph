@@ -2388,58 +2388,65 @@ MeshAlg::HCLaplacianSmoothing(
     R const                &beta,
     uint32_t                maxiter)
 {
-    uint32_t                                iter, i, m;
+    uint32_t                                iter, m;
 
     /* for vertex displacement calculation, a simple discrete version of the laplacian is used, the umbrella operator.
      * dxi = 1/num_neighbours SUM_{all neighbours x_}{x_i - x_j}, so, the centroid the x_i's neighbours. */
-    std::list<typename Mesh<Tm, Tv, Tf, R>::Vertex *>   vi_nbs;
-    std::list<uint32_t>                                 vi_nbs_ids;
-    Vec3<R>                                             xi_new;
+    std::vector<uint32_t>                                    vi_nbs_ids;
 
     /* original vertex coordinates */
-    std::map<uint32_t, Vec3<R>> o;
+    std::vector<Vec3<R> > o;
 
     /* vertex coordinates before the step */
-    std::map<uint32_t, Vec3<R>> q;
+    std::vector<Vec3<R> > q;
 
     /* vertex coordinates after the step */
-    std::map<uint32_t, Vec3<R>> p;
+    std::vector<Vec3<R> > p;
 
     /* correction offsets, pushing back the vertices to a weighted sum of original and previous
      * position to avoid volume shrinkage */
-    std::map<uint32_t, Vec3<R>> b;
+    std::vector<Vec3<R> > b;
 
     /* initialize original coordinates o and current coordinates q: prior to the first step,
      * q = o */
-    for (auto &v : M.vertices) {
-        i       = v.id();
-        o[i]    = v.pos();
-        q[i]    = v.pos();
+    size_t vsz = M.vertices.size();
+    o.resize(vsz);
+    p.resize(vsz);
+    q.resize(vsz);
+    b.resize(vsz);
+    std::map<uint32_t, size_t> indexMap;
+    size_t i = 0;
+    for (auto& v : M.vertices)
+    {
+        o[i] = q[i] = v.pos();
+        indexMap[v.id()] = i;
+        ++i;
     }
 
-    for (iter = 0; iter < maxiter; iter++) {
-        for (auto &vi : M.vertices) {
+    for (iter = 0; iter < maxiter; iter++)
+    {
+        i = 0;
+        for (auto &vi : M.vertices)
+        {
             /* get vertex id, vertex star and vertex star size */
-            i = vi.id();
-            vi.getVertexStar(vi_nbs);
+            const std::list<typename Mesh<Tm, Tv, Tf, R>::Vertex *>& vi_nbs = vi.getVertexStar();
             m = vi_nbs.size();
              
             /* throw exception here? isolated vertex .. */
             if (m > 0) {
                 /* compute new position with "umbrella" discrete laplacian operator, store in
                  * temporary xi_new. */
-                xi_new  = Aux::VecMat::nullvec<R>();
+                p[i] = Aux::VecMat::nullvec<R>();
                 for (auto &w : vi_nbs) {
-                    xi_new += w->pos();
+                    p[i] += w->pos();
                 }
-                xi_new *= 1.0 / ( (R) m);
-
-                /* copy computed value from temporary xi_new into map p: only one access */
-                p[i]    = xi_new;
+                p[i] /= (R) m;
 
                 /* compute offset value b[i] for vertex i */
-                b[i]    = xi_new - ( o[i]*alpha + q[i]*(1.0 - alpha) );
+                b[i] = p[i] - ( o[i]*alpha + q[i]*(1.0 - alpha) );
             }
+
+            ++i;
         }
 
         /* iterate over all vertices again, correct new position p[i] with offsets b[j] of the
@@ -2447,10 +2454,11 @@ MeshAlg::HCLaplacianSmoothing(
          * itself.. */
         Vec3<R> p_i_correction;
         R       nbfactor;
-        for (auto &vi : M.vertices) {
-            i               = vi.id();
-            vi.getVertexStarIndices(vi_nbs_ids);
-            m               = vi_nbs_ids.size();
+        i = 0;
+        for (auto &vi : M.vertices)
+        {
+            vi.getVertexStarIndicesVector(vi_nbs_ids);
+            m = vi_nbs_ids.size();
 
             /* throw exception here? isolated vertex .. */
             if (m > 0) {
@@ -2458,26 +2466,17 @@ MeshAlg::HCLaplacianSmoothing(
                 nbfactor        = (1.0 - beta) / (R)m;
 
                 for (uint32_t w_id : vi_nbs_ids) {
-                    p_i_correction += (b[w_id] * nbfactor);
+                    p_i_correction += (b[indexMap[w_id]] * nbfactor);
                 }
 
-                /* set new vertex position (note: this invokes operator=() of typename Mesh<Tm, Tv, Tf>::Vertex, after dereferencing the
-                 * typename Mesh<Tm, Tv, Tf>::vertex_iterator has produces a reference to typename Mesh<Tm, Tv, Tf>::Vertex as lvalue). */
                 vi.pos() = p[i] - p_i_correction;
-                if (!Aux::VecMat::isfiniteVec3(vi.pos())) {
-                    printf("vertex: %5d. new coordinate not finite: p[i] = (%10.5f, %10.5f, %10.5f), p_i_correction: (%10.5f, %10.5f, %10.5f) \n",
-                            i,
-                            p[i][0], p[i][1], p[i][2],
-                            p_i_correction[0], p_i_correction[1], p_i_correction[2]);
-                    throw("MeshAlg::HCLaplacianSmoothing(): new vertex position vector computed during iteration has infinite component.");
-                }
             }
+
+            ++i;
         }
 
-        /* shift: q = p. clear p. */
-        q.clear();
+        // update q
         q.swap(p);
-        /* q now contains contents of p before the swap(), p is empty. done for this iteration. */
     }
 }
 

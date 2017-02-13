@@ -674,7 +674,9 @@ class Mesh {
                 */
 
                 void                                getVertexStar(std::list<Vertex *> &vstar) const;
+                const std::list<Vertex*>&           getVertexStar() const;
                 void                                getVertexStarIndices(std::list<uint32_t> &vstar) const;
+                void                                getVertexStarIndicesVector(std::vector<uint32_t>& vstar) const;
                 void                                getVertexStarIterators(std::list<vertex_iterator> &vstar) const;
                 
                 // way more efficient:
