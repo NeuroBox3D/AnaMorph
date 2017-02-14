@@ -2970,8 +2970,8 @@ NLM_CellNetwork<R>::performFullAnalysis()
     debugl(1, "NLM_CellNetwork::performFullAnalysis().\n");
     debugTabInc();
 
-    /* precompute data for polynomials / numerical solvers.  disable dynamic recomputation of inner products,
-     * approximation data, etc.. i.e. set them to immutable. otherwise, multiple concurrent write-access during e.g.
+    /* precompute data for polynomials / numerical solvers. disable dynamic recomputation of inner products,
+     * approximation data, etc., i.e., set them to immutable. otherwise, multiple concurrent write-access during e.g.
      * dynamic recomputation of required values would result in undefined behaviour in multi-threaded environments. all
      * required values are precomputed beforehand and never touched during analysis. maximum BB degree 24 and BB bi-degree
      * (8, 8) is sufficient for the currently considered modelling settings (mainly cubic bezier curves as spine

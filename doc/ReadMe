@@ -320,7 +320,7 @@ Command line switches:
                                 smoothing, where <beta> must be greater than
                                 <alpha> to ensure a converging "diffusion",
                                 i.e. smoothing, process.
-                                DEFAULT: enabled, alpha=0.4, beta=0.7, maxiter=100
+                                DEFAULT: enabled, alpha=0.4, beta=0.7, maxiter=10
 
                                 NOTE: if either -mesh-pp-gec (stage 1) or
                                 -mesh-pp-hc (stage2) is enabled, post-processing

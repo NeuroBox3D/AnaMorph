@@ -4793,19 +4793,23 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
 
     /* write a dummy texture coordinate to increase compatability with the somewhat ill-defined
      * wavefront format. some readers don't accept empty texture coordinates */
-    fprintf(outfile, "\n# dummy texture coordinate to increase compatability with several programs importing .obj files.\n");
+    fprintf(outfile, "\n# dummy texture coordinate to increase compatibility with several programs importing .obj files.\n");
     fprintf(outfile, "vt 0.0 0.0\n");
 
-    /* write in all the face normals, preceeded by a comment */
-    fprintf(outfile, "\n# %15ld face normals.\n", this->faces.size());
+    /* write in all the face normals, preceded by a comment */
+    //fprintf(outfile, "\n# %15ld face normals.\n", this->faces.size());
 
     debugl(4, "writing %15ld face normals..\n", this->faces.size());
     debugTabInc();
 
     Vec3<R> n;
-    for (auto &f : this->faces) {
-        debugl(5, "writing face normal %5d..\n", f.id());
-        n = f.getNormal();
+    for (auto &v : this->vertices) {
+        debugl(5, "writing vertex normal %5d..\n", v.id());
+        const std::list<typename Mesh<Tm, Tv, Tf, R>::Face*>& faceStar = v.getFaceStar();
+        n.assign((R)0);
+        for (auto f : faceStar)
+            n += f->getNormal();
+        n.normalize();
         fprintf(outfile, "vn %+.10e %+.10e %+.10e\n", n[0], n[1], n[2]);
     }
 

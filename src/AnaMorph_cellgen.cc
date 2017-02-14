@@ -463,7 +463,7 @@ const std::string usage_string =
 "                                smoothing, where <beta> must be greater than\n"\
 "                                <alpha> to ensure a converging \"diffusion\",\n"\
 "                                i.e. smoothing, process. \n"\
-"                                DEFAULT: enabled, alpha=0.4, beta=0.7, maxiter=100\n"\
+"                                DEFAULT: enabled, alpha=0.4, beta=0.7, maxiter=10\n"\
 "\n"\
 "                                NOTE: if either -mesh-pp-gec (stage 1) or \n"\
 "                                -mesh-pp-hc (stage2) is enabled, post-processing\n"\
@@ -534,7 +534,7 @@ AnaMorph_cellgen::AnaMorph_cellgen(
     this->pp_hc                                     = true;
     this->pp_hc_alpha                               = 0.4;
     this->pp_hc_beta                                = 0.7;
-    this->pp_hc_maxiter                             = 100;
+    this->pp_hc_maxiter                             = 10;
 }
 
 bool
@@ -815,8 +815,8 @@ AnaMorph_cellgen::processCommandLineArguments()
             }
 
             /* check value */
-            if (this->meshing_canal_segment_n_phi_segments < 3 || this->meshing_canal_segment_n_phi_segments > 36) {
-                printf("ERROR: angular canal surface discretization parameter specified in switch \"meshing-cansurf-angularsegments\" must be in [12,360].\n");
+            if (this->meshing_canal_segment_n_phi_segments < 3 || this->meshing_canal_segment_n_phi_segments > 64) {
+                printf("ERROR: angular canal surface discretization parameter specified in switch \"meshing-cansurf-angularsegments\" must be in [12,36].\n");
                 return false;
             }
         }
