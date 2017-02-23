@@ -63,6 +63,7 @@ const std::list<
         { "meshing-individual-surfaces",            0 },
         { "cellnet-pc",                             3 },
         { "no-cellnet-pc",                          0 },
+        { "scale-radius",                           1 },
         { "cellnet-partition-strategy",             3 },
         { "cellnet-parametrization-strategy",       1 },
         { "ana-nthreads",                           1 },
@@ -332,6 +333,11 @@ const std::string usage_string =
 "                                icosahedron to represent the soma sphere,\n"
 "                                default value: 3.\n"
 "\n"
+" -scale-radius <scale>          Defines a scaling factor used to scale the radius\n"
+"                                after pre-conditioning. Can be used to create a\n"
+"                                cell-in-cell representation of the ER.\n"
+"                                default value: 1.0.\n"
+"\n"
 " -meshing-cansurf-angularsegments <nseg>      \n"\
 "                                defines angular discretization precision used\n"\
 "                                during neurite path / neurite canal segment \n"\
@@ -510,6 +516,7 @@ AnaMorph_cellgen::AnaMorph_cellgen(
     this->meshing_flush_face_limit                  = 100000;
 
     this->meshing_n_soma_refs                       = 3;
+    this->scale_radius                              = 1.0;
     this->meshing_canal_segment_n_phi_segments      = 6;
     this->meshing_outer_loop_maxiter                = 16;
     this->meshing_inner_loop_maxiter                = 8;
@@ -601,6 +608,27 @@ AnaMorph_cellgen::processCommandLineArguments()
         else if (s == "no-cellnet-pc") {
             this->pc = false;
         }
+
+        else if (s == "scale-radius") {
+            try {
+                scale_radius = std::stod(s_args[0]);
+            }
+            catch (std::out_of_range& ex) {
+                printf("ERROR: argument to switch \"scale-radius\" out of range.\n");
+                return false;
+            }
+            catch (...) {
+                printf("ERROR: argument to switch \"scale-radius\" could not be converted to a double.\n");
+                return false;
+            }
+
+            // check value
+            if (this->scale_radius < 0.1) {
+                printf("ERROR: Radius scale must not be less than 0.1 as this would result in too big a geometry.\n");
+                return false;
+            }
+        }
+
         else if (s == "cellnet-partition-strategy") {
             double filter_angle, max_radius_ratio;
             try {
