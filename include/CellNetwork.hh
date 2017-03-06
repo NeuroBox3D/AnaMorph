@@ -188,6 +188,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
 
                 virtual Vec3<R>                 getSinglePointPosition() const = 0;
                 virtual R                       getSinglePointRadius() const = 0;
+                virtual void                    scaleSinglePointRadius(R scale) = 0;
 
                 uint32_t                        numSections() const;
 
@@ -314,6 +315,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
 
                 virtual Vec3<R>             getSinglePointPosition() const final;
                 virtual R                   getSinglePointRadius() const final;
+                virtual void                scaleSinglePointRadius(R scale) final;
 
                 /* iterators */
                 soma_iterator               iterator();
@@ -356,6 +358,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
 
                 virtual Vec3<R>             getSinglePointPosition() const;
                 virtual R                   getSinglePointRadius() const;
+                virtual void                scaleSinglePointRadius(R scale);
 
                 virtual Vec3<R>             getPosition() const;
                 virtual void                setPosition(Vec3<R> const &p);
@@ -3458,7 +3461,7 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
 
     /* public members */
     public:
-        /* the various accesors */
+        /* the various accessors */
         NeuronVertexAccessor                        neuron_vertices;
         SomaAccessor                                soma_vertices;
         NeuriteVertexAccessor                       neurite_vertices;

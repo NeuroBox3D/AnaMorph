@@ -388,3 +388,19 @@ preliminaryPreconditioning(
     debugTabDec();
     debugl(1, "CellNetwork::preliminaryPreconditioning(): done.\n");
 }
+
+
+
+template <typename network_type, typename R>
+void scale_radii(network_type& C, const R& scale)
+{
+    // scaling
+    typename network_type::neuron_iterator nvit = C.neuron_vertices.begin();
+    typename network_type::neuron_iterator nvit_end = C.neuron_vertices.end();
+    for (; nvit != nvit_end; ++nvit)
+        nvit->scaleSinglePointRadius(scale);
+
+    // adjust root vertex positions to preserve intersection with soma
+    C.computeInitialNeuriteRootVertices();
+}
+

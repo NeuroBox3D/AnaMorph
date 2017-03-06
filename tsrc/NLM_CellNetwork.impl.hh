@@ -705,11 +705,56 @@ namespace NLM {
         debugl(1, "NeuritePath::generateInitialSegmentMesh(): done.\n");
     }
 
+
+    template <typename R>
+    template <typename Tm, typename Tv, typename Tf>
+    void NeuritePath<R>::appendTailSegment
+    (
+        Mesh<Tm, Tv, Tf, R>& M,
+        uint32_t segmentIndex,
+        uint32_t n_phi_segments,
+        R triangle_height_factor,
+        const Vec3<R>& rvec,
+        R phi_0,
+        R arclen_dt,
+        bool& circle_offset_inOut,
+        std::vector<typename Mesh<Tm, Tv, Tf, R>::vertex_iterator>& circle_its_inOut,
+        typename Mesh<Tm, Tv, Tf, R>::vertex_iterator& circle_closing_vertex_it_inOut,
+        bool preserve_crease_edges
+    ) const
+    {
+        debugl(2, "generating mesh for neurite canal segment %d\n", segmentIndex);
+
+        // delete closing vertex of previous segment
+        M.vertices.erase(circle_closing_vertex_it_inOut);
+
+        // generate segment mesh
+        this->canal_segments_magnified[segmentIndex]->template generateMesh<Tm, Tv, Tf>
+        (
+            M,
+            n_phi_segments,
+            triangle_height_factor,
+            rvec,
+            phi_0,
+            arclen_dt,
+            circle_offset_inOut,
+            &circle_its_inOut,
+            &circle_offset_inOut,
+            &circle_its_inOut,
+            &circle_closing_vertex_it_inOut,
+            preserve_crease_edges
+        );
+
+        debugl(2, "done with mesh for neurite canal segment %d\n", i);
+    }
+
+
     template <typename R>
     template<typename Tm, typename Tv, typename Tf>
     void
     NeuritePath<R>::appendTailMesh(
         Mesh<Tm, Tv, Tf, R>                                    &M,
+        uint32_t                                                startSeg,
         uint32_t                                                n_phi_segments,
         R                                                       triangle_height_factor,
         Vec3<R>                                                 rvec,
@@ -750,7 +795,7 @@ namespace NLM {
 
         debugl(2, "appending tail neurite canal segment meshes..\n");
         debugTabInc();
-        for (uint32_t i = 1; i < m; i++) {
+        for (uint32_t i = startSeg; i < m; i++) {
             debugl(2, "generating mesh for neurite canal segment %d\n", i);
             /* delete closing vertex of previous segment */
             M.vertices.erase(segment_i_start_circle_closing_vertex_it);
@@ -3336,6 +3381,8 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
         tmp.writeObjFile("M_cell_before_merge");
         */
 
+        uint32_t segment_index = 1;
+
         debugl(1, "entering outer meshing loop for path %d.\n", (*npt_vit)->id());
         debugTabInc();
         while (!done) {
@@ -3424,6 +3471,29 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     this->meshing_preserve_crease_edges);
             }
             catch (...) {debugTabDec(); debugTabDec(); debugTabDec(); throw;}
+
+            // add more segments if joining has failed before due to intersection of the end circle
+            for (uint32_t i = 1; i < segment_index; ++i)
+            {
+                try
+                {
+                    P.template appendTailSegment<Tm, Tv, Tf>
+                    (
+                        M_P,
+                        i,
+                        this->meshing_canal_segment_n_phi_segments,
+                        meshing_cansurf_triangle_height_factor,
+                        render_vector,
+                        phi_0,
+                        1e-3,
+                        end_circle_offset,
+                        end_circle_its,
+                        closing_vertex_it,
+                        this->meshing_preserve_crease_edges
+                    );
+                }
+                catch (...) {debugTabDec(); debugTabDec(); debugTabDec(); throw;}
+            }
 
             /* triangulate M_P for RedBlueAlgorithm */
             M_P.triangulateQuads();
@@ -3622,14 +3692,42 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 restore_M_cell      = true;
             }
 
+            // check that the complete end circle of P is not merged with M_cell
+            // this is not allowed, as we need it to connect the rest of the neurite
+            for (auto &it : circle_its_update)
+            {
+                if (it.explicitlyInvalid())
+                {
+                    debugl(0, "Neurite end circle intersects cell grid to connect to.\n"
+                              "Adding another segment to initial neurite stump and trying to connect again.\n");
+
+                    // if P has no more segments left to append, then this is an error
+                    if (P.numEdges() <= segment_index)
+                    {
+                        debugTabDec(); debugTabDec(); debugTabDec();
+                        throw("NLM_CellNetwork::renderCellNetwork(): RedBlueUnion algorithm has explicitly invalidated an "\
+                          "end circle iterator or the closing vertex iterator of the current path P's initial mesh "
+                          "segment. This means the tip of the initial segment intersects with the rest of the geometry."
+                          " This degenerate case cannot be dealt with at the moment. In a clean network, this should be "
+                          "impossible. numerical edge case due to tight PMDV / SMDV constants?");
+                    }
+
+                    // otherwise send R-B in another outer iteration
+                    // and tell it to append one further segment to P
+                    ++segment_index;
+                    new_outer_iteration = true;
+                    restore_M_cell      = true;
+                    break;
+                }
+            }
+
             /* start fresh iteration of outer meshing loop if required */
             if (new_outer_iteration) {
                 debugl(1, "re-iteration of outer meshing loop necessary..\n");
                 /* if radius_factor has reached radius_factor_safe_lb, throw exception, since a definitely safe radius
                  * should already have been reached. */
                 if (radius_factor == radius_factor_safe_lb) {
-                    /*
-                    #ifndef NDEBUG
+
                     Mesh<Tm, Tv, Tf, R> tmp = M_cell;
                     std::ostringstream oss1;
                     oss1 << "M_cell_split_" << outer_loop_iter << "_" << inner_loop_iter;
@@ -3639,8 +3737,6 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                     std::ostringstream oss2;
                     oss2 << "M_P_split_" << outer_loop_iter << "_" << inner_loop_iter;
                     tmp.writeObjFile(oss2.str().c_str());
-                    #endif
-                    */
 
                     debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): Reached safe lower bound radius factor for current "
@@ -3654,38 +3750,9 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
                 }
             }
 
-            /* if this line is reached, the initial segment has been successfully merged into M_cell, where
-             * circle_its_update contain iterators to the end circle and closing vertex as new vertices of the partial
-             * union mesh M_cell.  check if any iterator has been explicitly invalidated by the RedBlueUnion algorithm.
-             * if so, throw an exception. if the network is clean in the sense of the definition in the thesis, this
-             * must not happen.  otherwise, unpack the updated iterators back into end_circle_its and closing_vertex_it
-             * and append rest of path to M_cell. */
+            // security check
             for (auto &it : circle_its_update) {
-                if (it.explicitlyInvalid()) {
-                    /*
-                    #ifndef NDEBUG
-                    Mesh<Tm, Tv, Tf, R> tmp = M_cell;
-                    std::ostringstream oss1;
-                    oss1 << "M_cell_split_" << outer_loop_iter << "_" << inner_loop_iter;
-                    tmp.writeObjFile(oss1.str().c_str());
-
-                    tmp = M_P;
-                    std::ostringstream oss2;
-                    oss2 << "M_P_split_" << outer_loop_iter << "_" << inner_loop_iter;
-                    tmp.writeObjFile(oss2.str().c_str());
-                    #endif
-                    */
-
-                    // TODO: This need not be an error right away!
-                    //       One could first try to enlarge the blue mesh segment by segment and try again.
-                    debugTabDec(); debugTabDec(); debugTabDec();
-                    throw("NLM_CellNetwork::renderCellNetwork(): RedBlueUnion algorithm has explicitly invalidated an "\
-                        "end circle iterator or the closing vertex iterator of the current path P's initial mesh "
-                        "segment. This means the tip of the initial segment intersects with the rest of the geometry."
-                        " This degenerate case cannot be dealt with at the moment. In a clean network, this should be "
-                        "impossible. numerical edge case due to tight PMDV / SMDV constants?");
-                }
-                else if (!it.checkContainer(M_cell)) {
+                if (!it.checkContainer(M_cell)) {
                     debugl(1, "it.container: %p, M_cell (ptr): %p, M_P (ptr): %p.\n", it.getContainer(), &M_cell, &M_P);
                     debugTabDec(); debugTabDec(); debugTabDec();
                     throw("NLM_CellNetwork::renderCellNetwork(): RedBlueUnion algorithm has returned an "\
@@ -3705,14 +3772,11 @@ NLM_CellNetwork<R>::renderCellNetwork(std::string filename)
             try
             {
                 P.template appendTailMesh<Tm, Tv, Tf>(
-                    /* append to the partial cell mesh M_cell */
                     M_cell,
-                    /* n_phi_segments default to 16 for testing */
+                    segment_index,
                     this->meshing_canal_segment_n_phi_segments,
                     meshing_cansurf_triangle_height_factor,
-                    /* render vector */
                     render_vector,
-                    /* phi_0, arclen_dt = 1E-3 */
                     phi_0,
                     1E-3,
                     /* end circle information from RedBlue merged initial segment as start circle information for tail */
@@ -3832,6 +3896,7 @@ NLM_CellNetwork<R>::renderModellingMeshesIndividually(std::string filename) cons
                 P.template appendTailMesh<Tm, Tv, Tf>(
                     /* append to mesh M_P for path P */
                     M_P,
+                    1,
                     meshing_canal_segment_n_phi_segments,
                     meshing_cansurf_triangle_height_factor,
                     /* render vector */

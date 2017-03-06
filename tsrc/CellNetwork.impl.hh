@@ -1119,6 +1119,19 @@ SomaVertex::getSinglePointRadius() const
     return rmax;
 }
 
+template <
+    typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
+    typename Tns, typename Tas, typename Tds, typename Tnr, typename Tar, typename Tdr, typename R
+>
+void
+CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
+SomaVertex::scaleSinglePointRadius(R scale)
+{
+    // soma may consist of more than one section (due to swc soma representation)
+    for (auto &section : this->sections)
+        section.radius() *= scale;
+}
+
 /* iterators */
 template <
     typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
@@ -1214,6 +1227,17 @@ CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
 NeuriteVertex::getSinglePointRadius() const
 {
     return (this->getRadius());
+}
+
+template <
+    typename Tn, typename Tv, typename Te, typename Tso, typename Tnv, typename Tax, typename Tde,
+    typename Tns, typename Tas, typename Tds, typename Tnr, typename Tar, typename Tdr, typename R
+>
+void
+CellNetwork<Tn, Tv, Te, Tso, Tnv, Tax, Tde, Tns, Tas, Tds, Tnr, Tar, Tdr, R>::
+NeuriteVertex::scaleSinglePointRadius(R scale)
+{
+    this->sections.begin()->radius() *= scale;
 }
 
 template <

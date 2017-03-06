@@ -4802,6 +4802,7 @@ Mesh<Tm, Tv, Tf, R>::writeObjFile(const char *jobname)
     debugl(4, "writing %15ld face normals..\n", this->faces.size());
     debugTabInc();
 
+    // vertex normals, for whatever reason they may be needed
     Vec3<R> n;
     for (auto &v : this->vertices) {
         debugl(5, "writing vertex normal %5d..\n", v.id());

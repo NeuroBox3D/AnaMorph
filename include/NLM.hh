@@ -240,10 +240,28 @@ namespace NLM {
                                                         R const                                                &radius_reduction_factor,
 														bool                                                    preserve_crease_edges = false) const;
 
+            /// append only one segment of the tail mesh
+            template <typename Tm, typename Tv, typename Tf>
+            void appendTailSegment
+            (
+                Mesh<Tm, Tv, Tf, R>& M,
+                uint32_t segmentIndex,
+                uint32_t n_phi_segments,
+                R triangle_height_factor,
+                const Vec3<R>& rvec,
+                R phi_0,
+                R arclen_dt,
+                bool& circle_offset_inOut,
+                std::vector<typename Mesh<Tm, Tv, Tf, R>::vertex_iterator>& circle_its_inOut,
+                typename Mesh<Tm, Tv, Tf, R>::vertex_iterator& circle_closing_vertex_it_inOut,
+                bool preserve_crease_edges
+            ) const;
+
 
             template<typename Tm, typename Tv, typename Tf>
             void                                    appendTailMesh(
                                                         Mesh<Tm, Tv, Tf, R>                                    &M,
+                                                        uint32_t                                                startSeg,
                                                         uint32_t                                                n_phi_segments,
                                                         R                                                       triangle_height_factor,
                                                         Vec3<R>                                                 rvec,

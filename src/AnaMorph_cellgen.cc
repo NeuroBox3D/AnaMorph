@@ -623,7 +623,7 @@ AnaMorph_cellgen::processCommandLineArguments()
             }
 
             // check value
-            if (this->scale_radius < 0.1) {
+            if (scale_radius < 0.1) {
                 printf("ERROR: Radius scale must not be less than 0.1 as this would result in too big a geometry.\n");
                 return false;
             }
@@ -1073,10 +1073,14 @@ AnaMorph_cellgen::run()
 
             C.updateSettings(C_settings);
             
+            // This does not seem to be necessary and is really annoying when trying to
+            // match original 1d positions to 3d positions generated with AnaMorph.
+            /*
+            // transform cell network to centroid system
             printf("transforming network coordinate system to soma 0 as origin.. ");fflush(stdout);
-            /* transform cell network to centroid system */
             C.transformToSomaSystem(C.soma_vertices.begin());
             printf("done.\n");
+            */
 
             /* apply preconditioning algorithm */
             if (this->pc) {
@@ -1087,6 +1091,13 @@ AnaMorph_cellgen::run()
 
                 CellNetworkAlg::preliminaryPreconditioning(C, this->pc_alpha, this->pc_beta, this->pc_gamma);
                 printf("done.\n\n");
+            }
+
+            // possibly scale radius (useful to create a cell-in-cell ER)
+            if (scale_radius != 1.0)
+            {
+                std::cout << "scaling radii using factor " << scale_radius << "." << std::endl;
+                CellNetworkAlg::scale_radii(C, scale_radius);
             }
 
             /* partition cell network and update geometry */

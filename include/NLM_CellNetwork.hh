@@ -966,8 +966,9 @@ class NLM_CellNetwork
          * if the neurite branches before leaving the soma sphere, an exception is thrown, but this case is extremely
          * rare in practice with the current soma sphere settings. */
         bool                                        nlm_neurite_root_vertices_adjusted;
+    public: // we need this to be public for scaling radii
         void                                        computeInitialNeuriteRootVertices(); 
-
+    protected:
         /* update basic information specific to NLM_CellNetwork */
         bool                                        nlm_network_info_updated;
         void                                        updateNLMNetworkInfo();
