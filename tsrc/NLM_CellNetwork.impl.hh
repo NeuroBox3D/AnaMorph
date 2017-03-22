@@ -745,7 +745,7 @@ namespace NLM {
             preserve_crease_edges
         );
 
-        debugl(2, "done with mesh for neurite canal segment %d\n", i);
+        debugl(2, "done with mesh for neurite canal segment %d\n", segmentIndex);
     }
 
 
