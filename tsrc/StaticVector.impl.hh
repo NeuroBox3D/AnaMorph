@@ -60,7 +60,7 @@ StaticVector<N, T>::StaticVector(const T& x)
 template<uint32_t N, typename T>
 StaticVector<N, T>::StaticVector(const this_type& _v)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         v[i] = _v.v[i];
 }
 
@@ -72,7 +72,7 @@ template<uint32_t N, typename T>
 StaticVector<N, T>&
 StaticVector<N, T>::operator=(const this_type& _v)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         v[i] = _v.v[i];
     return *this;
 }
@@ -88,7 +88,7 @@ template<uint32_t N, typename T>
 void
 StaticVector<N, T>::assign(const T& x)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         v[i] = x;
 }
 
@@ -129,7 +129,7 @@ StaticVector<N, T>
 StaticVector<N, T>::operator+(const this_type& _v) const
 {
     StaticVector r;
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         r[i] = v[i] + _v[i];
     return r;
 }
@@ -138,7 +138,7 @@ template<uint32_t N, typename T>
 StaticVector<N, T> &
 StaticVector<N, T>::operator+=(const this_type& _v)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         v[i] += _v[i];
     return *this;
 }
@@ -148,7 +148,7 @@ StaticVector<N, T>
 StaticVector<N, T>::operator-(const this_type& _v) const
 {
     StaticVector r;
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         r[i] = v[i] - _v[i];
     return r;
 }
@@ -157,7 +157,7 @@ template<uint32_t N, typename T>
 StaticVector<N, T> &
 StaticVector<N, T>::operator-=(const this_type& _v)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         v[i] -= _v[i];
     return *this;
 }
@@ -167,7 +167,7 @@ StaticVector<N, T>
 StaticVector<N, T>::operator*(const T& alpha) const
 {
     StaticVector r;
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         r[i] = alpha * v[i];
     return r;
 }
@@ -176,7 +176,7 @@ template<uint32_t N, typename T>
 StaticVector<N, T> &
 StaticVector<N, T>::operator*=(const T& alpha)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < N; ++i)
         v[i] *= alpha;
     return *this;
 }
