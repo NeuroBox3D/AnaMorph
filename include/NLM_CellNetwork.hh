@@ -1017,7 +1017,7 @@ class NLM_CellNetwork
                     R
                 >(NLM::NeuritePath<R> const &P)
             >                                       parametrization_chord_length(),
-                                                    //parametrization_centripetal(),
+                                                    parametrization_centripetal(),
                                                     parametrization_uniform();
     protected:
         /* partition an entire cell of the network, identified by the soma s */

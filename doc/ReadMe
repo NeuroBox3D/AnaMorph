@@ -121,7 +121,11 @@ Command line switches:
                                     parametrization and matching scaling
                                     factors.
 
-                                    2. "uniform": use uniform parametrization
+                                    2. "centripetal": use centripetal
+                                    parametrization and matching scaling
+                                    factors.
+
+                                    3. "uniform": use uniform parametrization
                                     and matching scaling factors.
 
                                 DEFAULT: <strategy> = "chord-length".

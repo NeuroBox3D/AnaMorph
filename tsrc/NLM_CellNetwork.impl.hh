@@ -1682,6 +1682,41 @@ NLM_CellNetwork<R>::parametrization_chord_length()
 }
 
 template <typename R>
+std::function<std::tuple<R, std::vector<R>, R>(const NLM::NeuritePath<R>& P)>
+NLM_CellNetwork<R>::parametrization_centripetal()
+{
+    auto algo = std::function<std::tuple<R, std::vector<R>, R>(const NLM::NeuritePath<R>& P)>(
+        [] (const NLM::NeuritePath<R>& P) -> std::tuple<R, std::vector<R>, R>
+        {
+            const uint32_t n = P.numVertices();
+            std::vector<R> parameters(n, 0);
+
+            // sum up neurite segment lenth roots to get overall centripetal length
+            // and store partial centripetal lengths in neurite_vertex_parameters in the process.
+            R len = 0;
+            for (uint32_t i = 1; i < n; ++i)
+            {
+                len += sqrt(P.neurite_segments[i-1]->getLength());
+                parameters[i] = len;
+            }
+
+            parameters[0] = 0;
+            for (uint32_t i = 1; i < n - 1; ++i)
+                parameters[i] /= len;
+
+            parameters[n-1] = 1;
+
+            R speedAt0 = P.neurite_segments[0]->getLength() / parameters[1];
+            R speedAtN = P.neurite_segments[n-2]->getLength() / (1.0 - parameters[n-2]);
+
+            return (std::tuple<R, std::vector<R>, R>(speedAt0, parameters, speedAtN));
+        }
+    );
+
+    return algo;
+}
+
+template <typename R>
 std::function<
         std::tuple<
             R,

@@ -265,7 +265,11 @@ const std::string usage_string =
 "                                    parametrization and matching scaling\n"\
 "                                    factors.\n"\
 "\n"\
-"                                    2. \"uniform\": use uniform parametrization\n"\
+"                                    2. \"centripetal\": use centripetal\n"\
+"                                    parametrization and matching scaling\n"\
+"                                    factors.\n"\
+"\n"\
+"                                    3. \"uniform\": use uniform parametrization\n"\
 "                                    and matching scaling factors.\n"\
 "\n"\
 "                                DEFAULT: <strategy> = \"chord-length\".\n"\
@@ -672,6 +676,9 @@ AnaMorph_cellgen::processCommandLineArguments()
         else if (s == "cellnet-parametrization-strategy") {
             if (s_args[0] == "chord-length") {
                 this->parametrization_algo = NLM_CellNetwork<double>::parametrization_chord_length();
+            }
+            else if (s_args[0] == "centripetal") {
+                this->parametrization_algo = NLM_CellNetwork<double>::parametrization_centripetal();
             }
             else if (s_args[0] == "uniform") {
                 this->parametrization_algo = NLM_CellNetwork<double>::parametrization_uniform();
