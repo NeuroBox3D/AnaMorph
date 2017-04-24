@@ -5,10 +5,9 @@ cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 make -j4
 
 
-
 ------------
-all builds require llvm/clang >= 3.4 for full C++11 standard support
-along with a compatible C++ STL implementation. all makefiles are
-adjusted to use the GNU STL libc++. all builds tested and working
-with libc++ version >= 4.7.2.5-5
+This software builds heavily on the C++11 standard.
+At the time of development, llvm/clang >= 3.4 was required for building.
+At this time, other compilers may have implemented more complete support
+for the standard.
 ------------
