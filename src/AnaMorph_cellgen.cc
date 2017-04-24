@@ -1121,10 +1121,12 @@ AnaMorph_cellgen::run()
             bool clean = C.performFullAnalysis();
             printf("done.\n");
 
+#if 0	// This is meaningless unless one has the morphview code.
             /* output morphology viewer file */
             printf("writing AnaMorph visualization file \"%s.amv\".. ", this->network_name.c_str());fflush(stdout);
             C.writeMorphViewFile( std::string(network_name) + ".amv");
             printf("done.\n");
+#endif
 
             /* render cell network mesh */
             if (clean || this->force_meshing) {
