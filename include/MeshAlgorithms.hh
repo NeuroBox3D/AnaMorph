@@ -418,6 +418,6 @@ namespace MeshAlg {
         std::list<typename Mesh<Tm, Tv, Tf, R>::Face *>            &face_list);
 }
 
-#include "../tsrc/MeshAlgorithms.impl.hh"
+#include "../tsrc/MeshAlgorithms_impl.hh"
 
 #endif 

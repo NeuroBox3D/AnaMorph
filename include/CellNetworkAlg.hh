@@ -61,7 +61,7 @@ namespace CellNetworkAlg {
     template <typename network_type, typename R = double>
     void scale_radii(network_type& C, const R& scale);
 
-#include "../tsrc/CellNetworkAlg.impl.hh"
+#include "../tsrc/CellNetworkAlg_impl.hh"
 
 }
 

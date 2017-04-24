@@ -111,6 +111,6 @@ class Tensor {
         bool                            operator>=(Tensor<K, T> const &x) const;
 };
 
-#include "../tsrc/Tensor.impl.hh"
+#include "../tsrc/Tensor_impl.hh"
 
 #endif

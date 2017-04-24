@@ -246,6 +246,6 @@ class BezierCurve : public SpaceCurveReal< BernsteinPolynomial<degree, R, R>, R 
         void computeStationaryPointDistPoly(const Vec3<R>& x, BernsteinPolynomial<degree+derivDeg, R, R>& p) const;
 };
 
-#include "../tsrc/ParametricCurve.impl.hh"
+#include "../tsrc/ParametricCurve_impl.hh"
 
 #endif

@@ -85,6 +85,6 @@ class StaticVector
         T v[N];
 };
 
-#include "../tsrc/StaticVector.impl.hh"
+#include "../tsrc/StaticVector_impl.hh"
 
 #endif // STATIC_VECTOR_HH

@@ -84,6 +84,6 @@ class Vector : public Tensor<1, T> {
         Vector<T>                          &operator*=(T const &alpha);
 };
 
-#include "../tsrc/Vector.impl.hh"
+#include "../tsrc/Vector_impl.hh"
 
 #endif

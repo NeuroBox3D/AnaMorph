@@ -211,6 +211,6 @@ class BiBernsteinPolynomial : public BivariatePolynomial<deg1, deg2, F, R>
         void convertFromPowerBasis(const coeff_type& coeff_pow);
 };
 
-#include "../tsrc/BivariatePolynomial.impl.hh"
+#include "../tsrc/BivariatePolynomial_impl.hh"
 
 #endif

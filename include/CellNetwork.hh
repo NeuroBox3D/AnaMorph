@@ -3737,6 +3737,6 @@ class CellNetwork : public Graph<Tn, Tv, Te> {
                                                         bool const     &check_coincident_positions = false);
 };
 
-#include "../tsrc/CellNetwork.impl.hh"
+#include "../tsrc/CellNetwork_impl.hh"
 
 #endif

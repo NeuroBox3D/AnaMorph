@@ -79,6 +79,6 @@ class Matrix : public Tensor<2, T> {
         Vector<T>                           getCol(uint32_t j) const;
 };
 
-#include "../tsrc/Matrix.impl.hh"
+#include "../tsrc/Matrix_impl.hh"
 
 #endif

@@ -87,6 +87,6 @@ class StaticMatrix
         StaticVector<N,T> m[M];
 };
 
-#include "../tsrc/StaticMatrix.impl.hh"
+#include "../tsrc/StaticMatrix_impl.hh"
 
 #endif // STATIC_MATRIX_HH

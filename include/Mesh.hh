@@ -1336,6 +1336,6 @@ class Mesh {
 };
 
 /* include header for template implementation */
-#include "../tsrc/Mesh.impl.hh"
+#include "../tsrc/Mesh_impl.hh"
 
 #endif

@@ -517,6 +517,6 @@ template <uint32_t degree, typename R>
 StaticMatrix<degree+1, degree+1, BiBernsteinPolynomial<2*degree-1, 2*degree-1, R, R> >
 BLRCanalSurface<degree, R>::G;
 
-#include "../tsrc/CanalSurface.impl.hh"
+#include "../tsrc/CanalSurface_impl.hh"
 
 #endif 

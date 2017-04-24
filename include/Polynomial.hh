@@ -623,6 +623,6 @@ template<uint32_t degree, typename F, typename R>
 StaticMatrix<degree+1, degree+1, F> BernsteinPolynomial<degree, F, R>::bernstein_basis_inner_products;
 
 
-#include "../tsrc/Polynomial.impl.hh"
+#include "../tsrc/Polynomial_impl.hh"
 
 #endif

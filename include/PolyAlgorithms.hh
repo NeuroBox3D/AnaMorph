@@ -269,6 +269,6 @@ namespace PolyAlg {
 
 } // namespace PolyAlg
 
-#include "../tsrc/PolyAlgorithms.impl.hh"
+#include "../tsrc/PolyAlgorithms_impl.hh"
 
 #endif

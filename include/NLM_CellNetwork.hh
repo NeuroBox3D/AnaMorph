@@ -1074,6 +1074,6 @@ class NLM_CellNetwork
         void                                        writeMorphViewFile(std::string filename) const;
 };
 
-#include "../tsrc/NLM_CellNetwork.impl.hh"
+#include "../tsrc/NLM_CellNetwork_impl.hh"
 
 #endif
