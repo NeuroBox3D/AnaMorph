@@ -1,44 +1,48 @@
-/* --------------------------------------------------------------------------------
+/*
+ * This file is part of
+ *
+ * AnaMorph: a framework for geometric modelling, consistency analysis and surface
+ * mesh generation of anatomically reconstructed neuron morphologies.
  * 
- *                              THIS FILE IS PART OF                               
+ * Copyright (c) 2013-2017: G-CSC, Goethe University Frankfurt - Queisser group
+ * Author: Konstantin Mörschel
  * 
- * AnaMorph: A Framework for Geometric Modelling, Consistency Analysis and Surface
- * Mesh Generation of Anatomically Reconstructed Neuron Morphologies
+ * AnaMorph is free software: Redistribution and use in source and binary forms,
+ * with or without modification, are permitted under the terms of the
+ * GNU Lesser General Public License version 3 (as published by the
+ * Free Software Foundation) with the following additional attribution
+ * requirements (according to LGPL/GPL v3 §7):
  * 
- * Web site: http://www.anamorph.net
+ * (1) The following notice must be displayed in the Appropriate Legal Notices
+ * of covered and combined works:
+ * "Based on AnaMorph (https://github.com/NeuroBox3D/AnaMorph)."
  * 
- * Copyright (c) 2013-2014, Konstantin Mörschel.
- * All rights reserved.
+ * (2) The following notice must be displayed at a prominent place in the
+ * terminal output of covered works:
+ * "Based on AnaMorph (https://github.com/NeuroBox3D/AnaMorph)."
+ *
+ * (3) Neither the name "AnaMorph" nor the names of its contributors may be
+ * used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * (4) The following bibliography is recommended for citation and must be
+ * preserved in all covered files:
+ * "Mörschel K, Breit M, Queisser G. Generating neuron geometries for detailed
+ *   three-dimensional simulations using AnaMorph. Neuroinformatics (2017)"
+ * "Grein S, Stepniewski M, Reiter S, Knodel MM, Queisser G.
+ *   1D-3D hybrid modelling – from multi-compartment models to full resolution
+ *   models in space and time. Frontiers in Neuroinformatics 8, 68 (2014)"
+ * "Breit M, Stepniewski M, Grein S, Gottmann P, Reinhardt L, Queisser G.
+ *   Anatomically detailed and large-scale simulations studying synapse loss
+ *   and synchrony using NeuroBox. Frontiers in Neuroanatomy 10 (2016)"
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 
- *    This product includes software developed by f for
- *    AnaMorph (http://www.anamorph.net).
- * 
- * 4. Neither the name "AnaMorph" nor the names of its contributors may be
- *    used to endorse or promote products derived from this software without
- *    specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS OF ANAMORPH ''AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS OF ANAMORPH BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * -------------------------------------------------------------------------------- */
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "AnaMorph_cellgen.hh"
 #include "NLM_CellNetwork.hh"
@@ -117,44 +121,48 @@ const std::list<
     };
 
 const std::string usage_string = 
-"--------------------------------------------------------------------------------\n"\
-"\n"\
-"AnaMorph: A Framework for Geometric Modelling, Consistency Analysis and Surface\n"\
-"Mesh Generation of Anatomically Reconstructed Neuron Morphologies\n"\
-"\n"\
-"Web site: http://www.anamorph.net\n"\
-"\n"\
-"Copyright (c) 2013-2014, Konstantin Mörschel.\n"\
-"All rights reserved.\n"\
-"\n"\
-"Redistribution and use in source and binary forms, with or without\n"\
-"modification, are permitted provided that the following conditions are met:\n"\
-"1. Redistributions of source code must retain the above copyright\n"\
-"   notice, this list of conditions and the following disclaimer.\n"\
-"2. Redistributions in binary form must reproduce the above copyright\n"\
-"   notice, this list of conditions and the following disclaimer in the\n"\
-"   documentation and/or other materials provided with the distribution.\n"\
-"3. All advertising materials mentioning features or use of this software\n"\
-"   must display the following acknowledgement:\n"\
-"\n"\
-"   This product includes software developed by Konstantin Mörschel for\n"\
-"   AnaMorph (http://www.anamorph.net).\n"\
-"\n"\
-"4. Neither the name \"AnaMorph\" nor the names of its contributors may be\n"\
-"   used to endorse or promote products derived from this software without\n"\
-"   specific prior written permission.\n"\
-"\n"\
-"THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS OF ANAMORPH ''AS IS'' AND ANY\n"\
-"EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\n"\
-"WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n"\
-"DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS OF ANAMORPH BE LIABLE FOR ANY\n"\
-"DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n"\
-"(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\n"\
-"LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\n"\
-"ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n"\
-"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n"\
-"SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"\
-"\n"\
+"--------------------------------------------------------------------------------\n"
+" AnaMorph: a framework for geometric modelling, consistency analysis and surface\n"
+" mesh generation of anatomically reconstructed neuron morphologies.\n"
+"\n"
+" Copyright (c) 2013-2017: G-CSC, Goethe University Frankfurt - Queisser group\n"
+" Created by Konstantin Mörschel.\n"
+"\n"
+" AnaMorph is free software: Redistribution and use in source and binary forms,\n"
+" with or without modification, are permitted under the terms of the\n"
+" GNU Lesser General Public License version 3 (as published by the\n"
+" Free Software Foundation) with the following additional attribution\n"
+" requirements (according to LGPL/GPL v3 §7):\n"
+"\n"
+" (1) The following notice must be displayed in the Appropriate Legal Notices\n"
+" of covered and combined works:\n"
+" \"Based on AnaMorph (https://github.com/NeuroBox3D/AnaMorph).\"\n"
+"\n"
+" (2) The following notice must be displayed at a prominent place in the\n"
+" terminal output of covered works:\n"
+" \"Based on AnaMorph (https://github.com/NeuroBox3D/AnaMorph).\"\n"
+"\n"
+" (3) Neither the name \"AnaMorph\" nor the names of its contributors may be\n"
+" used to endorse or promote products derived from this software without\n"
+" specific prior written permission.\n"
+"\n"
+" (4) The following bibliography is recommended for citation and must be\n"
+" preserved in all covered files:\n"
+" \"Mörschel K, Breit M, Queisser G. Generating neuron geometries for detailed\n"
+"   three-dimensional simulations using AnaMorph. Neuroinformatics (2017)\"\n"
+" \"Grein S, Stepniewski M, Reiter S, Knodel MM, Queisser G.\n"
+"   1D-3D hybrid modelling – from multi-compartment models to full resolution\n"
+"   models in space and time. Frontiers in Neuroinformatics 8, 68 (2014)\"\n"
+" \"Breit M, Stepniewski M, Grein S, Gottmann P, Reinhardt L, Queisser G.\n"
+"   Anatomically detailed and large-scale simulations studying synapse loss\n"
+"   and synchrony using NeuroBox. Frontiers in Neuroanatomy 10 (2016)\"\n"
+"\n"
+" This program is distributed in the hope that it will be useful,\n"
+" but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+" See the GNU Lesser General Public License for more details.\n"
+" You should have received a copy of the GNU Lesser General Public License\n"
+" along with this program. If not, see <http://www.gnu.org/licenses/>.\n"
 "--------------------------------------------------------------------------------\n"\
 "\n"\
 "am_cellgen: command line interface for the non-linear geometric modelling and\n"\
