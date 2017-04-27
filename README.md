@@ -2,8 +2,6 @@
 # AnaMorph
 Framework for creating 3d neuronal morphologies from point/diameter descriptions.
 
-Coming soon ...
-
 
 ## Installing ##
 1. Clone this repository using git:
