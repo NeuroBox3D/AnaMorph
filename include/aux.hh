@@ -113,8 +113,8 @@ namespace Aux {
 
                 /* fill in binomial coefficients */
                 bicof[0] = R(1);
-                for (k = 1; k < n; ++k)
-                    bicof[k] = floor(0.5 + exp(lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1)));
+                for (uint32_t i = 1; i < n; ++i)
+                    bicof[i] = floor(0.5 + exp(lgamma(n+1) - lgamma(i+1) - lgamma(n-i+1)));
 
                 bicof[n] = (R)1;
 
@@ -122,7 +122,8 @@ namespace Aux {
 
                 bicof_recompute = false;
             }
-            return k < n+1 ? bicof[k] : (R)0;
+            return bicof[k];
+            //return k < n+1 ? bicof[k] : (R)0;
 #endif
         }
 
