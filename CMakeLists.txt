@@ -62,15 +62,15 @@ message(STATUS "SHARED    ${SHARED}")
 
 
 ## check if boost is available
-#set(boost_cmp_flag)
-#find_package(Boost)
-#if (Boost_FOUND)
-#	# we only need headers
-#	include_directories(${Boost_INCLUDE_DIRS})
-#	
-#	# set compile flag
-#	set(boost_cmp_flag -DWITH_BOOST)
-#endif (Boost_FOUND)
+set(boost_cmp_flag)
+find_package(Boost)
+if (Boost_FOUND)
+	# we only need headers
+	include_directories(${Boost_INCLUDE_DIRS})
+	
+	# set compile flag
+	set(boost_cmp_flag -DWITH_BOOST)
+endif (Boost_FOUND)
 
 ## directories
 get_filename_component(ROOT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
