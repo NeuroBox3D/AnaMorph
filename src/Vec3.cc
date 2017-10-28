@@ -274,5 +274,21 @@ void Vec3<R>::print_debugl(uint32_t level) const
 
 
 
+template <typename R>
+std::ostream& operator<<(std::ostream& stream, const Vec3<R>& v)
+{
+	if (!v.size()) return stream << "()";
+
+	std::size_t sz = v.size() - 1;
+	stream << "(";
+	for (std::size_t i = 0; i < sz; ++i)
+		stream << v[i] << " ";
+	stream << v[sz] << ")";
+
+	return stream;
+}
+
+
 // make Vec3<double> usable
 template class Vec3<double>;
+template std::ostream& operator<<(std::ostream& stream, const Vec3<double>& v);

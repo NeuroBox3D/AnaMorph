@@ -48,6 +48,8 @@
 #define VEC3_H
 
 #include "StaticVector.hh"
+#include <ostream>
+
 
 template <typename R>
 class Vec3
@@ -110,5 +112,7 @@ class Vec3
         using StaticVector<3, R>::v;
 };
 
+template <typename R>
+std::ostream& operator<<(std::ostream& stream, const Vec3<R>& v);
 
 #endif
