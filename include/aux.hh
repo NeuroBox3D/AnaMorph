@@ -906,7 +906,7 @@ namespace Aux {
                 // then they might indeed intersect.
                 Vec3<R> w = v0 - p0;
                 R test = n * w;
-                if (test / n.len2() / w.len2() < ieps)
+                if (std::abs(test / n.len2() / w.len2()) < ieps)
                 {
                     // they ARE in the same plane; calculate whether they intersect
                     R isec = rayTriangleInPlane(p0, p1, v0, v1, v2, n, ieps);
