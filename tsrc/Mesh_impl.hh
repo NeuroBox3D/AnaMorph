@@ -3380,7 +3380,9 @@ Mesh<Tm, Tv, Tf, R>::getOtherFaceIncidentToManifoldEdge(
             throw MeshEx(MESH_LOGIC_ERROR, "Mesh::getFacesIncidentToManifoldEdge(): edge has no incident faces.");
         }
         else {
-            throw MeshEx(MESH_NONMANIFOLD, "Mesh::getFacesIncidentToManifoldEdge(): edge hat > 2 incident faces: non-manifold edge.");
+        	std::ostringstream oss;
+        	oss << "Mesh::getFacesIncidentToManifoldEdge(): edge has " << nIF << " (!=2) incident faces: non-manifold edge.";
+            throw MeshEx(MESH_NONMANIFOLD, oss.str().c_str());
         }
     }
     else {
