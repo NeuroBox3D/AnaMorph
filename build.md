@@ -1,8 +1,12 @@
+# Build
 Please use CMake to build.
 
+
+```
 mkdir build
 cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 make -j4
+```
 
 
 This software builds heavily on the C++11 standard.
