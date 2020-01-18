@@ -65,6 +65,7 @@ Vec2::Vec2(double x, double y)
 
 
 Vec2::Vec2(const Vec2& _v)
+: StaticVector<2, double>()
 {
     v[0] = _v[0];
     v[1] = _v[1];

@@ -561,7 +561,9 @@ namespace NLM {
                 return candidate;
             }
             else
+            {
                 debugl(1, "attempt %d of %d, r_min = %5.4f not %5.4f-permissible for P.\n", attempt + 1, max_attempts, r_min, lambda);
+            }
         }
 
         throw("NeuritePath::findPermissibleRenderVector(). no permissible render vector found.");

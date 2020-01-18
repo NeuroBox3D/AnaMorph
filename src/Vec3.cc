@@ -70,6 +70,7 @@ Vec3<R>::Vec3(R x, R y, R z)
 
 template <typename R>
 Vec3<R>::Vec3(const Vec3<R>& _v)
+: StaticVector<3, R>()
 {
     v[0] = _v[0];
     v[1] = _v[1];

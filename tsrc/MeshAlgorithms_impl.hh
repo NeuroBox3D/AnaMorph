@@ -278,7 +278,7 @@ MeshAlg::appendHalfSphereToCanalSurfaceMesh(
     uint32_t    i, j;
     uint32_t    ntsegments;
     Vec3<R>     p, px, py, pz;
-    R           t, phi, dt, dphi, r, alpha, dalpha;
+    R           t, phi, r, alpha, dalpha;
 
     /* vectors storing vertex iterators of current and last circle */
     std::vector<typename Mesh<Tm, Tv, Tf, R>::vertex_iterator>  last_circle;
@@ -288,8 +288,6 @@ MeshAlg::appendHalfSphereToCanalSurfaceMesh(
 
     /* experimentally conceived value for ntsegments */
     ntsegments  = nphisegments / 2;
-    dt          = 1.0 / (R)ntsegments;
-    dphi        = twopi / (R)nphisegments;
     dalpha      = (M_PI / 2.0) / (R)ntsegments;
 
     /* resize vectors, assign current_circle to start_circle_ids */
@@ -1135,7 +1133,9 @@ RedBlue_generateRBTupleList(
 
     /* point of intersection / parametric value on segment lambda */
     Vec3<TR>                                                x;
-    TR                                                      x_s, x_t, x_lambda;
+    TR                                                      x_s = 0;
+    TR														x_t = 0;
+    TR														x_lambda = 0;
 
     /* red edge e = (u, v) identified by iterators u_it, v_it */
     std::list<typename Mesh<Tm, Tv, Tf, TR>::Face *>        e_Y_candidate_tris;

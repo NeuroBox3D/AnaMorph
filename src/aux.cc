@@ -724,8 +724,10 @@ namespace Aux {
              * in a (the remaining when the shared edge is taken out) lies in the circumcircle of a.
              * if so, flip edge and return true. in all other cases, return false */
             bool        neighbours;
-            uint32_t    fst_shared_vertex, snd_shared_vertex;
-            uint32_t    A_rem_vertex, B_rem_vertex;
+            uint32_t    fst_shared_vertex = 0;
+            uint32_t	snd_shared_vertex = 0;
+            uint32_t    A_rem_vertex = 0;
+            uint32_t	B_rem_vertex = 0;
 
             neighbours = getTwoTrianglesSharedEdgeAndRemainingVertices(
                     A.v0_id, A.v1_id, A.v2_id,

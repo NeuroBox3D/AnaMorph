@@ -95,7 +95,7 @@ preliminaryPreconditioning(
     typename CellNetworkType::neurite_iterator  u, v;
     Vec3<R>                                     p_u, p_v;
     R                                           uv_len, r_u, r_v, rmax;
-    uint32_t                                    k, nmax, m, n;
+    uint32_t                                    k, nmax, m;
     R                                           k_penalty, n_penalty, ratio;
     std::vector<std::pair<Vec3<R>, R>>          k_vertex_info, n_vertex_info;
 
@@ -141,7 +141,6 @@ preliminaryPreconditioning(
          *
          *  */
         nmax        = std::ceil(uv_len / rmax);
-        n           = 0;
         n_penalty   = Aux::Numbers::inf<R>();
 
         debugl(2, "nmax: %d\n", nmax);
@@ -169,7 +168,6 @@ preliminaryPreconditioning(
             /* calculate penalty */
             k_penalty = penalty_function(k_vertex_info);
             if (k_penalty < n_penalty) {
-                n               = k;
                 n_penalty       = k_penalty;
                 n_vertex_info   = k_vertex_info;
             }

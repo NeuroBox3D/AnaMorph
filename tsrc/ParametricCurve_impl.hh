@@ -382,8 +382,8 @@ SpaceCurveReal<C2F, R>::SpaceCurveReal(
 
 template <typename C2F, typename R>
 SpaceCurveReal<C2F, R>::SpaceCurveReal(SpaceCurveReal<C2F, R> const &x)
+: ParametricCurve<C2F, R, Vec3<R> >(x)
 {
-    ParametricCurve<C2F, R, Vec3<R>>::operator=(x);
     this->arclen_set    = x.arclen_set;
     this->arclen        = x.arclen;
     this->arclen_dt     = x.arclen_dt;

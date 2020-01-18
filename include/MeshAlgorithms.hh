@@ -59,7 +59,7 @@ namespace RedBlue_ExCodes {
         RB_ISECPOLY_NUM,
         RB_AFFECTED_CIRCLE_TRIVIAL
     };
-};
+}
 
 struct RedBlue_Ex : public std::runtime_error {
     const uint32_t      type;
