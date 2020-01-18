@@ -722,7 +722,7 @@ BezierCanalSurface<degree, RadF, R>::checkRenderVector(Vec3<R> const &r) const
             root, p.eval(root) / q.eval(root));
     }
     debugTabDec();
-    debugl(3, "minimum target function value fmin: %5.4f\n", fmin);
+    debugl(3, "minimum target function value fmin: %5.4f\n", f_min);
 
     debugTabDec();
     debugl(3, "BezierCanalSurface::checkRenderVector(): done. f_min: %5.4f\n", f_min);

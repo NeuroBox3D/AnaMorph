@@ -921,13 +921,6 @@ Mesh<Tm, Tv, Tf, R>::Face::getBoundingBox() const
 
     /* extend bounding box by 2.5%, but no less than 1E-3, on each side. */
     return (BoundingBox<R>(bb_min, bb_max).extend(0.025, Vec3<R>(1E-3, 1E-3, 1E-3)));
-
-    // code never gets here!?s
-    debugl(5, "aabb (widened): (%5.4f, %5.4f, %5.4f) - (%5.4f, %5.4f, %5.4f)\n",
-            bb_min[0], bb_min[1], bb_min[2],
-            bb_max[0], bb_max[1], bb_max[2]);
-
-    debugTabDec();
 }
 
 template <typename Tm, typename Tv, typename Tf, typename R>

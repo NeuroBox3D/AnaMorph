@@ -176,7 +176,6 @@ preliminaryPreconditioning(
 
         /* value for n has been chosen. split the segment using n_vertex_info, but remove u (front) and v (back) to get
          * information about intermediate vertices. */
-        debugl(2, "best value for n: %d\n", n);
         n_vertex_info.erase(n_vertex_info.begin());
         n_vertex_info.pop_back();
 
