@@ -50,7 +50,7 @@ The **post-processing** step of smoothing can be deactivated using:
 
 	am_cellgen -i someCell.swc -force-meshing -no-mesh-pp-hc
 
-A comprehensive list of adjustable parameters is contained in the file $AnaMorphHome/doc/ReadMe. It is also displayed if you simply call
+A comprehensive list of adjustable parameters is contained in the file **$AnaMorphHome/doc/ReadMe**. It is also displayed if you simply call
 
 	am_cellgen
 
