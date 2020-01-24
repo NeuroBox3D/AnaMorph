@@ -5899,7 +5899,7 @@ readFromNeuroMorphoSWCFile(
      }
  
      // Check if root node is compartment of soma-type
-     if (swc_nodes[soma_root_node_ids.front()].compartment_id != 1)  {
+     if (swc_nodes[soma_root_node_ids.front()].compartment_type != 1)  {
        throw("CellNetwork::readFromNeuroMorphoSWCFile(): SWC geometries wih non-soma type root node (compartment index: 1) not yet supported");
      }
  
