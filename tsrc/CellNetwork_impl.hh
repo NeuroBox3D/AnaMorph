@@ -5886,12 +5886,23 @@ readFromNeuroMorphoSWCFile(
     for (auto &node : swc_nodes) {
         /* get parent of node, add node as child of parent */
         if (node.parent_id == -1) {
-            soma_root_node_ids.push_back( node.compartment_id );
+            soma_root_node_ids.push_back(node.compartment_id);
         }
         else {
             swc_nodes[node.parent_id].child_ids.push_back(node.compartment_id);
         }
     }
+    
+     // Check for presence of a dedicated root node
+     if (soma_root_node_ids.size() == 0) {
+       throw("CellNetwork::readFromNeuroMorphoSWCFIle(): SWC geometries containing no dedicated root node (connectivity index: -1) not yet supported");
+     }
+ 
+     // Check if root node is compartment of soma-type
+     if (swc_nodes[soma_root_node_ids.front()].compartment_id != 1)  {
+       throw("CellNetwork::readFromNeuroMorphoSWCFile(): SWC geometries wih non-soma type root node (compartment index: 1) not yet supported");
+     }
+ 
 
     /* sort all child_id lists. */
     for (auto &node : swc_nodes) {
