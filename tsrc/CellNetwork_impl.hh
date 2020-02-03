@@ -4939,7 +4939,7 @@ traverseBreadthFirst(
         v_filtered_in_edges.clear();
 
         /* for both directed and undirected version, get all of v's OUT edges and extract those satisfying edge_pred */
-        v_it->template getOutEdges(tmp_edges);
+        v_it->getOutEdges(tmp_edges);
         for (auto &e : tmp_edges) {
             if (edge_pred(*e)) {
                 v_filtered_out_edges.push_back(e);
@@ -4991,7 +4991,7 @@ traverseBreadthFirst(
 
         /* for undirected version, also process v's IN edges in a completely symmetric way. */
         if (!directed) {
-            v_it->template getInEdges(tmp_edges);
+            v_it->getInEdges(tmp_edges);
             for (auto &e : tmp_edges) {
                 if (edge_pred(*e)) {
                     v_filtered_in_edges.push_back(e);
@@ -5886,12 +5886,23 @@ readFromNeuroMorphoSWCFile(
     for (auto &node : swc_nodes) {
         /* get parent of node, add node as child of parent */
         if (node.parent_id == -1) {
-            soma_root_node_ids.push_back( node.compartment_id );
+            soma_root_node_ids.push_back(node.compartment_id);
         }
         else {
             swc_nodes[node.parent_id].child_ids.push_back(node.compartment_id);
         }
     }
+    
+     // Check for presence of a dedicated root node
+     if (soma_root_node_ids.size() == 0) {
+       throw("CellNetwork::readFromNeuroMorphoSWCFIle(): SWC geometries containing no dedicated root node (connectivity index: -1) not yet supported");
+     }
+ 
+     // Check if root node is compartment of soma-type
+     if (swc_nodes[soma_root_node_ids.front()].compartment_type != 1)  {
+       throw("CellNetwork::readFromNeuroMorphoSWCFile(): SWC geometries wih non-soma type root node (compartment index: 1) not yet supported");
+     }
+ 
 
     /* sort all child_id lists. */
     for (auto &node : swc_nodes) {
