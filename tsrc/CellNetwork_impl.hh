@@ -4939,7 +4939,7 @@ traverseBreadthFirst(
         v_filtered_in_edges.clear();
 
         /* for both directed and undirected version, get all of v's OUT edges and extract those satisfying edge_pred */
-        v_it->template getOutEdges(tmp_edges);
+        v_it->getOutEdges(tmp_edges);
         for (auto &e : tmp_edges) {
             if (edge_pred(*e)) {
                 v_filtered_out_edges.push_back(e);
@@ -4991,7 +4991,7 @@ traverseBreadthFirst(
 
         /* for undirected version, also process v's IN edges in a completely symmetric way. */
         if (!directed) {
-            v_it->template getInEdges(tmp_edges);
+            v_it->getInEdges(tmp_edges);
             for (auto &e : tmp_edges) {
                 if (edge_pred(*e)) {
                     v_filtered_in_edges.push_back(e);
