@@ -2,6 +2,8 @@
 # AnaMorph
 Framework for creating 3d neuronal morphologies from point/diameter descriptions.
 
+## Build Status ##
+[![Build Status](https://travis-ci.org/stephanmg/AnaMorph.svg?branch=master)](https://travis-ci.org/stephanmg/AnaMorph)
 
 ## Installing ##
 1. Clone this repository using git:
