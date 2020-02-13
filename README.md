@@ -61,3 +61,8 @@ A comprehensive list of adjustable parameters is contained in the file **$AnaMor
 	am_cellgen
 
 without any arguments.
+
+### Extra coarse geometries ###
+Using `-meshing-cansurf-angularsegments 4` might lead even coarser meshes,
+where the dendrites are approximated by square cross sections. Using square
+cross sections might require adding the parameter `preserve-crease-edges`.
