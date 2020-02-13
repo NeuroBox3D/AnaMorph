@@ -41,6 +41,7 @@ AnaMorph has several parameters adjustable on the command line. Some of them are
 	am_cellgen -i someCell.swc -force-meshing -meshing-cansurf-angularsegments 6
 
 will produce neurites with a resolution of 6 nodes per cross-section (the default setting).
+Smaller values for this parameter will result in coarser grids. For values lower than 5, the additional option *-preserve-crease-edges* is recommended to avoid unnatural twisting with loss of volume.
 
 **Preconditioning** can be fine-tuned using the *-cellnet-pc* directive:
 
