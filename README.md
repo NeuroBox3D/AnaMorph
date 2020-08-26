@@ -3,6 +3,7 @@
 Framework for creating 3d neuronal morphologies from point/diameter descriptions.
 
 ## Build Status ##
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/038ab7986d934a4a8f8cb050c4b1068f)](https://app.codacy.com/gh/NeuroBox3D/AnaMorph?utm_source=github.com&utm_medium=referral&utm_content=NeuroBox3D/AnaMorph&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/NeuroBox3D/AnaMorph.svg?branch=master)](https://travis-ci.org/NeuroBox3D/AnaMorph)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
