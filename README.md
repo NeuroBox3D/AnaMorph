@@ -3,7 +3,7 @@
 Framework for creating 3d neuronal morphologies from point/diameter descriptions.
 
 ## Build Status ##
-[![Build Status](https://travis-ci.org/stephanmg/AnaMorph.svg?branch=master)](https://travis-ci.org/stephanmg/AnaMorph)
+[![Build Status](https://travis-ci.org/NeuroBox3D/AnaMorph.svg?branch=master)](https://travis-ci.org/NeuroBox3D/AnaMorph)
 
 Tested builds: 
 - Linux:  GCC 5.4, Clang 7.
